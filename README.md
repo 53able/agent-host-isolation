@@ -25,16 +25,16 @@ untrusted input
 
 The objective is not “absolute safety.” It is to make unauthorized access to named protected assets denyable and testable without relying on the model's judgment.
 
-## Adoption benefits
+## How the isolation mechanism works
 
-Each benefit is documented as an operational story with its situation, risk, workflow change, practical value, and remaining limit.
+The mechanism is divided into six boundaries. Each document explains the control, its decision rule, and its failure behavior.
 
-1. [Run an unfamiliar repository without exposing the whole host](docs/benefits/01-unfamiliar-repository.md)
-2. [Keep credentials outside ordinary execution](docs/benefits/02-credential-separation.md)
-3. [Add network access only when the task needs it](docs/benefits/03-network-control.md)
-4. [Separate artifact generation from permanent host changes](docs/benefits/04-artifact-import.md)
-5. [Stop resource-heavy work before it becomes a host incident](docs/benefits/05-resource-limits.md)
-6. [Replace “the build passed” with evidence that the boundary held](docs/benefits/06-boundary-evidence.md)
+1. [Capability classification and execution profiles](docs/mechanisms/01-capability-profiles.md)
+2. [Read-only input and guest-local scratch](docs/mechanisms/02-input-and-scratch.md)
+3. [Default-deny network and credential handling](docs/mechanisms/03-network-and-credentials.md)
+4. [Result gate and host-side broker](docs/mechanisms/04-result-gate-and-broker.md)
+5. [Resource limits, watchdogs, and cleanup](docs/mechanisms/05-resource-governance.md)
+6. [Adversarial verification and status recording](docs/mechanisms/06-adversarial-verification.md)
 
 ## Install
 
@@ -110,11 +110,11 @@ assets/
 references/
 scripts/
 docs/
-  benefits/
+  mechanisms/
     01-...md through 06-...md
   ja-JP/
     README.md
-    benefits/
+    mechanisms/
       01-...md through 06-...md
 tests/
 .github/workflows/
