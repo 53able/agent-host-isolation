@@ -25,6 +25,17 @@ untrusted input
 
 The objective is not “absolute safety.” It is to make unauthorized access to named protected assets denyable and testable without relying on the model's judgment.
 
+## Adoption benefits
+
+Each benefit is documented as an operational story with its situation, risk, workflow change, practical value, and remaining limit.
+
+1. [Run an unfamiliar repository without exposing the whole host](docs/benefits/01-unfamiliar-repository.md)
+2. [Keep credentials outside ordinary execution](docs/benefits/02-credential-separation.md)
+3. [Add network access only when the task needs it](docs/benefits/03-network-control.md)
+4. [Separate artifact generation from permanent host changes](docs/benefits/04-artifact-import.md)
+5. [Stop resource-heavy work before it becomes a host incident](docs/benefits/05-resource-limits.md)
+6. [Replace “the build passed” with evidence that the boundary held](docs/benefits/06-boundary-evidence.md)
+
 ## Install
 
 Install the skill with the Vercel Skills CLI:
@@ -99,8 +110,12 @@ assets/
 references/
 scripts/
 docs/
+  benefits/
+    01-...md through 06-...md
   ja-JP/
     README.md
+    benefits/
+      01-...md through 06-...md
 tests/
 .github/workflows/
 ```

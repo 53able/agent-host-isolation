@@ -22,6 +22,17 @@ AIエージェントを、能力ベースの実行境界に置くための Agent
 
 目標は「絶対安全」ではありません。定義した保護対象への未承認アクセスを、モデルの判断に頼らず拒否・検証できる状態にすることです。
 
+## 導入メリット
+
+各メリットを、状況、境界がない場合のリスク、このスキルによる変更、導入効果、残る限界に分けて説明します。
+
+1. [未知のリポジトリを、host全体へ触れさせずに実行する](benefits/01-unfamiliar-repository.md)
+2. [通常の実行から認証情報を切り離す](benefits/02-credential-separation.md)
+3. [networkを常時開放せず、必要な宛先だけを追加する](benefits/03-network-control.md)
+4. [成果物の生成とhostへの永続化を分ける](benefits/04-artifact-import.md)
+5. [資源を使い切る前に停止する](benefits/05-resource-limits.md)
+6. [「buildが成功した」から「境界が機能した」へ進む](benefits/06-boundary-evidence.md)
+
 ## インストール
 
 Vercel Skills CLIを使います。
