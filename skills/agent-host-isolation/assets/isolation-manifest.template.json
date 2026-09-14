@@ -1,0 +1,28 @@
+{
+  "task_id": "replace-with-unique-task-id",
+  "profile": "guest-build",
+  "execution_host": "guest-vm",
+  "input_mounts": [
+    {"source": "task-input-snapshot", "target": "/workspace", "read_only": true}
+  ],
+  "scratch": {"path": "/scratch", "guest_local": true, "max_bytes": 1073741824},
+  "network": {"default": "deny", "allow": []},
+  "credentials": {"mode": "none", "task_scoped_broker": false},
+  "host_integration": false,
+  "control_sockets": [],
+  "resource_limits": {
+    "cpu": "replace-with-limit",
+    "memory_bytes": 2147483648,
+    "processes": 128,
+    "disk_bytes": 2147483648,
+    "log_bytes": 104857600,
+    "vm_count": 1,
+    "wall_time_seconds": 1800
+  },
+  "result_gate": {
+    "required": true,
+    "allowed_side_effects": [],
+    "audit_record": "replace-with-audit-location"
+  },
+  "supply_chain": {"image_digest": "replace-with-immutable-digest", "tool_commit": "replace-with-full-commit-or-na"}
+}
