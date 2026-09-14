@@ -41,13 +41,13 @@ The mechanism is divided into six boundaries. Each document explains the control
 Install the skill with the Vercel Skills CLI:
 
 ```bash
-npx skills add https://github.com/53able/agent-host-isolation
+npx skills add 53able/agent-host-isolation
 ```
 
 To inspect the available skill before installation:
 
 ```bash
-npx skills add https://github.com/53able/agent-host-isolation --list
+npx skills add 53able/agent-host-isolation --list
 ```
 
 ## Quick start
