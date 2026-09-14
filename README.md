@@ -58,7 +58,7 @@ A restricted interpreter such as JustBash can reduce capabilities for inspection
 Copy the bundled template:
 
 ```bash
-cp skills/agent-host-isolation/assets/isolation-manifest.template.json isolation-manifest.json
+cp assets/isolation-manifest.template.json isolation-manifest.json
 ```
 
 Define the exact input snapshot, network policy, credential mode, resource limits, immutable image identity, result gate, and audit record. Keep unspecified capabilities denied.
@@ -66,7 +66,7 @@ Define the exact input snapshot, network policy, credential mode, resource limit
 ### 3. Validate before execution
 
 ```bash
-python3 skills/agent-host-isolation/scripts/validate-manifest.py isolation-manifest.json
+python3 scripts/validate-manifest.py isolation-manifest.json
 ```
 
 The validator rejects common unsafe configurations, including writable input mounts, unrestricted networking, host integration, control sockets, direct credentials without a scoped broker, missing resource limits, and mutable image identities.
@@ -79,7 +79,7 @@ Keep Git push, deployment, publishing, external writes, and credential-bound ope
 
 ### 5. Test denial, not only success
 
-Copy `skills/agent-host-isolation/assets/isolation-verification.template.md` and record the seven test classes:
+Copy `assets/isolation-verification.template.md` and record the seven test classes:
 
 1. Mount
 2. Credential
@@ -94,12 +94,10 @@ Use `verified for tested configuration` only after every required test passes on
 ## Repository structure
 
 ```text
-skills/
-  agent-host-isolation/
-    SKILL.md
-    assets/
-    references/
-    scripts/
+SKILL.md
+assets/
+references/
+scripts/
 docs/
   ja-JP/
     README.md

@@ -55,7 +55,7 @@ JustBashのようなrestricted interpreterは、調査・整形タスクの能�
 同梱templateを複製します。
 
 ```bash
-cp skills/agent-host-isolation/assets/isolation-manifest.template.json isolation-manifest.json
+cp assets/isolation-manifest.template.json isolation-manifest.json
 ```
 
 入力snapshot、network policy、credential mode、resource limit、immutableなimage identity、result gate、audit recordを具体化します。未指定のcapabilityはdenyのままにします。
@@ -63,7 +63,7 @@ cp skills/agent-host-isolation/assets/isolation-manifest.template.json isolation
 ### 3. 実行前に検査する
 
 ```bash
-python3 skills/agent-host-isolation/scripts/validate-manifest.py isolation-manifest.json
+python3 scripts/validate-manifest.py isolation-manifest.json
 ```
 
 validatorは、書込み可能なinput mount、無制限network、host integration、control socket、scoped brokerを介さないcredential、resource limitの欠落、変更可能なimage identityなどを拒否します。
@@ -76,7 +76,7 @@ Git push、deploy、publish、外部書込み、credentialを伴う操作はgues
 
 ### 5. 成功だけでなく拒否を試す
 
-`skills/agent-host-isolation/assets/isolation-verification.template.md`を複製し、次の7種類を記録します。
+`assets/isolation-verification.template.md`を複製し、次の7種類を記録します。
 
 1. Mount
 2. Credential

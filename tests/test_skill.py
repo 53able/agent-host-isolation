@@ -6,10 +6,10 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_DIR = ROOT / "skills" / "agent-host-isolation"
-SKILL_FILE = SKILL_DIR / "SKILL.md"
-VALIDATOR = SKILL_DIR / "scripts" / "validate-manifest.py"
-TEMPLATE = SKILL_DIR / "assets" / "isolation-manifest.template.json"
+SKILL_DIR = ROOT
+SKILL_FILE = ROOT / "SKILL.md"
+VALIDATOR = ROOT / "scripts" / "validate-manifest.py"
+TEMPLATE = ROOT / "assets" / "isolation-manifest.template.json"
 
 
 class SkillStructureTests(unittest.TestCase):
