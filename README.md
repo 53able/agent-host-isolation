@@ -107,8 +107,6 @@ tests/
 .github/workflows/
 ```
 
-The layout follows the skill discovery convention used by [vercel-labs/skills](https://github.com/vercel-labs/skills), with each installable skill stored under `skills/<skill-name>/SKILL.md`. The Japanese documentation layout follows the locale-directory approach used by [affaan-m/ECC](https://github.com/affaan-m/ECC/tree/main/docs/ja-JP).
-
 ## Important limitations
 
 - This repository provides a procedure and deterministic manifest checks; it does not create a VM or host firewall by itself.
