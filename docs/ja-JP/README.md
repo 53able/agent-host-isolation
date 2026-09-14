@@ -24,7 +24,7 @@ AIエージェントを、能力ベースの実行境界に置くための Agent
 
 ## インストール
 
-[Vercel Skills CLI](https://github.com/vercel-labs/skills)を使います。
+Vercel Skills CLIを使います。
 
 ```bash
 npx skills add 53able/agent-host-isolation --skill agent-host-isolation
@@ -48,7 +48,7 @@ npx skills add 53able/agent-host-isolation --list
 | `guest-build` | install、build、test、コード生成、任意binary | 短命guest VM、read-only input、guest-local scratch、network default deny |
 | `elevated-release` | 検証済み成果物に対する一件のrelease操作 | `guest-build`の制限とtask-scopedなhost-side broker |
 
-JustBashのようなrestricted interpreterは、調査・整形タスクの能力を小さくする用途に使えます。ただしVM境界ではないため、任意のnative binaryを実行するtaskでguest VMの代わりにはなりません。詳細は[JustBashのthreat model](https://github.com/vercel-labs/just-bash/blob/main/THREAT_MODEL.md)を確認してください。
+JustBashのようなrestricted interpreterは、調査・整形タスクの能力を小さくする用途に使えます。ただしVM境界ではないため、任意のnative binaryを実行するtaskでguest VMの代わりにはなりません。
 
 ### 2. Task manifestを作る
 
@@ -95,13 +95,6 @@ Git push、deploy、publish、外部書込み、credentialを伴う操作はgues
 - Restricted interpreterは能力を減らしますが、guest VMと同じ隔離境界ではありません。
 - Runtime固有のflagとhostへの到達性は、対象OS・runtime versionで実測する必要があります。
 - Build成功だけでは、保護対象へのアクセスが拒否された証拠になりません。
-
-## 一次資料
-
-- Apple Container: [technical overview](https://github.com/apple/container/blob/main/docs/technical-overview.md)、[mounts and volumes](https://github.com/apple/container/blob/main/docs/volumes.md)、[host integration](https://github.com/apple/container/blob/main/docs/host-integration.md)、[networking](https://github.com/apple/container/blob/main/docs/networking.md)
-- Vercel Labs: [JustBash threat model](https://github.com/vercel-labs/just-bash/blob/main/THREAT_MODEL.md)
-- Docker: [Docker Engine security](https://docs.docker.com/engine/security/)
-- OWASP GenAI Security Project: [LLM08 — Excessive Agency](https://genai.owasp.org/llmrisk2023-24/llm08-excessive-agency/)
 
 ## ライセンス
 

@@ -27,7 +27,7 @@ The objective is not “absolute safety.” It is to make unauthorized access to
 
 ## Install
 
-Install the skill with the [Vercel Skills CLI](https://github.com/vercel-labs/skills):
+Install the skill with the Vercel Skills CLI:
 
 ```bash
 npx skills add 53able/agent-host-isolation --skill agent-host-isolation
@@ -51,7 +51,7 @@ Choose the smallest sufficient profile:
 | `guest-build` | Install, build, test, code generation, arbitrary binaries | Short-lived guest VM; read-only input; guest-local scratch; default-deny network |
 | `elevated-release` | One explicit release operation after verified build evidence | `guest-build` restrictions plus a task-scoped host-side broker |
 
-A restricted interpreter such as JustBash can reduce capabilities for inspection tasks. It is not a VM boundary and must not replace a guest VM for arbitrary native execution. See the [JustBash threat model](https://github.com/vercel-labs/just-bash/blob/main/THREAT_MODEL.md).
+A restricted interpreter such as JustBash can reduce capabilities for inspection tasks. It is not a VM boundary and must not replace a guest VM for arbitrary native execution.
 
 ### 2. Create a task manifest
 
@@ -114,13 +114,6 @@ tests/
 - Restricted interpreters reduce available commands but are not equivalent to guest-VM isolation.
 - Runtime-specific flags and host reachability must be tested on the target operating system and runtime version.
 - A successful build is not evidence that protected paths and endpoints were denied.
-
-## Primary references
-
-- Apple Container: [technical overview](https://github.com/apple/container/blob/main/docs/technical-overview.md), [mounts and volumes](https://github.com/apple/container/blob/main/docs/volumes.md), [host integration](https://github.com/apple/container/blob/main/docs/host-integration.md), [networking](https://github.com/apple/container/blob/main/docs/networking.md)
-- Vercel Labs: [JustBash threat model](https://github.com/vercel-labs/just-bash/blob/main/THREAT_MODEL.md)
-- Docker: [Docker Engine security](https://docs.docker.com/engine/security/)
-- OWASP GenAI Security Project: [LLM08 — Excessive Agency](https://genai.owasp.org/llmrisk2023-24/llm08-excessive-agency/)
 
 ## License
 
