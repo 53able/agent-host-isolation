@@ -38,13 +38,13 @@ AIエージェントを、能力ベースの実行境界に置くための Agent
 Vercel Skills CLIを使います。
 
 ```bash
-npx skills add 53able/agent-host-isolation --skill agent-host-isolation
+npx skills add https://github.com/53able/agent-host-isolation --skill agent-host-isolation
 ```
 
 インストール前に収録スキルを確認する場合:
 
 ```bash
-npx skills add 53able/agent-host-isolation --list
+npx skills add https://github.com/53able/agent-host-isolation --list
 ```
 
 ## 最短の使い方
