@@ -41,12 +41,6 @@ Vercel Skills CLIを使います。
 npx skills add 53able/agent-host-isolation
 ```
 
-インストール前に収録スキルを確認する場合:
-
-```bash
-npx skills add 53able/agent-host-isolation --list
-```
-
 ## 最短の使い方
 
 ### 1. タスクを分類する

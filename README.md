@@ -44,12 +44,6 @@ Install the skill with the Vercel Skills CLI:
 npx skills add 53able/agent-host-isolation
 ```
 
-To inspect the available skill before installation:
-
-```bash
-npx skills add 53able/agent-host-isolation --list
-```
-
 ## Quick start
 
 ### 1. Classify the task
