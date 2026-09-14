@@ -41,6 +41,24 @@ Vercel Skills CLIを使います。
 npx skills add 53able/agent-host-isolation
 ```
 
+## バージョン
+
+releaseはGit tagで管理します。versionを固定してinstallする場合:
+
+```bash
+npx skills add '53able/agent-host-isolation#v0.1.0'
+```
+
+projectへのinstallでは、sourceと選択したGit refが`skills-lock.json`へ記録されます。同じskill versionを再現する必要があるprojectでは、このfileをcommitします。
+
+projectへinstallしたskillを明示的に更新する場合:
+
+```bash
+npx skills update agent-host-isolation -p
+```
+
+releaseごとの変更は[CHANGELOG.md](../../CHANGELOG.md)で確認できます。
+
 ## 最短の使い方
 
 ### 1. タスクを分類する

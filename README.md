@@ -44,6 +44,24 @@ Install the skill with the Vercel Skills CLI:
 npx skills add 53able/agent-host-isolation
 ```
 
+## Versions
+
+Releases use Git tags. To install a fixed version:
+
+```bash
+npx skills add '53able/agent-host-isolation#v0.1.0'
+```
+
+A project installation records the source and selected Git ref in `skills-lock.json`. Commit that file when the project must reproduce the same skill version.
+
+To update the project installation explicitly:
+
+```bash
+npx skills update agent-host-isolation -p
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for release changes.
+
 ## Quick start
 
 ### 1. Classify the task
