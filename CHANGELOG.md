@@ -8,6 +8,7 @@
 - Add strict Manifest v2 validation, allowlisted Apple Container argv compilation, gateway grant decisions, lifecycle/checkpoint contracts, normalized event validation, and non-mutating host readiness probing.
 - Add a fail-closed JustBash `inspect` runtime extension to the shared Manifest v2 contract.
 - Document the JustBash boundary, lifecycle, observability, adversarial tests, and `InspectBlocked` behavior in English and Japanese.
+- Add a bounded, cleanup-aware Apple Container denial smoke test with JSON evidence output.
 
 ### Changed
 

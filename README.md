@@ -127,6 +127,13 @@ python3 scripts/probe_apple_container.py isolation-manifest.json
 
 The probe never reports `verified`; it only reports whether the recorded host is ready for adversarial tests or why it is blocked.
 
+With Apple Container services running, execute the bounded local denial smoke test and retain its JSON evidence:
+
+```bash
+python3 scripts/run_apple_container_smoke.py \
+  --output evidence/apple-container-smoke-YYYYMMDD.json
+```
+
 ### 5. Execute and import through a result gate
 
 Run arbitrary binaries only inside the selected guest VM. Export patches, logs, and generated files to guest output storage. Before importing them, inspect paths, symlinks, file types, sizes, hashes, and the destination repository.

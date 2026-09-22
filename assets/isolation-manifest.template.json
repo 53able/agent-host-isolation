@@ -31,7 +31,7 @@
   },
   "gateway": {
     "default": "deny",
-    "task_network": "replace-with-task-network",
+    "task_network": "none",
     "ingress_ports": [],
     "grants": [],
     "credential_broker": null

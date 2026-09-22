@@ -1,0 +1,1 @@
+This is the only host input exposed to the Apple Container smoke test.

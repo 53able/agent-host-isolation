@@ -1,0 +1,506 @@
+{
+  "artifact": "artifact-ok",
+  "captured_at": "2026-09-22T19:15:48.670979+00:00",
+  "cleanup_errors": [],
+  "commands": {
+    "artifact-read": [
+      "container",
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "--read-only",
+      "--cap-drop",
+      "ALL",
+      "--mount",
+      "type=volume,source=ahi-smoke-49ae71ed-output,target=/output,readonly",
+      "docker.io/library/alpine:3.22@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
+      "cat",
+      "/output/result.txt"
+    ],
+    "create": [
+      "container",
+      "create",
+      "--name",
+      "ahi-smoke-49ae71ed",
+      "--read-only",
+      "--cap-drop",
+      "ALL",
+      "--cpus",
+      "1",
+      "--memory",
+      "268435456",
+      "--ulimit",
+      "nproc=32:32",
+      "--ulimit",
+      "nofile=64:64",
+      "--label",
+      "org.agent-host-isolation.task-id=ahi-smoke-49ae71ed",
+      "--label",
+      "org.agent-host-isolation.manifest-hash=sha256:6cff99ec124218d65fc2346c63884d8dfda6afe26d6cb2464dfa6942b6c50230",
+      "--label",
+      "org.agent-host-isolation.workspace-hash=sha256:79f2f9c079a994abc56af542e835115f144dc8d964f6e0d911e0dc6431fc770a",
+      "--mount",
+      "type=bind,source=/Users/oreore/.t3/worktrees/agent-host-isolation/t3code-08fae771/validation/apple-container/input,target=/workspace,readonly",
+      "--mount",
+      "type=volume,source=ahi-smoke-49ae71ed-scratch,target=/scratch",
+      "--mount",
+      "type=volume,source=ahi-smoke-49ae71ed-output,target=/output",
+      "--network",
+      "none",
+      "docker.io/library/alpine:3.22@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
+      "sh",
+      "-c",
+      "set -u\nfailed=0\nif touch /rootfs-write-probe 2>/dev/null; then echo rootfs-writable; failed=1; else echo rootfs-denied; fi\nif touch /workspace/write-probe 2>/dev/null; then echo workspace-writable; failed=1; else echo workspace-write-denied; fi\nif [ -e /Users ]; then echo host-home-visible; failed=1; else echo host-home-hidden; fi\nif [ -n \"${SSH_AUTH_SOCK:-}\" ] || [ -S /run/host-services/ssh-auth.sock ]; then echo ssh-agent-visible; failed=1; else echo ssh-agent-hidden; fi\nif [ -S /var/run/docker.sock ] || [ -S /run/containerd/containerd.sock ]; then echo control-socket-visible; failed=1; else echo control-socket-hidden; fi\ninterfaces=\"$(ls /sys/class/net | tr '\\n' ' ')\"\nif [ \"$interfaces\" = \"lo \" ]; then echo network-loopback-only; else echo \"unexpected-interfaces:$interfaces\"; failed=1; fi\nif wget -T 2 -qO- http://1.1.1.1 >/dev/null 2>&1; then echo internet-egress-reachable; failed=1; else echo internet-egress-denied; fi\nif wget -T 2 -qO- http://192.168.64.1 >/dev/null 2>&1; then echo host-gateway-reachable; failed=1; else echo host-gateway-denied; fi\ncap_eff=\"$(awk '/^CapEff:/ {print $2}' /proc/self/status)\"\nif [ \"$cap_eff\" = \"0000000000000000\" ]; then echo capabilities-dropped; else echo \"capabilities-present:$cap_eff\"; failed=1; fi\nprintf 'nofile=%s\\n' \"$(ulimit -n)\"\nprintf 'nproc=%s\\n' \"$(ulimit -u)\"\nprintf 'artifact-ok\\n' > /output/result.txt && echo artifact-written\nif [ \"$failed\" -eq 0 ]; then echo ahi-smoke-pass; fi\nsleep 3\nexit \"$failed\""
+    ],
+    "create-output-volume": [
+      "container",
+      "volume",
+      "create",
+      "-s",
+      "1048576",
+      "--label",
+      "org.agent-host-isolation.task-id=ahi-smoke-49ae71ed",
+      "ahi-smoke-49ae71ed-output"
+    ],
+    "create-scratch-volume": [
+      "container",
+      "volume",
+      "create",
+      "-s",
+      "16777216",
+      "--label",
+      "org.agent-host-isolation.task-id=ahi-smoke-49ae71ed",
+      "ahi-smoke-49ae71ed-scratch"
+    ],
+    "start": [
+      "container",
+      "start",
+      "ahi-smoke-49ae71ed"
+    ]
+  },
+  "final_inspect": {
+    "configuration": {
+      "capAdd": [],
+      "capDrop": [
+        "ALL"
+      ],
+      "creationDate": "2026-09-22T19:15:48Z",
+      "dns": {
+        "nameservers": [],
+        "options": [],
+        "searchDomains": []
+      },
+      "id": "ahi-smoke-49ae71ed",
+      "image": {
+        "descriptor": {
+          "digest": "sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
+          "mediaType": "application/vnd.oci.image.index.v1+json",
+          "size": 9218
+        },
+        "reference": "docker.io/library/alpine@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce"
+      },
+      "initProcess": {
+        "arguments": [
+          "-c",
+          "set -u\nfailed=0\nif touch /rootfs-write-probe 2>/dev/null; then echo rootfs-writable; failed=1; else echo rootfs-denied; fi\nif touch /workspace/write-probe 2>/dev/null; then echo workspace-writable; failed=1; else echo workspace-write-denied; fi\nif [ -e /Users ]; then echo host-home-visible; failed=1; else echo host-home-hidden; fi\nif [ -n \"${SSH_AUTH_SOCK:-}\" ] || [ -S /run/host-services/ssh-auth.sock ]; then echo ssh-agent-visible; failed=1; else echo ssh-agent-hidden; fi\nif [ -S /var/run/docker.sock ] || [ -S /run/containerd/containerd.sock ]; then echo control-socket-visible; failed=1; else echo control-socket-hidden; fi\ninterfaces=\"$(ls /sys/class/net | tr '\\n' ' ')\"\nif [ \"$interfaces\" = \"lo \" ]; then echo network-loopback-only; else echo \"unexpected-interfaces:$interfaces\"; failed=1; fi\nif wget -T 2 -qO- http://1.1.1.1 >/dev/null 2>&1; then echo internet-egress-reachable; failed=1; else echo internet-egress-denied; fi\nif wget -T 2 -qO- http://192.168.64.1 >/dev/null 2>&1; then echo host-gateway-reachable; failed=1; else echo host-gateway-denied; fi\ncap_eff=\"$(awk '/^CapEff:/ {print $2}' /proc/self/status)\"\nif [ \"$cap_eff\" = \"0000000000000000\" ]; then echo capabilities-dropped; else echo \"capabilities-present:$cap_eff\"; failed=1; fi\nprintf 'nofile=%s\\n' \"$(ulimit -n)\"\nprintf 'nproc=%s\\n' \"$(ulimit -u)\"\nprintf 'artifact-ok\\n' > /output/result.txt && echo artifact-written\nif [ \"$failed\" -eq 0 ]; then echo ahi-smoke-pass; fi\nsleep 3\nexit \"$failed\""
+        ],
+        "environment": [
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ],
+        "executable": "sh",
+        "rlimits": [
+          {
+            "hard": 32,
+            "limit": "RLIMIT_NPROC",
+            "soft": 32
+          },
+          {
+            "hard": 64,
+            "limit": "RLIMIT_NOFILE",
+            "soft": 64
+          }
+        ],
+        "supplementalGroups": [],
+        "terminal": false,
+        "user": {
+          "id": {
+            "gid": 0,
+            "uid": 0
+          }
+        },
+        "workingDirectory": "/"
+      },
+      "labels": {
+        "org.agent-host-isolation.manifest-hash": "sha256:6cff99ec124218d65fc2346c63884d8dfda6afe26d6cb2464dfa6942b6c50230",
+        "org.agent-host-isolation.task-id": "ahi-smoke-49ae71ed",
+        "org.agent-host-isolation.workspace-hash": "sha256:79f2f9c079a994abc56af542e835115f144dc8d964f6e0d911e0dc6431fc770a"
+      },
+      "mounts": [
+        {
+          "destination": "/workspace",
+          "options": [
+            "ro"
+          ],
+          "source": "/Users/oreore/.t3/worktrees/agent-host-isolation/t3code-08fae771/validation/apple-container/input",
+          "type": {
+            "virtiofs": {}
+          }
+        },
+        {
+          "destination": "/scratch",
+          "options": [],
+          "source": "/Users/oreore/Library/Application Support/com.apple.container/volumes/ahi-smoke-49ae71ed-scratch/volume.img",
+          "type": {
+            "volume": {
+              "cache": {
+                "on": {}
+              },
+              "format": "ext4",
+              "name": "ahi-smoke-49ae71ed-scratch",
+              "sync": {
+                "fsync": {}
+              }
+            }
+          }
+        },
+        {
+          "destination": "/output",
+          "options": [],
+          "source": "/Users/oreore/Library/Application Support/com.apple.container/volumes/ahi-smoke-49ae71ed-output/volume.img",
+          "type": {
+            "volume": {
+              "cache": {
+                "on": {}
+              },
+              "format": "ext4",
+              "name": "ahi-smoke-49ae71ed-output",
+              "sync": {
+                "fsync": {}
+              }
+            }
+          }
+        }
+      ],
+      "networks": [],
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      },
+      "publishedPorts": [],
+      "publishedSockets": [],
+      "readOnly": true,
+      "resources": {
+        "cpuOverhead": 1,
+        "cpus": 1,
+        "memoryInBytes": 268435456
+      },
+      "rosetta": false,
+      "runtimeHandler": "container-runtime-linux",
+      "ssh": false,
+      "sysctls": {},
+      "useInit": false,
+      "virtualization": false
+    },
+    "id": "ahi-smoke-49ae71ed",
+    "status": {
+      "networks": [],
+      "startedDate": "2026-09-22T19:15:49Z",
+      "state": "stopped"
+    }
+  },
+  "host": {
+    "architecture": "arm64",
+    "container_version": "COMPONENT            VERSION                                                              BUILD    COMMIT\ncontainer            1.2.2                                                                release  0190097d06df0b9065f4c2d2c7873c649d81d493\ncontainer-apiserver  container-apiserver version 1.2.2 (build: release, commit: 0190097)  release  0190097d06df0b9065f4c2d2c7873c649d81d493",
+    "macos": "26.7",
+    "service_status": "FIELD              VALUE\nstatus             running\nappRoot            /Users/oreore/Library/Application Support/com.apple.container/\ninstallRoot        /usr/local/\nlogRoot            \napiserver.version  container-apiserver version 1.2.2 (build: release, commit: 0190097)\napiserver.commit   0190097d06df0b9065f4c2d2c7873c649d81d493\napiserver.build    release\napiserver.appName  container-apiserver",
+    "system_properties": "[build]\ncpus = 2\nimage = \"ghcr.io/apple/container-builder-shim/builder:0.13.1\"\nmemory = \"2048mb\"\nrosetta = true\n\n[container]\ncpus = 4\nmemory = \"1gb\"\n\n[dns]\n\n[kernel]\nbinaryPath = \"opt/kata/share/kata-containers/vmlinux-6.18.15-186\"\ndigest = \"sha256:f63d54507d1f18635d94475077e4c2330de4d8e05cedf25f7c38f063b0e66a91\"\nurl = \"https://github.com/kata-containers/kata-containers/releases/download/3.28.0/kata-static-3.28.0-arm64.tar.zst\"\n\n[machine]\ncpus = 4\nhomeMount = \"rw\"\nmemory = \"16gb\"\nvirtualization = false\n\n[network]\n\n[registry]\ndomain = \"docker.io\"\n\n[vminit]\nimage = \"ghcr.io/apple/containerization/vminit:0.40.1\""
+  },
+  "logs": "rootfs-denied\nworkspace-write-denied\nhost-home-hidden\nssh-agent-hidden\ncontrol-socket-hidden\nnetwork-loopback-only\ninternet-egress-denied\nhost-gateway-denied\ncapabilities-dropped\nnofile=64\nnproc=32\nartifact-written\nahi-smoke-pass\n",
+  "manifest": {
+    "gateway": {
+      "credential_broker": null,
+      "default": "deny",
+      "grants": [],
+      "ingress_ports": [],
+      "task_network": "none"
+    },
+    "manifest_version": 2,
+    "model": {
+      "credential_broker_ref": null,
+      "id": "none",
+      "provider": "none"
+    },
+    "resources": {
+      "cpu": {
+        "enforced_by": "apple-container",
+        "limit": 1,
+        "on_exceed": "throttle"
+      },
+      "disk_bytes": {
+        "enforced_by": "apple-container-volume",
+        "limit": 16777216,
+        "on_exceed": "block"
+      },
+      "log_bytes": {
+        "enforced_by": "host-watchdog",
+        "limit": 1048576,
+        "on_exceed": "terminate"
+      },
+      "memory_bytes": {
+        "enforced_by": "apple-container",
+        "limit": 268435456,
+        "on_exceed": "terminate"
+      },
+      "open_files": {
+        "enforced_by": "guest-ulimit",
+        "limit": 64,
+        "on_exceed": "block"
+      },
+      "processes": {
+        "enforced_by": "guest-ulimit",
+        "limit": 32,
+        "on_exceed": "block"
+      },
+      "vm_count": {
+        "enforced_by": "host-scheduler",
+        "limit": 1,
+        "on_exceed": "block"
+      },
+      "wall_time_seconds": {
+        "enforced_by": "host-watchdog",
+        "limit": 20,
+        "on_exceed": "terminate"
+      }
+    },
+    "resultGate": {
+      "allowed_side_effects": [],
+      "artifact_import": {
+        "max_bytes": 1048576,
+        "reject_path_traversal": true,
+        "reject_symlinks": true,
+        "source": "/output"
+      },
+      "audit_record": "evidence/ahi-smoke-49ae71ed.json",
+      "required": true
+    },
+    "runtime": {
+      "drop_capabilities": [
+        "ALL"
+      ],
+      "environment": {},
+      "kind": "apple-container",
+      "minimum_macos_version": "26.0",
+      "minimum_version": "1.2.2",
+      "nested_virtualization": false,
+      "output": {
+        "target": "/output",
+        "volume": "ahi-smoke-49ae71ed-output"
+      },
+      "rootfs_read_only": true,
+      "scratch": {
+        "target": "/scratch",
+        "volume": "ahi-smoke-49ae71ed-scratch"
+      },
+      "socket_publishing": false,
+      "ssh_forwarding": false
+    },
+    "task": {
+      "command": [
+        "sh",
+        "-c",
+        "set -u\nfailed=0\nif touch /rootfs-write-probe 2>/dev/null; then echo rootfs-writable; failed=1; else echo rootfs-denied; fi\nif touch /workspace/write-probe 2>/dev/null; then echo workspace-writable; failed=1; else echo workspace-write-denied; fi\nif [ -e /Users ]; then echo host-home-visible; failed=1; else echo host-home-hidden; fi\nif [ -n \"${SSH_AUTH_SOCK:-}\" ] || [ -S /run/host-services/ssh-auth.sock ]; then echo ssh-agent-visible; failed=1; else echo ssh-agent-hidden; fi\nif [ -S /var/run/docker.sock ] || [ -S /run/containerd/containerd.sock ]; then echo control-socket-visible; failed=1; else echo control-socket-hidden; fi\ninterfaces=\"$(ls /sys/class/net | tr '\\n' ' ')\"\nif [ \"$interfaces\" = \"lo \" ]; then echo network-loopback-only; else echo \"unexpected-interfaces:$interfaces\"; failed=1; fi\nif wget -T 2 -qO- http://1.1.1.1 >/dev/null 2>&1; then echo internet-egress-reachable; failed=1; else echo internet-egress-denied; fi\nif wget -T 2 -qO- http://192.168.64.1 >/dev/null 2>&1; then echo host-gateway-reachable; failed=1; else echo host-gateway-denied; fi\ncap_eff=\"$(awk '/^CapEff:/ {print $2}' /proc/self/status)\"\nif [ \"$cap_eff\" = \"0000000000000000\" ]; then echo capabilities-dropped; else echo \"capabilities-present:$cap_eff\"; failed=1; fi\nprintf 'nofile=%s\\n' \"$(ulimit -n)\"\nprintf 'nproc=%s\\n' \"$(ulimit -u)\"\nprintf 'artifact-ok\\n' > /output/result.txt && echo artifact-written\nif [ \"$failed\" -eq 0 ]; then echo ahi-smoke-pass; fi\nsleep 3\nexit \"$failed\""
+      ],
+      "expected_artifacts": [
+        "/output/result.txt"
+      ],
+      "goal": "verify Apple Container denial controls on the recorded host",
+      "id": "ahi-smoke-49ae71ed",
+      "lifecycle": {
+        "checkpoint": "disabled",
+        "stop_timeout_seconds": 2
+      },
+      "profile": "guest-build"
+    },
+    "workspace": {
+      "image": {
+        "digest": "sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
+        "reference": "docker.io/library/alpine:3.22"
+      },
+      "lockfile": {
+        "path": "scripts/run_apple_container_smoke.py",
+        "sha256": "855f0276c5660cc192ab82a30e36204b89d0c728a64a8425f1412a5f000856c6"
+      },
+      "mcps": [],
+      "repository": {
+        "commit": "de5b1e8ab708455aa4de638cfc3581e3bc06b13d",
+        "tree_hash": "59b8a6562cb414d4f7b8bd7882aed3f5455757d3",
+        "url": "https://github.com/53able/agent-host-isolation.git"
+      },
+      "skills": [
+        {
+          "id": "agent-host-isolation",
+          "version": "de5b1e8ab708455aa4de638cfc3581e3bc06b13d"
+        }
+      ],
+      "snapshot": {
+        "id": "ahi-smoke-49ae71ed-input",
+        "read_only": true,
+        "source": "/Users/oreore/.t3/worktrees/agent-host-isolation/t3code-08fae771/validation/apple-container/input",
+        "target": "/workspace"
+      },
+      "toolchain": {
+        "apple-container": "container CLI version 1.2.2 (build: release, commit: 0190097)",
+        "python": "3.14.6"
+      }
+    }
+  },
+  "manifest_hash": "sha256:6cff99ec124218d65fc2346c63884d8dfda6afe26d6cb2464dfa6942b6c50230",
+  "repository_commit": "de5b1e8ab708455aa4de638cfc3581e3bc06b13d",
+  "running_inspect": {
+    "configuration": {
+      "capAdd": [],
+      "capDrop": [
+        "ALL"
+      ],
+      "creationDate": "2026-09-22T19:15:48Z",
+      "dns": {
+        "nameservers": [],
+        "options": [],
+        "searchDomains": []
+      },
+      "id": "ahi-smoke-49ae71ed",
+      "image": {
+        "descriptor": {
+          "digest": "sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
+          "mediaType": "application/vnd.oci.image.index.v1+json",
+          "size": 9218
+        },
+        "reference": "docker.io/library/alpine@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce"
+      },
+      "initProcess": {
+        "arguments": [
+          "-c",
+          "set -u\nfailed=0\nif touch /rootfs-write-probe 2>/dev/null; then echo rootfs-writable; failed=1; else echo rootfs-denied; fi\nif touch /workspace/write-probe 2>/dev/null; then echo workspace-writable; failed=1; else echo workspace-write-denied; fi\nif [ -e /Users ]; then echo host-home-visible; failed=1; else echo host-home-hidden; fi\nif [ -n \"${SSH_AUTH_SOCK:-}\" ] || [ -S /run/host-services/ssh-auth.sock ]; then echo ssh-agent-visible; failed=1; else echo ssh-agent-hidden; fi\nif [ -S /var/run/docker.sock ] || [ -S /run/containerd/containerd.sock ]; then echo control-socket-visible; failed=1; else echo control-socket-hidden; fi\ninterfaces=\"$(ls /sys/class/net | tr '\\n' ' ')\"\nif [ \"$interfaces\" = \"lo \" ]; then echo network-loopback-only; else echo \"unexpected-interfaces:$interfaces\"; failed=1; fi\nif wget -T 2 -qO- http://1.1.1.1 >/dev/null 2>&1; then echo internet-egress-reachable; failed=1; else echo internet-egress-denied; fi\nif wget -T 2 -qO- http://192.168.64.1 >/dev/null 2>&1; then echo host-gateway-reachable; failed=1; else echo host-gateway-denied; fi\ncap_eff=\"$(awk '/^CapEff:/ {print $2}' /proc/self/status)\"\nif [ \"$cap_eff\" = \"0000000000000000\" ]; then echo capabilities-dropped; else echo \"capabilities-present:$cap_eff\"; failed=1; fi\nprintf 'nofile=%s\\n' \"$(ulimit -n)\"\nprintf 'nproc=%s\\n' \"$(ulimit -u)\"\nprintf 'artifact-ok\\n' > /output/result.txt && echo artifact-written\nif [ \"$failed\" -eq 0 ]; then echo ahi-smoke-pass; fi\nsleep 3\nexit \"$failed\""
+        ],
+        "environment": [
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ],
+        "executable": "sh",
+        "rlimits": [
+          {
+            "hard": 32,
+            "limit": "RLIMIT_NPROC",
+            "soft": 32
+          },
+          {
+            "hard": 64,
+            "limit": "RLIMIT_NOFILE",
+            "soft": 64
+          }
+        ],
+        "supplementalGroups": [],
+        "terminal": false,
+        "user": {
+          "id": {
+            "gid": 0,
+            "uid": 0
+          }
+        },
+        "workingDirectory": "/"
+      },
+      "labels": {
+        "org.agent-host-isolation.manifest-hash": "sha256:6cff99ec124218d65fc2346c63884d8dfda6afe26d6cb2464dfa6942b6c50230",
+        "org.agent-host-isolation.task-id": "ahi-smoke-49ae71ed",
+        "org.agent-host-isolation.workspace-hash": "sha256:79f2f9c079a994abc56af542e835115f144dc8d964f6e0d911e0dc6431fc770a"
+      },
+      "mounts": [
+        {
+          "destination": "/workspace",
+          "options": [
+            "ro"
+          ],
+          "source": "/Users/oreore/.t3/worktrees/agent-host-isolation/t3code-08fae771/validation/apple-container/input",
+          "type": {
+            "virtiofs": {}
+          }
+        },
+        {
+          "destination": "/scratch",
+          "options": [],
+          "source": "/Users/oreore/Library/Application Support/com.apple.container/volumes/ahi-smoke-49ae71ed-scratch/volume.img",
+          "type": {
+            "volume": {
+              "cache": {
+                "on": {}
+              },
+              "format": "ext4",
+              "name": "ahi-smoke-49ae71ed-scratch",
+              "sync": {
+                "fsync": {}
+              }
+            }
+          }
+        },
+        {
+          "destination": "/output",
+          "options": [],
+          "source": "/Users/oreore/Library/Application Support/com.apple.container/volumes/ahi-smoke-49ae71ed-output/volume.img",
+          "type": {
+            "volume": {
+              "cache": {
+                "on": {}
+              },
+              "format": "ext4",
+              "name": "ahi-smoke-49ae71ed-output",
+              "sync": {
+                "fsync": {}
+              }
+            }
+          }
+        }
+      ],
+      "networks": [],
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      },
+      "publishedPorts": [],
+      "publishedSockets": [],
+      "readOnly": true,
+      "resources": {
+        "cpuOverhead": 1,
+        "cpus": 1,
+        "memoryInBytes": 268435456
+      },
+      "rosetta": false,
+      "runtimeHandler": "container-runtime-linux",
+      "ssh": false,
+      "sysctls": {},
+      "useInit": false,
+      "virtualization": false
+    },
+    "id": "ahi-smoke-49ae71ed",
+    "status": {
+      "networks": [],
+      "startedDate": "2026-09-22T19:15:49Z",
+      "state": "running"
+    }
+  },
+  "stats": [
+    {
+      "blockReadBytes": 3405824,
+      "blockWriteBytes": 16384,
+      "cpuUsageUsec": 8406,
+      "id": "ahi-smoke-49ae71ed",
+      "memoryLimitBytes": 268435456,
+      "memoryUsageBytes": 4096000,
+      "networkRxBytes": 0,
+      "networkTxBytes": 0,
+      "numProcesses": 2
+    }
+  ],
+  "status": "passed",
+  "task_id": "ahi-smoke-49ae71ed",
+  "worktree_status_before": []
+}

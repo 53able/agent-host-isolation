@@ -203,7 +203,7 @@ def _validate_gateway(value: Any, errors: list[str]) -> None:
         errors.append("gateway.default must be 'deny'.")
     network = gateway.get("task_network")
     if not isinstance(network, str) or not SAFE_ID.fullmatch(network) or PLACEHOLDER.search(network):
-        errors.append("gateway.task_network must name a concrete task-dedicated network enforced by a gateway.")
+        errors.append("gateway.task_network must be 'none' or name a concrete task-dedicated network enforced by a gateway.")
     if gateway.get("ingress_ports") != []:
         errors.append("gateway.ingress_ports must be empty in the standard profile.")
     broker = gateway.get("credential_broker")
@@ -215,6 +215,10 @@ def _validate_gateway(value: Any, errors: list[str]) -> None:
     if not isinstance(grants, list):
         errors.append("gateway.grants must be an array.")
         return
+    if grants and network == "none":
+        errors.append("gateway.task_network cannot be 'none' when egress grants are declared.")
+    if not grants and network != "none":
+        errors.append("gateway.task_network must be 'none' when no egress grants are declared.")
     for index, raw_grant in enumerate(grants):
         path = f"gateway.grants[{index}]"
         grant = _mapping(raw_grant, path, errors)
