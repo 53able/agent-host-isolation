@@ -28,8 +28,8 @@
   "workspace": {
     "repository": {
       "url": "https://github.com/53able/agent-host-isolation.git",
-      "commit": "b1ad45721e442568f80bb8ccec4a68530512699a",
-      "tree_hash": "b3eca3dbec8ddf149ae46600ee0084a7e981a5a1"
+      "commit": "e9e7e394bf173cc8c21a57478e622c686a2bfdad",
+      "tree_hash": "0bfd60622c489aeb7a5ba37dd7b79a05f4e11cd8"
     },
     "snapshot": {
       "id": "just-bash-adversarial-input",
@@ -103,6 +103,11 @@
       "max_execution_time_ms": 1000,
       "max_extension_cleanup_time_ms": 25
     },
+    "host_watchdog": {
+      "max_rss_bytes": 536870912,
+      "wall_time_ms": 30000,
+      "poll_interval_ms": 50
+    },
     "unsupported_command": "InspectBlocked",
     "host_shell_fallback": false,
     "audit_events": [
@@ -169,6 +174,16 @@
       "limit": 25,
       "enforced_by": "just-bash",
       "on_exceed": "terminate"
+    },
+    "sampled_worker_rss_bytes": {
+      "limit": 536870912,
+      "enforced_by": "host-watchdog",
+      "on_exceed": "terminate"
+    },
+    "host_wall_time_ms": {
+      "limit": 30000,
+      "enforced_by": "host-watchdog",
+      "on_exceed": "terminate"
     }
   },
   "resultGate": {
@@ -193,7 +208,7 @@
         "package_version": "3.4.2",
         "node_version": "24.13.1",
         "agent_host_isolation_version": "0.1.0",
-        "manifest_hash": "sha256:e50a7fad5db9c7aff009ed4bac6f3b3f0fac792aeba1869b1bdc842d4b382542",
+        "manifest_hash": "sha256:3f9d58722a2add3b662d064e3f00df2828c736433a38269e9cac1868e9c7e3ae",
         "input_snapshot_hash": "sha256:844f3e4cea5dcb8868cd5e203e2d237a03fd637ce8e2e87700f3734a5e82475a",
         "tests": {
           "mount": true,
