@@ -9,6 +9,7 @@
 - Add a fail-closed JustBash `inspect` runtime extension to the shared Manifest v2 contract.
 - Document the JustBash boundary, lifecycle, observability, adversarial tests, and `InspectBlocked` behavior in English and Japanese.
 - Add a bounded, cleanup-aware Apple Container denial smoke test with JSON evidence output.
+- Add a pinned JustBash embedding that runs all seven adversarial test classes and emits hash-bound verification evidence.
 
 ### Changed
 

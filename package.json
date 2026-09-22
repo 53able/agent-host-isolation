@@ -1,0 +1,15 @@
+{
+  "name": "agent-host-isolation-validation",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "pretest:just-bash-adversarial": "node scripts/invalidate_just_bash_verification.mjs && npm ci --ignore-scripts",
+    "test:just-bash-adversarial": "node scripts/run_just_bash_adversarial.mjs"
+  },
+  "devDependencies": {
+    "just-bash": "3.4.2"
+  }
+}
