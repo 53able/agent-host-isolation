@@ -27,7 +27,7 @@ def _safe_audit_path(value: Any) -> bool:
 
 def build_escalation_request(
     source_manifest: dict[str, Any],
-    missing_capability: str,
+    blocked_event: dict[str, Any],
     target_manifest: dict[str, Any],
     audit_record: str,
 ) -> dict[str, Any]:
@@ -37,15 +37,32 @@ def build_escalation_request(
     target_errors = validate_v2(target_manifest)
     if target_errors:
         raise ValueError("target manifest is invalid: " + "; ".join(target_errors))
+    if target_manifest["task"].get("id") != source_manifest["task"]["id"]:
+        raise ValueError("target manifest must retain the same task.id")
+    if not isinstance(blocked_event, dict) or any(
+        blocked_event.get(key) != expected for key, expected in (
+            ("event", "InspectBlocked"), ("outcome", "blocked"), ("exit_code", 127),
+            ("host_shell_fallback", False),
+        )
+    ) or blocked_event.get("escalation") != {"automatic": False, "requested": False}:
+        raise ValueError("a fail-closed InspectBlocked event is required")
+    missing_capability = blocked_event.get("missing_capability")
     if not isinstance(missing_capability, str) or not missing_capability.strip():
-        raise ValueError("missing_capability must be non-empty")
+        raise ValueError("InspectBlocked missing_capability must be non-empty")
+    source_hash = canonical_manifest_hash(source_manifest)
+    expected_source = {
+        "task_id": source_manifest["task"]["id"],
+        "attempt_id": source_manifest["task"]["attempt_id"],
+        "manifest_hash": source_hash,
+    }
+    if blocked_event.get("source") != expected_source:
+        raise ValueError("InspectBlocked source identity must match the source manifest")
     source_attempt = source_manifest["task"]["attempt_id"]
     target_attempt = target_manifest["task"].get("attempt_id")
     if not isinstance(target_attempt, str) or not SAFE_ID.fullmatch(target_attempt) or target_attempt == source_attempt:
         raise ValueError("target manifest must identify a new valid attempt")
     if target_manifest["task"].get("profile") != "guest-build" or target_manifest["runtime"].get("kind") != "apple-container":
         raise ValueError("target manifest must select guest-build on apple-container")
-    source_hash = canonical_manifest_hash(source_manifest)
     target_hash = _manifest_hash(target_manifest)
     if target_hash == source_hash:
         raise ValueError("target manifest must be distinct from the source manifest")
@@ -56,6 +73,7 @@ def build_escalation_request(
         "task_id": source_manifest["task"]["id"],
         "source_attempt_id": source_attempt,
         "source_manifest_hash": source_hash,
+        "blocked_event_hash": _manifest_hash(blocked_event),
         "missing_capability": missing_capability,
         "target_profile": "guest-build",
         "target_runtime_kind": "apple-container",
@@ -69,14 +87,15 @@ def build_escalation_request(
 def main() -> int:
     if len(sys.argv) != 5:
         print(
-            "Usage: python3 scripts/just_bash_contract.py SOURCE_MANIFEST MISSING_CAPABILITY TARGET_MANIFEST AUDIT_RECORD",
+            "Usage: python3 scripts/just_bash_contract.py SOURCE_MANIFEST BLOCKED_EVENT_JSON TARGET_MANIFEST AUDIT_RECORD",
             file=sys.stderr,
         )
         return 2
     try:
         source = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+        blocked_event = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
         target = json.loads(Path(sys.argv[3]).read_text(encoding="utf-8"))
-        request = build_escalation_request(source, sys.argv[2], target, sys.argv[4])
+        request = build_escalation_request(source, blocked_event, target, sys.argv[4])
     except (FileNotFoundError, json.JSONDecodeError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

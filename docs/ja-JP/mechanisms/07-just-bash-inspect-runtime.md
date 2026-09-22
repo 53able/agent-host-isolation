@@ -12,9 +12,9 @@
 
 標準profileが公開するのは宣言済みsnapshotだけです。filesystemはin-memory、または作成済みsnapshotだけをrootとするoverlayです。書込みはtask-localなvirtual overlayに残します。repository root、親workspace、home directory、host environment、child process、native binary、control socket、credentialは公開しません。
 
-Network、JavaScript、Python、custom command、tool invocationは無効です。標準validatorはnetwork attachmentとgrantをすべて拒否します。別途宣言する`network-derived` variantでは、task networkと各grantをtask ID、exactなnon-IP origin/port、path prefix、HTTP method、scope、purpose、expiry、転送量、redirect再評価、audit recordへ束縛します。Verified evidenceにはredirect、IP literal、alternate portの拒否testも追加で要求します。full Internet accessは常に無効です。その他の追加capabilityも別途仕様化・reviewした派生profileで扱い、実行中の標準attemptを変更しません。
+Network、JavaScript、Python、custom command、tool invocationは無効です。標準validatorはnetwork attachmentとgrantをすべて拒否します。`network-derived`はgrant宣言が妥当でも現在は拒否します。JustBashにはexact origin、path、method、expiry、転送量、redirect各hopの再評価を実行時に強制するGateway adapterがありません。grant宣言だけでnetwork accessは有効になりません。full Internet accessは常に無効です。その他の追加capabilityも別途仕様化・reviewした派生profileで扱い、実行中の標準attemptを変更しません。
 
-ManifestはJustBash package、Node.js、agent-host-isolation、input snapshotのidentityを固定します。`execution_limit_profile: hardened`を選び、call depth、command count、source、filesystem、output、archive、database、wall-clock、extension cleanupの上限を固定します。上限超過はattempt失敗であり、部分outputを成功artifactとして扱いません。
+ManifestはJustBash package、Node.js、agent-host-isolation、input snapshotのidentityを固定します。`execution_limit_profile: hardened`を選び、call depth、command count、source、filesystem、output、archive、database、wall-clock、extension cleanupの上限を固定します。Templateの初期値は敵対的test harnessで使用した値（call depth 8、command 32、source/output 4 KiB、filesystem 128 KiB、archive/database 32 KiB、execution 1秒、cleanup 25 ms）です。Validatorの最大値は推奨初期値ではなく上限です。In-processの制限だけではhost全体のmemory上限にはならず、host exhaustionへの耐性を主張する前にhost watchdog/worker processが必要です。上限超過はattempt失敗であり、部分outputを成功artifactとして扱いません。
 
 ## Snapshotとresult flow
 
@@ -24,9 +24,9 @@ Filesystem差分とexport artifactは非信頼outputです。Hostへ取り込む
 
 ## 失敗と昇格
 
-未対応commandや不足capabilityは`InspectBlocked`として記録します。Host shellへfallbackせず、現在のattemptの権限も広げません。Native executionが必要なら、新しい`guest-build` manifest、manifest hash、Task attemptを作り、Apple Container runtimeとして再検査してから実行します。昇格はrequestであり、自動許可ではありません。
+Host側の`scripts/just_bash_runtime.mjs` adapterは、単一のJustBash command-not-found（exit 127）を`InspectBlocked`に変換します。先行する副作用の後に127で終了した複合commandは昇格signalではなく失敗として扱います。AdapterはJustBash instanceだけを受け取り、host executorは受け付けません。Host shellへfallbackせず、現在のattemptの権限も広げません。Native executionが必要なら、**同じTask ID**で新しい`guest-build` manifest、manifest hash、Task attemptを作り、Apple Container runtimeとして再検査してから実行します。昇格はrequestであり、自動許可ではありません。
 
-Target manifestの検査後に`scripts/just_bash_contract.py`でaudit eventを作ります。Generatorはattempt IDの再利用、同一または不正なtarget manifest hash、不正なsource manifest、missing capabilityの欠落を拒否し、runtimeを実行せずsource/target identityを記録します。
+Target manifestの検査後、記録した`InspectBlocked` JSON eventをsource/target manifestと一緒に`scripts/just_bash_contract.py`へ渡します。Generatorはeventのsource Task/attempt/manifest hashとmissing capabilityを検証し、attempt IDの再利用や異なるTask IDを拒否します。Blocked event hashと両manifestのidentityを記録しますが、runtimeは実行しません。
 
 1 Task sessionが1 JustBash instanceを所有します。Filesystemと明示的Task stateはexportできますが、shell environment、function、working directory、process memory、実行途中commandをcheckpointとは扱いません。Resume時はmanifest、runtime version、input snapshotのhash一致を要求します。
 
@@ -34,4 +34,4 @@ Target manifestの検査後に`scripts/just_bash_contract.py`でaudit eventを�
 
 Task/attempt ID、manifest/input hash、runtime version、正規化済みcommand metadata、exit code、duration、limit violation、bounded stdout/stderr hash、filesystem diff、artifact、result-gate decision、cleanup outcomeを関連付けます。AST command collectionはaudit補助であり、security enforcementの唯一の根拠にはしません。
 
-対象package、Node.js、host、manifest、snapshot、embedding configurationで敵対的testを実行するまで、statusは`unverified`または`blocked`です。`verified-for-tested-configuration`には、canonical executable-manifest hash、snapshot hash、runtime version、7 test class、cleanup resultが一致する構造化recordを要求します。Validator成功はcontract整合性を示しますが、escape不能を証明しません。
+対象package、Node.js、host、manifest、snapshot、embedding configurationで敵対的testを実行するまで、statusは`unverified`または`blocked`です。Runnerは生成するmanifest/evidence以外の実行入力がcommit済みtreeと異なる場合、verified結果を拒否します。`verified-for-tested-configuration`には、canonical executable-manifest hash、snapshot hash、runtime version、7 test class、cleanup resultが一致する構造化recordを要求します。Validator成功はcontract整合性を示しますが、escape不能を証明しません。

@@ -80,6 +80,28 @@ def valid_just_bash_manifest():
     return manifest
 
 
+def valid_inspect_escalation_target():
+    manifest = valid_manifest()
+    manifest["task"].update(id="inspect-task", attempt_id="attempt-2")
+    manifest["runtime"]["scratch"]["volume"] = "inspect-task-scratch"
+    manifest["runtime"]["output"]["volume"] = "inspect-task-output"
+    return manifest
+
+
+def inspect_blocked_event(manifest, capability="native-binary"):
+    return {
+        "event": "InspectBlocked", "outcome": "blocked", "exit_code": 127,
+        "source": {
+            "task_id": manifest["task"]["id"],
+            "attempt_id": manifest["task"]["attempt_id"],
+            "manifest_hash": just_bash_manifest.canonical_manifest_hash(manifest),
+        },
+        "missing_capability": capability,
+        "host_shell_fallback": False,
+        "escalation": {"automatic": False, "requested": False},
+    }
+
+
 class SkillStructureTests(unittest.TestCase):
     def test_frontmatter_metadata_uses_logical_skill_id(self):
         text = SKILL_FILE.read_text(encoding="utf-8")
@@ -420,6 +442,14 @@ class JustBashManifestTests(unittest.TestCase):
         result = self.run_validator(valid_just_bash_manifest())
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_template_defaults_are_below_validator_ceilings(self):
+        manifest = valid_just_bash_manifest()
+        limits = manifest["runtime"]["limits"]
+        for name, ceiling in just_bash_manifest.LIMIT_MAXIMA.items():
+            with self.subTest(name=name):
+                self.assertLess(limits[name], ceiling)
+                self.assertEqual(manifest["resources"][name]["limit"], limits[name])
+
     def test_rejects_incompatible_profile_and_native_command_class(self):
         for profile in ("guest-build", "elevated-release"):
             with self.subTest(profile=profile):
@@ -427,6 +457,16 @@ class JustBashManifestTests(unittest.TestCase):
         self.assert_rejected(
             lambda m: m["task"].update(command_classes=["package-manager"]),
             "standard inspect command classes",
+        )
+        for command in ("curl", "node", "/bin/sh"):
+            with self.subTest(command=command):
+                self.assert_rejected(
+                    lambda m, command=command: m["task"].update(command=[command, "--version"], command_classes=["read"]),
+                    "versioned standard inspect command",
+                )
+        self.assert_rejected(
+            lambda m: m["task"].update(command_classes=["read"]),
+            "its class declared",
         )
 
     def test_rejects_unpinned_or_unsupported_versions(self):
@@ -442,7 +482,7 @@ class JustBashManifestTests(unittest.TestCase):
         self.assert_rejected(lambda m: m["gateway"].update(task_network="network"), "must not configure network")
         self.assert_rejected(lambda m: m["gateway"].update(grants=[{}]), "must not configure network")
 
-    def test_accepts_separately_declared_network_derived_profile(self):
+    def test_rejects_network_derived_without_runtime_enforcement(self):
         manifest = valid_just_bash_manifest()
         manifest["runtime"]["profile_variant"] = "network-derived"
         manifest["gateway"]["task_network"] = "inspect-task-network"
@@ -454,7 +494,8 @@ class JustBashManifestTests(unittest.TestCase):
             "redirect_policy": "revalidate-exact-origin",
         }]
         result = self.run_validator(manifest)
-        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("network-derived JustBash is unavailable", result.stderr)
 
     def test_rejects_network_bypass_grants(self):
         def derived_manifest():
@@ -477,6 +518,8 @@ class JustBashManifestTests(unittest.TestCase):
             (lambda g: g.update(redirect_policy="follow"), "revalidate the exact origin"),
             (lambda g: g.update(path_prefix="/v1/../admin"), "without traversal"),
             (lambda g: g.update(path_prefix="/v1/%2e%2e/admin"), "encoded separators"),
+            (lambda g: g.update(path_prefix="/v1"), "canonical absolute URL path prefix"),
+            (lambda g: g.update(methods=["POST"]), "only GET or HEAD"),
         )
         for mutate, message in cases:
             with self.subTest(message=message):
@@ -485,6 +528,21 @@ class JustBashManifestTests(unittest.TestCase):
                 result = self.run_validator(manifest)
                 self.assertEqual(result.returncode, 1, result.stderr)
                 self.assertIn(message, result.stderr)
+
+    def test_rejects_ambiguous_network_paths_and_unbound_network_name(self):
+        manifest = valid_just_bash_manifest()
+        manifest["runtime"]["profile_variant"] = "network-derived"
+        manifest["gateway"]["task_network"] = "unrelated-network"
+        manifest["gateway"]["grants"] = [{
+            "task_id": "inspect-task", "origin": "https://api.example.com:443", "port": 443,
+            "path_prefix": "/v1?admin", "methods": ["GET"], "scope": "public metadata",
+            "purpose": "bounded inspection input", "expiry": "2099-01-01T00:00:00Z",
+            "max_bytes": 1024, "audit_record": "audit/network.json",
+            "redirect_policy": "revalidate-exact-origin",
+        }]
+        result = self.run_validator(manifest)
+        self.assertIn("task_network must be bound to task.id", result.stderr)
+        self.assertIn("path_prefix must be a canonical absolute URL path", result.stderr)
 
     def test_rejects_unknown_runtime_field_and_unbounded_limits(self):
         self.assert_rejected(lambda m: m["runtime"].update(extra_cli_args=[]), "runtime contains unknown keys")
@@ -540,10 +598,9 @@ class JustBashManifestTests(unittest.TestCase):
 
     def test_builds_distinct_auditable_escalation_request(self):
         manifest = valid_just_bash_manifest()
-        target = valid_manifest()
-        target["task"]["attempt_id"] = "attempt-2"
+        target = valid_inspect_escalation_target()
         request = just_bash_contract.build_escalation_request(
-            manifest, "native-binary", target, "audit/escalation.json",
+            manifest, inspect_blocked_event(manifest), target, "audit/escalation.json",
         )
         self.assertEqual(request["event"], "InspectBlocked")
         self.assertEqual(request["source_attempt_id"], "attempt-1")
@@ -552,20 +609,45 @@ class JustBashManifestTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "new valid attempt"):
             target["task"]["attempt_id"] = "attempt-1"
             just_bash_contract.build_escalation_request(
-                manifest, "native-binary", target, "audit/escalation.json",
+                manifest, inspect_blocked_event(manifest), target, "audit/escalation.json",
             )
 
-    def test_escalation_rejects_invalid_target_manifest_and_audit_path(self):
+    def test_escalation_rejects_different_task_id(self):
         source = valid_just_bash_manifest()
         target = valid_manifest()
         target["task"]["attempt_id"] = "attempt-2"
+        with self.assertRaisesRegex(ValueError, "same task.id"):
+            just_bash_contract.build_escalation_request(
+                source, inspect_blocked_event(source), target, "audit/escalation.json",
+            )
+
+    def test_escalation_requires_matching_inspect_blocked_event(self):
+        source = valid_just_bash_manifest()
+        target = valid_inspect_escalation_target()
+        for field, replacement in (("event", "command"), ("outcome", "completed"), ("exit_code", 0)):
+            with self.subTest(field=field):
+                event = inspect_blocked_event(source)
+                event[field] = replacement
+                with self.assertRaisesRegex(ValueError, "InspectBlocked event"):
+                    just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        event = inspect_blocked_event(source)
+        event["source"]["manifest_hash"] = "sha256:" + "0" * 64
+        with self.assertRaisesRegex(ValueError, "source identity"):
+            just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        event = inspect_blocked_event(source)
+        event["missing_capability"] = ""
+        with self.assertRaisesRegex(ValueError, "missing_capability"):
+            just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+
+    def test_escalation_rejects_invalid_target_manifest_and_audit_path(self):
+        source = valid_just_bash_manifest()
+        target = valid_inspect_escalation_target()
         target["workspace"]["image"]["digest"] = "latest"
         with self.assertRaisesRegex(ValueError, "target manifest is invalid"):
-            just_bash_contract.build_escalation_request(source, "native-binary", target, "audit/escalation.json")
-        target = valid_manifest()
-        target["task"]["attempt_id"] = "attempt-2"
+            just_bash_contract.build_escalation_request(source, inspect_blocked_event(source), target, "audit/escalation.json")
+        target = valid_inspect_escalation_target()
         with self.assertRaisesRegex(ValueError, "safe relative path"):
-            just_bash_contract.build_escalation_request(source, "native-binary", target, "../audit.json")
+            just_bash_contract.build_escalation_request(source, inspect_blocked_event(source), target, "../audit.json")
 
     def test_malformed_nested_types_fail_closed_without_traceback(self):
         cases = (

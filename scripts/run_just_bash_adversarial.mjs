@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 
 import { Bash, DefenseInDepthBox } from "just-bash";
 import { invalidateVerification } from "./invalidate_just_bash_verification.mjs";
+import { canonicalManifestHash, executeInspectCommand } from "./just_bash_runtime.mjs";
 
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const INPUT = join(ROOT, "validation", "just-bash", "input", "allowed.txt");
@@ -47,11 +48,6 @@ function stableJson(value) {
   return JSON.stringify(value);
 }
 
-function canonicalManifestHash(manifest) {
-  const { verification: _verification, ...executable } = manifest;
-  return sha256(stableJson(executable));
-}
-
 function runHost(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: ROOT,
@@ -65,6 +61,18 @@ function runHost(command, args, options = {}) {
     );
   }
   return result.stdout.trim();
+}
+
+function assertCleanExecutionInputs() {
+  const dirty = runHost("git", [
+    "status", "--porcelain=v1", "--untracked-files=all", "--", ".",
+    ":(exclude)evidence/just-bash-adversarial-20260923.json",
+    ":(exclude)evidence/just-bash-adversarial-20260923.md",
+    ":(exclude)validation/just-bash/manifest.json",
+  ]);
+  if (dirty) {
+    throw new Error(`verification requires committed execution inputs; dirty paths:\n${dirty}`);
+  }
 }
 
 function packageMetadata() {
@@ -348,7 +356,9 @@ function limitViolation(stderr) {
 }
 
 async function filesystemSnapshot(bash) {
-  if (typeof bash.fs.getAllPaths !== "function") return null;
+  if (typeof bash.fs.getAllPaths !== "function") {
+    throw new Error("filesystem diff audit unavailable: fs.getAllPaths is not exposed");
+  }
   const snapshot = {};
   for (const path of [...bash.fs.getAllPaths()].sort()) {
     const stat = await bash.fs.lstat(path);
@@ -429,10 +439,17 @@ async function executeTests(manifest, hostSentinel) {
     const before = await filesystemSnapshot(bash);
     const started = process.hrtime.bigint();
     try {
-      result = await bash.exec(command, options);
+      const execution = await executeInspectCommand({
+        bash,
+        command,
+        manifest,
+        options,
+      });
+      result = execution.result;
       const passed = Boolean(await oracle(result));
       const after = await filesystemSnapshot(bash);
       record(testClass, name, command, expected, {
+        event: execution.event,
         ...summarizeResult(result),
         duration_ms: Number(process.hrtime.bigint() - started) / 1_000_000,
         limit_violation: limitViolation(result.stderr ?? ""),
@@ -457,6 +474,36 @@ async function executeTests(manifest, hostSentinel) {
     "/workspace/traversal.tar": traversal,
     "/workspace/oversized.tar": oversized,
   });
+
+  // Filesystem-diff evidence is a required result-gate input. Do not run any
+  // probe when the embedding cannot provide a complete virtual-filesystem
+  // snapshot; otherwise a missing audit would be recorded as a successful
+  // run with a null diff.
+  try {
+    await filesystemSnapshot(bash);
+  } catch (error) {
+    record(
+      "side_effect",
+      "filesystem-diff-audit-availability",
+      "inspect virtual filesystem before adversarial probes",
+      "missing filesystem snapshot capability leaves verification unverified",
+      {
+        thrown: error.message,
+        filesystem_diff: null,
+        audit_available: false,
+      },
+      false,
+    );
+    return {
+      probes,
+      classPass,
+      resultGate: {
+        accepted: false,
+        reason: "filesystem-diff-audit-unavailable",
+      },
+      defense: DefenseInDepthBox.getInstance().getStatus(),
+    };
+  }
 
   await execProbe("mount", "snapshot-read", bash, "cat /workspace/allowed.txt", "declared snapshot is readable", (r) => r.exitCode === 0 && r.stdout === "allowed snapshot content\n");
   await execProbe("mount", "absolute-host-read", bash, `cat ${hostSentinel}`, "absolute host path is absent", (r) => r.exitCode !== 0 && !r.stdout.includes("host-secret"));
@@ -609,6 +656,7 @@ async function main() {
   if (process.env.npm_lifecycle_event !== "test:just-bash-adversarial") {
     throw new Error("run through 'npm run test:just-bash-adversarial' so the clean-install pretest executes");
   }
+  assertCleanExecutionInputs();
   const manifest = buildManifest();
   writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
   validateManifestFile();

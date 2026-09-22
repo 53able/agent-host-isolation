@@ -32,6 +32,14 @@ LIMIT_MAXIMA = {
     "max_extension_cleanup_time_ms": 1_000,
 }
 ALLOWED_COMMAND_CLASSES = {"read", "search", "text-processing", "structured-data", "hash", "deterministic-transform"}
+INSPECT_COMMAND_CLASS_V1 = {
+    "cat": "read", "ls": "read", "head": "read", "tail": "read",
+    "rg": "search", "grep": "search", "find": "search",
+    "wc": "text-processing", "sed": "text-processing", "awk": "text-processing",
+    "sort": "text-processing", "uniq": "text-processing", "cut": "text-processing", "tr": "text-processing",
+    "jq": "structured-data", "sha256sum": "hash", "md5sum": "hash",
+    "printf": "deterministic-transform", "echo": "deterministic-transform",
+}
 REQUIRED_AUDIT_EVENTS = {"runtime_identity", "command", "stdout_stderr", "filesystem_diff", "artifact", "failure", "limit_violation", "result_gate", "cleanup"}
 REQUIRED_TESTS = {"mount", "credential", "network", "command_path", "resource", "supply_chain", "side_effect"}
 PLACEHOLDER = re.compile(r"(?:replace-with|placeholder|example\.invalid)", re.I)
@@ -131,6 +139,10 @@ def _validate_task(value: Any, errors: list[str]) -> None:
         or len(classes) != len(set(classes))
     ):
         errors.append("task.command_classes must be a unique non-empty subset of standard inspect command classes.")
+    if isinstance(command, list) and command and isinstance(command[0], str):
+        required_class = INSPECT_COMMAND_CLASS_V1.get(command[0])
+        if required_class is None or not isinstance(classes, list) or required_class not in classes:
+            errors.append("task.command must be a versioned standard inspect command with its class declared in task.command_classes.")
     artifacts = task.get("expected_artifacts")
     if not isinstance(artifacts, list) or any(not _absolute_guest_path(item) for item in artifacts):
         errors.append("task.expected_artifacts must contain absolute virtual-filesystem paths without '..'.")
@@ -239,8 +251,8 @@ def _validate_gateway(value: Any, profile_variant: Any, task_id: Any, errors: li
             errors.append("standard JustBash inspect must not configure network or grants; use a separately reviewed derived profile.")
     elif profile_variant == "network-derived":
         network = gateway.get("task_network")
-        if not isinstance(network, str) or not SAFE_ID.fullmatch(network):
-            errors.append("network-derived JustBash requires a concrete task_network identifier.")
+        if not isinstance(task_id, str) or network != f"{task_id}-network" or not SAFE_ID.fullmatch(network):
+            errors.append("gateway.task_network must be bound to task.id as '<task.id>-network'.")
         if not isinstance(grants, list) or not grants:
             errors.append("network-derived JustBash requires at least one scoped gateway grant.")
         else:
@@ -299,15 +311,15 @@ def _validate_network_grant(value: Any, index: int, task_id: Any, errors: list[s
     prefix = grant.get("path_prefix")
     if (
         not isinstance(prefix, str)
-        or not prefix.startswith("/")
-        or ".." in PurePosixPath(prefix).parts
-        or "%" in prefix
-        or "\\" in prefix
+        or not re.fullmatch(r"/[A-Za-z0-9._~/-]*", prefix)
+        or "//" in prefix
+        or any(segment in {".", ".."} for segment in prefix.split("/"))
+        or (prefix != "/" and not prefix.endswith("/"))
     ):
-        errors.append(f"{path}.path_prefix must be a canonical absolute URL path prefix without traversal or encoded separators.")
+        errors.append(f"{path}.path_prefix must be a canonical absolute URL path prefix without traversal or encoded separators, query, or fragment.")
     methods = grant.get("methods")
-    if not isinstance(methods, list) or not methods or any(not isinstance(method, str) or method not in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"} for method in methods):
-        errors.append(f"{path}.methods must contain explicit uppercase HTTP methods.")
+    if not isinstance(methods, list) or not methods or any(not isinstance(method, str) or method not in {"GET", "HEAD"} for method in methods):
+        errors.append(f"{path}.methods must contain only GET or HEAD for inspect.")
     for name in ("scope", "purpose"):
         if not _concrete(grant.get(name)):
             errors.append(f"{path}.{name} must be concrete and non-empty.")
@@ -342,6 +354,8 @@ def _validate_runtime(value: Any, errors: list[str]) -> dict[str, int]:
         errors.append("runtime.kind must be just-bash.")
     if runtime.get("profile_variant") not in {"standard", "network-derived"}:
         errors.append("runtime.profile_variant must be standard or network-derived.")
+    elif runtime.get("profile_variant") == "network-derived":
+        errors.append("network-derived JustBash is unavailable until a request-time enforcing gateway adapter is installed.")
     for name in ("package_version", "node_version", "agent_host_isolation_version"):
         if not _pinned_version(runtime.get(name)):
             errors.append(f"runtime.{name} must be an exact pinned semantic version.")
