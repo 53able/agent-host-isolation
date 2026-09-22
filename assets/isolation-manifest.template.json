@@ -1,28 +1,79 @@
 {
-  "task_id": "replace-with-unique-task-id",
-  "profile": "guest-build",
-  "execution_host": "guest-vm",
-  "input_mounts": [
-    {"source": "task-input-snapshot", "target": "/workspace", "read_only": true}
-  ],
-  "scratch": {"path": "/scratch", "guest_local": true, "max_bytes": 1073741824},
-  "network": {"default": "deny", "allow": []},
-  "credentials": {"mode": "none", "task_scoped_broker": false},
-  "host_integration": false,
-  "control_sockets": [],
-  "resource_limits": {
-    "cpu": "replace-with-limit",
-    "memory_bytes": 2147483648,
-    "processes": 128,
-    "disk_bytes": 2147483648,
-    "log_bytes": 104857600,
-    "vm_count": 1,
-    "wall_time_seconds": 1800
+  "manifest_version": 2,
+  "task": {
+    "id": "replace-with-unique-task-id",
+    "goal": "replace-with-bounded-goal",
+    "profile": "guest-build",
+    "command": ["replace-with-program"],
+    "expected_artifacts": ["/output"],
+    "lifecycle": {"stop_timeout_seconds": 10, "checkpoint": "application-level"}
   },
-  "result_gate": {
+  "workspace": {
+    "repository": {
+      "url": "https://example.invalid/owner/repository.git",
+      "commit": "replace-with-full-commit-hash",
+      "tree_hash": "replace-with-tree-hash"
+    },
+    "snapshot": {
+      "id": "replace-with-snapshot-id",
+      "source": "/var/tmp/agent-host-isolation/snapshots/replace-with-snapshot-id",
+      "target": "/workspace",
+      "read_only": true
+    },
+    "image": {
+      "reference": "registry.example.invalid/agent-build",
+      "digest": "replace-with-sha256-digest"
+    },
+    "toolchain": {},
+    "lockfile": {"path": "replace-with-lockfile-path", "sha256": "replace-with-lockfile-sha256"},
+    "mcps": [],
+    "skills": [{"id": "agent-host-isolation", "version": "replace-with-version-or-commit"}]
+  },
+  "gateway": {
+    "default": "deny",
+    "task_network": "none",
+    "ingress_ports": [],
+    "grants": [],
+    "credential_broker": null,
+    "egress_gateway": null
+  },
+  "model": {
+    "provider": "replace-with-provider",
+    "id": "replace-with-model-id",
+    "credential_broker_ref": null
+  },
+  "runtime": {
+    "kind": "apple-container",
+    "minimum_version": "1.2.2",
+    "minimum_macos_version": "26.0",
+    "rootfs_read_only": true,
+    "drop_capabilities": ["ALL"],
+    "ssh_forwarding": false,
+    "socket_publishing": false,
+    "nested_virtualization": false,
+    "environment": {},
+    "scratch": {"volume": "replace-with-task-scratch-volume", "target": "/scratch"},
+    "output": {"volume": "replace-with-task-output-volume", "target": "/output"}
+  },
+  "resources": {
+    "cpu": {"limit": 1, "enforced_by": "apple-container", "on_exceed": "throttle"},
+    "memory_bytes": {"limit": 2147483648, "enforced_by": "apple-container", "on_exceed": "terminate"},
+    "disk_bytes": {"limit": 2147483648, "enforced_by": "apple-container-volume", "on_exceed": "block"},
+    "processes": {"limit": 128, "enforced_by": "guest-ulimit", "on_exceed": "block"},
+    "open_files": {"limit": 1024, "enforced_by": "guest-ulimit", "on_exceed": "block"},
+    "log_bytes": {"limit": 104857600, "enforced_by": "host-watchdog", "on_exceed": "terminate"},
+    "vm_count": {"limit": 1, "enforced_by": "host-scheduler", "on_exceed": "block"},
+    "wall_time_seconds": {"limit": 1800, "enforced_by": "host-watchdog", "on_exceed": "terminate"}
+  },
+  "resultGate": {
     "required": true,
+    "artifact_import": {
+      "source": "/output",
+      "max_bytes": 104857600,
+      "reject_symlinks": true,
+      "reject_path_traversal": true
+    },
     "allowed_side_effects": [],
     "audit_record": "replace-with-audit-location"
-  },
-  "supply_chain": {"image_digest": "replace-with-immutable-digest", "tool_commit": "replace-with-full-commit-or-na"}
+  }
 }

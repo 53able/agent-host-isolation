@@ -20,6 +20,7 @@ description: Designs and verifies capability-based execution boundaries for AI a
 3. Do not treat an interpreter, a container label, or a human approval hook as equivalent to a guest-VM boundary.
 4. Keep the control plane on the host only when it must retain interactive authentication or policy authority. Keep the execution plane in the selected restricted host.
 5. Read `references/execution-profiles.md` before selecting a profile other than `inspect` or `guest-build`.
+6. For Apple Container, read `references/apple-container-runtime.md`; do not infer egress isolation from `--network`.
 
 **Step 3: Materialize minimum capabilities.**
 1. Create a read-only input snapshot containing only the repository paths required by the task. Do not mount a parent workspace or home directory.
@@ -29,6 +30,7 @@ description: Designs and verifies capability-based execution boundaries for AI a
 5. Define CPU, memory, process, disk, log-volume, VM-count, and wall-time limits. Assign a host-side watchdog and cleanup action.
 6. Route external writes, credential use, publishing, deployment, and patch application through a host-side result gate. Bind every elevation to a task, destination, scope, expiry, and audit record.
 7. Run `python3 scripts/validate-manifest.py path/to/isolation-manifest.json` before starting the execution host. Correct every reported error; do not waive an error by modifying validator output.
+8. Generate Apple Container operations with `scripts/apple_container_compiler.py`. Execute the returned argv as an array; never append arbitrary flags or evaluate it as a shell string.
 
 **Step 4: Execute and import results.**
 1. Run the workload only in the selected execution host.
@@ -36,6 +38,7 @@ description: Designs and verifies capability-based execution boundaries for AI a
 3. Treat exported artifacts as untrusted. Check paths, symlinks, file types, sizes, hashes, and the destination repository before import.
 4. Present diffs and side-effect requests to the result gate. Keep Git push, deploy, POST, DELETE, and credential-bound requests unavailable to the guest.
 5. Destroy the guest, scratch storage, short-lived credentials, and temporary network grants after the task completes or times out.
+6. Treat stop/start as a filesystem-preserving process restart. Use application-level checkpoint/resume only after task, manifest, workspace, state hashes, and reissued leases match.
 
 **Step 5: Verify the boundary locally.**
 1. Copy `assets/isolation-verification.template.md` to the task evidence location.
