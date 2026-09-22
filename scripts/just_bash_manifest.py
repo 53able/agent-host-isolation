@@ -213,8 +213,8 @@ def _validate_workspace(value: Any, errors: list[str]) -> int:
                 errors.append(f"{path}.path duplicates another snapshot entry.")
             else:
                 seen.add(name)
-            if entry.get("type") not in {"regular", "directory"}:
-                errors.append(f"{path}.type forbids symlinks, devices, sockets, FIFOs, and other special files.")
+            if entry.get("type") != "regular":
+                errors.append(f"{path}.type must be regular in a file-only snapshot; it forbids symlinks, directories, devices, sockets, FIFOs, and other special files.")
             size = entry.get("size_bytes")
             if type(size) is not int or size < 0:
                 errors.append(f"{path}.size_bytes must be a non-negative integer.")

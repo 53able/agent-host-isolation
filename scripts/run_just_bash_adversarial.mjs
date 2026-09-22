@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 
 import { Bash, DefenseInDepthBox } from "just-bash";
 import { invalidateVerification } from "./invalidate_just_bash_verification.mjs";
-import { canonicalManifestHash, executeInspectCommand } from "./just_bash_runtime.mjs";
+import { AGENT_HOST_ISOLATION_VERSION, canonicalManifestHash, createInspectRuntime, executeInspectCommand, inspectRuntimeFilesystemSnapshot } from "./just_bash_runtime.mjs";
 import { HOST_WATCHDOG } from "./just_bash_watchdog.mjs";
 
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -23,7 +23,6 @@ const MANIFEST_PATH = join(ROOT, "validation", "just-bash", "manifest.json");
 const EVIDENCE_JSON = join(ROOT, "evidence", "just-bash-adversarial-20260923.json");
 const EVIDENCE_MD = join(ROOT, "evidence", "just-bash-adversarial-20260923.md");
 const PACKAGE_VERSION = "3.4.2";
-const AGENT_HOST_ISOLATION_VERSION = "0.1.0";
 const TEST_CLASSES = [
   "mount",
   "credential",
@@ -147,7 +146,7 @@ function buildManifest() {
     manifest_version: 2,
     task: {
       id: "just-bash-adversarial-20260923",
-      attempt_id: "attempt-1",
+      attempt_id: `attempt-${randomBytes(12).toString("hex")}`,
       goal: "verify the standard JustBash inspect embedding with denial-oriented adversarial probes",
       profile: "inspect",
       command: ["rg", "allowed", "/workspace"],
@@ -532,10 +531,14 @@ async function executeTests(manifest, hostSentinel) {
     await execProbe("command_path", `blocked-${command.split(" ")[0]}`, bash, command, "optional/native/tool path is unavailable", (r) => r.exitCode === 127);
   }
   {
-    const before = await filesystemSnapshot(bash);
-    const declared = await executeInspectCommand({ bash, argv: manifest.task.command, manifest });
-    const blocked = await executeInspectCommand({ bash, argv: ["node", "--version"], manifest });
-    const after = await filesystemSnapshot(bash);
+    const inspectRuntime = createInspectRuntime({ manifest, snapshotFiles: { "allowed.txt": readFileSync(INPUT) } });
+    const before = await inspectRuntimeFilesystemSnapshot(inspectRuntime);
+    const declared = await executeInspectCommand({ runtime: inspectRuntime, argv: manifest.task.command });
+    const after = await inspectRuntimeFilesystemSnapshot(inspectRuntime);
+    const blockedManifest = structuredClone(manifest);
+    blockedManifest.task.attempt_id = `attempt-${randomBytes(12).toString("hex")}`;
+    const blockedRuntime = createInspectRuntime({ manifest: blockedManifest, snapshotFiles: { "allowed.txt": readFileSync(INPUT) } });
+    const blocked = await executeInspectCommand({ runtime: blockedRuntime, argv: ["node", "--version"] });
     record("command_path", "manifest-command-binding", "declared rg argv; then undeclared node argv",
       "only exact declared argv executes; undeclared command becomes InspectBlocked without host fallback",
       {
@@ -546,7 +549,8 @@ async function executeTests(manifest, hostSentinel) {
         filesystem_diff: filesystemDiff(before, after),
       },
       declared.exit_code === 0 && blocked.event === "InspectBlocked" && blocked.exit_code === 127 &&
-      blocked.source.manifest_hash === canonicalManifestHash(manifest) && blocked.host_shell_fallback === false);
+      blocked.source.manifest_hash === canonicalManifestHash(blockedManifest) &&
+      blocked.source.attempt_id !== declared.source.attempt_id && blocked.host_shell_fallback === false);
   }
 
   await execProbe("resource", "call-depth", makeBash(manifest), "f(){ f; }; f", "max_call_depth terminates recursion", (r) => r.exitCode === 126 && r.stderr.includes("maximum recursion depth"));

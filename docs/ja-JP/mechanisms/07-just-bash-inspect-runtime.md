@@ -20,17 +20,23 @@ PollingやRSS計測によりwall-timeの停止も遅れる場合があります�
 
 ## Snapshotとresult flow
 
-HostはJustBash起動前にsnapshotを作ります。各entryにはrelative path、regular fileまたはdirectoryのtype、size、hashを記録します。absolute path、parent traversal、home-relative path、symlink、device、socket、FIFOを拒否します。Archive展開はvirtual filesystem内と展開上限内に限定します。
+HostはJustBash起動前にsnapshotを作ります。各entryには相対regular-file path、size、hashを記録します。absolute path、parent traversal、home-relative path、symlink、directory entry、device、socket、FIFOを拒否します。Archive展開はvirtual filesystem内と展開上限内に限定します。
+
+標準inspect factoryにはfile-only snapshot manifestを渡します。選択したdirectoryは構築前にregular file entryへ展開します。Factoryは各fileの内容とpath record全体をmanifestと照合し、privateなin-memory filesystemへbytesをコピーします。
 
 Filesystem差分とexport artifactは非信頼outputです。Hostへ取り込む前にresult gateでpath、symlink、type、size、hash、destinationを検査します。Runtimeはhost repositoryへ直接書き込みません。
 
 ## 失敗と昇格
 
-Host側の`scripts/just_bash_runtime.mjs` adapterはJustBash instanceとargvを受け取り、検証済みmanifestの`task.command`との完全一致を要求します。各argumentをshell-safeにquoteし、未宣言のargvは実行前に`InspectBlocked`にします。宣言済みの単一commandがcommand-not-found（exit 127）となった場合も`InspectBlocked`です。任意のshell stringや複合commandはadapter経由では実行できません。Host shellへfallbackせず、現在のattemptの権限も広げません。Native executionが必要なら、**同じTask ID**で新しい`guest-build` manifest、manifest hash、Task attemptを作り、Apple Container runtimeとして再検査してから実行します。昇格はrequestであり、自動許可ではありません。
+Host側の`scripts/just_bash_runtime.mjs` adapterが受け取るのは、`createInspectRuntime`が検証済みManifest v2と内容照合済みsnapshotから生成したopaque handleだけです。外部で作ったJustBash instanceは渡せません。Factoryはnetworkなしの組み込みcommand、in-memory filesystem、追加の言語・tool・custom commandなし、hardened limitに固定します。Adapterは宣言argvを高々1回実行し、各argumentをshell-safeにquoteします。未宣言argvは実行前に`InspectBlocked`にし、宣言済み単一commandがcommand-not-found（exit 127）の場合も`InspectBlocked`です。任意のshell stringや複合commandは実行できません。Host shellへfallbackせず、現在のattemptの権限も広げません。Native executionが必要なら、**同じTask ID**で新しい`guest-build` manifest、manifest hash、Task attemptを作り、Apple Container runtimeとして再検査してから実行します。昇格はrequestであり、自動許可ではありません。
 
 Target manifestの検査後、記録した`InspectBlocked` JSON eventをsource/target manifestと一緒に`scripts/just_bash_contract.py`へ渡します。Generatorはeventのsource Task/attempt/manifest hashとmissing capabilityを検証し、attempt IDの再利用や異なるTask IDを拒否します。Blocked event hashと両manifestのidentityを記録しますが、runtimeは実行しません。
 
-1 Task sessionが1 JustBash instanceを所有します。Filesystemと明示的Task stateはexportできますが、shell environment、function、working directory、process memory、実行途中commandをcheckpointとは扱いません。Resume時はmanifest、runtime version、input snapshotのhash一致を要求します。
+標準inspectの1 attemptがprivateなJustBash instanceを1つ所有し、宣言commandを1回実行します。Filesystemと明示的Task stateは新しい検証済みattemptへexportできますが、shell environment、function、working directory、process memory、実行途中commandをcheckpointとは扱いません。Resume時はmanifest、runtime version、input snapshotのhash一致を要求します。
+
+HostはTask/attempt identityをrepositoryのGit common directory内のprivate registryで原子的に1回だけ取得します。Claimはprocess再起動後も同一repositoryでの再利用を防ぐため保持します。再試行には新しいattempt IDが必要で、古いIDによるhandle再作成を拒否します。
+
+Claim recordは自動削除しません。各recordは小さいもののattempt数に応じて増えます。ArchiveまたはpruneはTask廃止後にhost control planeで明示的に行い、古いattempt IDを再利用可能にしてはいけません。
 
 ## 証跡
 

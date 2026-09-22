@@ -20,17 +20,23 @@ Polling and RSS measurement can also delay wall-time enforcement; a strict deadl
 
 ## Snapshot and result flow
 
-The host constructs the snapshot before starting JustBash. Every entry records a relative path, regular-file or directory type, size, and hash. Absolute paths, parent traversal, home-relative paths, symlinks, devices, sockets, and FIFOs are rejected. Archive extraction must remain inside the virtual filesystem and within the archive expansion limit.
+The host constructs the snapshot before starting JustBash. Every entry records a relative regular-file path, size, and hash. Absolute paths, parent traversal, home-relative paths, symlinks, directories, devices, sockets, and FIFOs are rejected as entries. Archive extraction must remain inside the virtual filesystem and within the archive expansion limit.
+
+The standard inspect factory requires a file-only snapshot manifest: expand selected directories into regular-file entries before construction. It checks every file's bytes and the aggregate path record against the manifest, then copies the bytes into the private in-memory filesystem.
 
 Filesystem changes and exported artifacts are untrusted output. The result gate validates paths, symlinks, types, sizes, hashes, and destinations before any host import. The runtime never writes directly to the host repository.
 
 ## Failure and escalation
 
-The host-side `scripts/just_bash_runtime.mjs` adapter accepts a JustBash instance and argv that must exactly match the validated manifest's `task.command`. It shell-quotes each argument; undeclared argv becomes `InspectBlocked` before execution. A declared atomic JustBash command-not-found exit (127) also becomes `InspectBlocked`. Arbitrary shell strings and compound commands are not accepted through this adapter. It never falls back to a host shell or widens the current attempt. If native execution is required, create a new `guest-build` manifest with the **same Task ID**, a new manifest hash, and a new Task attempt for the Apple Container runtime; validate both the new manifest and its result gate before execution. Escalation is a request, not automatic authorization.
+The host-side `scripts/just_bash_runtime.mjs` adapter accepts only an opaque handle created from a validated Manifest v2 and content-checked input snapshot by `createInspectRuntime`; caller-created JustBash instances cannot enter this path. The factory fixes networkless built-in commands, an in-memory filesystem, no optional language/tool/custom-command capability, and hardened limits. The adapter executes the declared argv at most once, shell-quoting each argument; undeclared argv becomes `InspectBlocked` before execution. A declared atomic JustBash command-not-found exit (127) also becomes `InspectBlocked`. Arbitrary shell strings and compound commands are not accepted. It never falls back to a host shell or widens the current attempt. If native execution is required, create a new `guest-build` manifest with the **same Task ID**, a new manifest hash, and a new Task attempt for the Apple Container runtime; validate both the new manifest and its result gate before execution. Escalation is a request, not automatic authorization.
 
 After the target manifest validates, pass the recorded `InspectBlocked` JSON event to `scripts/just_bash_contract.py` with the source and target manifests. The generator requires the event's source Task/attempt/manifest hash and missing capability, rejects a reused attempt ID or different Task ID, and records the blocked-event hash with both manifest identities. It does not execute either runtime.
 
-One Task session owns one JustBash instance. Filesystem and explicit Task state may be exported between calls, but shell environment, functions, working directory, process memory, and an in-flight command are not checkpoints. Resume requires matching manifest, runtime-version, and input-snapshot hashes.
+One standard inspect attempt owns one private JustBash instance and executes one declared command. Filesystem and explicit Task state may be exported for a new validated attempt, but shell environment, functions, working directory, process memory, and an in-flight command are not checkpoints. Resume requires matching manifest, runtime-version, and input-snapshot hashes.
+
+The host atomically claims each Task/attempt identity once in a private registry under the repository's Git common directory. Claims are retained to prevent same-repository replay, including after a process restart. A retry must use a new attempt ID; a fresh handle with the old ID is rejected.
+
+Claim records are not automatically pruned. They are small but grow with attempts; archival or pruning must be a deliberate host-control-plane operation after the Task is retired, and must not permit reuse of an old attempt ID.
 
 ## Evidence
 

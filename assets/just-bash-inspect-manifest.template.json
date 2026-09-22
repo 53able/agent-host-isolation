@@ -22,7 +22,7 @@
       "read_only": true,
       "hash": "sha256:replace-with-input-snapshot-hash",
       "paths": [
-        {"path": "src", "type": "directory", "size_bytes": 0, "hash": "sha256:replace-with-entry-hash"}
+        {"path": "src/example.txt", "type": "regular", "size_bytes": 0, "hash": "sha256:replace-with-entry-hash"}
       ]
     },
     "image": null,

@@ -442,6 +442,13 @@ class JustBashManifestTests(unittest.TestCase):
         result = self.run_validator(valid_just_bash_manifest())
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_accepts_shared_v2_just_bash_manifest_from_stdin(self):
+        result = subprocess.run(
+            ["python3", str(VALIDATOR), "-"], input=json.dumps(valid_just_bash_manifest()),
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_template_defaults_are_below_validator_ceilings(self):
         manifest = valid_just_bash_manifest()
         limits = manifest["runtime"]["limits"]
@@ -578,6 +585,10 @@ class JustBashManifestTests(unittest.TestCase):
         self.assert_rejected(
             lambda m: m["workspace"]["snapshot"]["paths"][0].update(type="symlink"),
             "forbids symlinks",
+        )
+        self.assert_rejected(
+            lambda m: m["workspace"]["snapshot"]["paths"][0].update(type="directory"),
+            "file-only snapshot",
         )
         self.assert_rejected(
             lambda m: m["workspace"]["snapshot"]["paths"].append(dict(m["workspace"]["snapshot"]["paths"][0])),
