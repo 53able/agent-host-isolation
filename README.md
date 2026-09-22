@@ -84,7 +84,7 @@ Copy the bundled template:
 cp assets/isolation-manifest.template.json isolation-manifest.json
 ```
 
-Define the exact input snapshot, network policy, credential mode, resource limits, immutable image identity, result gate, and audit record. Keep unspecified capabilities denied.
+Manifest v2 separates `task`, `workspace`, `gateway`, `model`, `runtime`, `resources`, and `resultGate`. Define the exact input snapshot, network policy, credential references, resource enforcement owners, immutable image identity, result gate, and audit record. Keep unspecified capabilities denied. Legacy v1 manifests are rejected rather than silently translated into an executable configuration.
 
 ### 3. Validate before execution
 
@@ -94,13 +94,37 @@ python3 scripts/validate-manifest.py isolation-manifest.json
 
 The validator rejects common unsafe configurations, including writable input mounts, unrestricted networking, host integration, control sockets, direct credentials without a scoped broker, missing resource limits, and mutable image identities.
 
-### 4. Execute and import through a result gate
+### 4. Compile Apple Container argv
+
+Generate one allowlisted operation at a time:
+
+```bash
+python3 scripts/apple_container_compiler.py isolation-manifest.json create
+python3 scripts/apple_container_compiler.py isolation-manifest.json start
+python3 scripts/apple_container_compiler.py isolation-manifest.json stats
+python3 scripts/apple_container_compiler.py isolation-manifest.json stop
+python3 scripts/apple_container_compiler.py isolation-manifest.json delete
+```
+
+The compiler emits a JSON argv array, not a shell command. It always pins the image digest and emits the task, manifest, and workspace hashes as labels. It has no arbitrary-extra-argument input, so options such as `--ssh`, `--publish-socket`, `--virtualization`, `--cap-add`, undeclared mounts, ports, networks, and inherited host environment variables cannot pass through.
+
+Apple Container network attachment is not a destination allowlist. The standard profile therefore requires a task-dedicated network whose egress is mediated by an external gateway or broker. See [the Apple Container runtime contract](references/apple-container-runtime.md).
+
+Collect non-mutating host readiness evidence before execution:
+
+```bash
+python3 scripts/probe_apple_container.py isolation-manifest.json
+```
+
+The probe never reports `verified`; it only reports whether the recorded host is ready for adversarial tests or why it is blocked.
+
+### 5. Execute and import through a result gate
 
 Run arbitrary binaries only inside the selected guest VM. Export patches, logs, and generated files to guest output storage. Before importing them, inspect paths, symlinks, file types, sizes, hashes, and the destination repository.
 
 Keep Git push, deployment, publishing, external writes, and credential-bound operations outside the guest. A host-side broker should validate the task, destination, scope, expiry, and audit record before performing an elevated operation.
 
-### 5. Test denial, not only success
+### 6. Test denial, not only success
 
 Copy `assets/isolation-verification.template.md` and record the seven test classes:
 
@@ -135,6 +159,7 @@ tests/
 ## Important limitations
 
 - This repository provides a procedure and deterministic manifest checks; it does not create a VM or host firewall by itself.
+- Validator or compiler success does not make a configuration `verified`; only the seven adversarial test classes on the recorded host/runtime can do that.
 - A VM does not neutralize capabilities explicitly passed through mounts, sockets, credentials, networking, or host integration.
 - Restricted interpreters reduce available commands but are not equivalent to guest-VM isolation.
 - Runtime-specific flags and host reachability must be tested on the target operating system and runtime version.

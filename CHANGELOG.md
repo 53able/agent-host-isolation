@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Add Manifest v2 resources for task, workspace, gateway, model, Apple Container runtime, resources, and result gate.
+- Add strict Manifest v2 validation, allowlisted Apple Container argv compilation, gateway grant decisions, lifecycle/checkpoint contracts, normalized event validation, and non-mutating host readiness probing.
+
+### Changed
+
+- Reject legacy v1 manifests instead of treating them as executable configurations.
+- Decouple the logical skill identity from its physical installation directory in tests and deployment guidance.
+
 ## v0.1.0 - 2026-09-15
 
 ### Initial release
