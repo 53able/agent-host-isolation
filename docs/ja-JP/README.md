@@ -132,6 +132,8 @@ Git push、deploy、publish、外部書込み、credentialを伴う操作はgues
 
 対象のhost、runtime version、manifestで必要なtestがすべてpassした場合だけ、`verified for tested configuration`と記録します。未実行・未対応の項目は`blocked`または`unverified`とします。
 
+JustBashの実測結果は[`evidence/just-bash-adversarial-20260923.md`](../../evidence/just-bash-adversarial-20260923.md)に記録しています。`npm ci --ignore-scripts && npm run test:just-bash-adversarial`で再実行でき、必要な全classとcleanupがpassしない限りrunnerはmanifestを`unverified`のままにします。
+
 ## 重要な制約
 
 - このrepositoryが提供するのは手順とmanifest検査です。VMやhost firewallを自動構築するものではありません。

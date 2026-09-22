@@ -1,0 +1,211 @@
+{
+  "manifest_version": 2,
+  "task": {
+    "id": "just-bash-adversarial-20260923",
+    "attempt_id": "attempt-1",
+    "goal": "verify the standard JustBash inspect embedding with denial-oriented adversarial probes",
+    "profile": "inspect",
+    "command": [
+      "rg",
+      "allowed",
+      "/workspace"
+    ],
+    "command_classes": [
+      "read",
+      "search",
+      "text-processing",
+      "structured-data",
+      "hash"
+    ],
+    "expected_artifacts": [
+      "/scratch/export/result.txt"
+    ],
+    "lifecycle": {
+      "stop_timeout_seconds": 5,
+      "checkpoint": "application-level"
+    }
+  },
+  "workspace": {
+    "repository": {
+      "url": "https://github.com/53able/agent-host-isolation.git",
+      "commit": "07fa419153896fa5bb383e2069dbc8df1d3887b8",
+      "tree_hash": "4e6ff95289005d093832a8ea52bcb541ad37b773"
+    },
+    "snapshot": {
+      "id": "just-bash-adversarial-input",
+      "target": "/workspace",
+      "read_only": true,
+      "hash": "sha256:844f3e4cea5dcb8868cd5e203e2d237a03fd637ce8e2e87700f3734a5e82475a",
+      "paths": [
+        {
+          "path": "allowed.txt",
+          "type": "regular",
+          "size_bytes": 25,
+          "hash": "sha256:4c848e15091f330b74497fe6ee5744839fd7d64eb00a90b54087c038538d03a8"
+        }
+      ]
+    },
+    "image": null,
+    "toolchain": {
+      "node": "24.13.1",
+      "just-bash": "3.4.2",
+      "agent-host-isolation": "0.1.0"
+    },
+    "lockfile": {
+      "path": "package-lock.json",
+      "sha256": "sha256:f39c8d9cf405a8ab62d0c13b8bf2de184d89bcc4b8b9ed978374796708bd3ec4"
+    },
+    "mcps": [],
+    "skills": [
+      {
+        "id": "agent-host-isolation",
+        "version": "0.1.0"
+      }
+    ]
+  },
+  "gateway": {
+    "default": "deny",
+    "task_network": null,
+    "ingress_ports": [],
+    "grants": [],
+    "credential_broker": null
+  },
+  "model": {
+    "provider": "none",
+    "id": "none",
+    "credential_broker_ref": null
+  },
+  "runtime": {
+    "kind": "just-bash",
+    "package_version": "3.4.2",
+    "node_version": "24.13.1",
+    "agent_host_isolation_version": "0.1.0",
+    "profile_variant": "standard",
+    "execution_limit_profile": "hardened",
+    "javascript": false,
+    "python": false,
+    "custom_commands": [],
+    "tool_invocation": false,
+    "inherit_host_environment": false,
+    "filesystem": {
+      "implementation": "in-memory",
+      "host_root": "input-snapshot-only",
+      "writes": "task-local-overlay"
+    },
+    "limits": {
+      "max_call_depth": 8,
+      "max_command_count": 32,
+      "max_source_bytes": 4096,
+      "max_filesystem_bytes": 131072,
+      "max_output_bytes": 4096,
+      "max_archive_bytes": 32768,
+      "max_database_bytes": 32768,
+      "max_execution_time_ms": 1000,
+      "max_extension_cleanup_time_ms": 25
+    },
+    "unsupported_command": "InspectBlocked",
+    "host_shell_fallback": false,
+    "audit_events": [
+      "runtime_identity",
+      "command",
+      "stdout_stderr",
+      "filesystem_diff",
+      "artifact",
+      "failure",
+      "limit_violation",
+      "result_gate",
+      "cleanup"
+    ],
+    "escalation": {
+      "target_profile": "guest-build",
+      "runtime_kind": "apple-container",
+      "require_new_manifest": true,
+      "require_new_attempt": true,
+      "automatic": false
+    }
+  },
+  "resources": {
+    "max_call_depth": {
+      "limit": 8,
+      "enforced_by": "just-bash",
+      "on_exceed": "terminate"
+    },
+    "max_command_count": {
+      "limit": 32,
+      "enforced_by": "just-bash",
+      "on_exceed": "terminate"
+    },
+    "max_source_bytes": {
+      "limit": 4096,
+      "enforced_by": "just-bash",
+      "on_exceed": "block"
+    },
+    "max_filesystem_bytes": {
+      "limit": 131072,
+      "enforced_by": "just-bash",
+      "on_exceed": "block"
+    },
+    "max_output_bytes": {
+      "limit": 4096,
+      "enforced_by": "just-bash",
+      "on_exceed": "terminate"
+    },
+    "max_archive_bytes": {
+      "limit": 32768,
+      "enforced_by": "just-bash",
+      "on_exceed": "block"
+    },
+    "max_database_bytes": {
+      "limit": 32768,
+      "enforced_by": "just-bash",
+      "on_exceed": "block"
+    },
+    "max_execution_time_ms": {
+      "limit": 1000,
+      "enforced_by": "just-bash",
+      "on_exceed": "terminate"
+    },
+    "max_extension_cleanup_time_ms": {
+      "limit": 25,
+      "enforced_by": "just-bash",
+      "on_exceed": "terminate"
+    }
+  },
+  "resultGate": {
+    "required": true,
+    "filesystem_diff": true,
+    "artifact_import": {
+      "source": "/scratch/export",
+      "max_bytes": 4096,
+      "reject_symlinks": true,
+      "reject_path_traversal": true
+    },
+    "allowed_side_effects": [],
+    "audit_record": "evidence/just-bash-adversarial-20260923.json"
+  },
+  "verification": {
+    "status": "verified-for-tested-configuration",
+    "adversarial_evidence": [
+      {
+        "host_os": "macOS",
+        "host_version": "26.7",
+        "embedding": "scripts/run_just_bash_adversarial.mjs:Bash+InMemoryFs",
+        "package_version": "3.4.2",
+        "node_version": "24.13.1",
+        "agent_host_isolation_version": "0.1.0",
+        "manifest_hash": "sha256:eb72d84cd7b67270c5202b6f094bb042ce4a7dbecf1d9b70ed2665f2d0a638c9",
+        "input_snapshot_hash": "sha256:844f3e4cea5dcb8868cd5e203e2d237a03fd637ce8e2e87700f3734a5e82475a",
+        "tests": {
+          "mount": true,
+          "credential": true,
+          "network": true,
+          "command_path": true,
+          "resource": true,
+          "supply_chain": true,
+          "side_effect": true
+        },
+        "cleanup_passed": true
+      }
+    ]
+  }
+}

@@ -154,6 +154,8 @@ Copy `assets/isolation-verification.template.md` and record the seven test class
 
 Use `verified for tested configuration` only after every required test passes on the named host, runtime version, and manifest. Mark unrun or unsupported checks as `blocked` or `unverified`.
 
+The recorded JustBash test run is in [`evidence/just-bash-adversarial-20260923.md`](evidence/just-bash-adversarial-20260923.md). Reproduce it with `npm ci --ignore-scripts && npm run test:just-bash-adversarial`; the runner keeps the manifest `unverified` unless every required class and cleanup check passes.
+
 ## Repository structure
 
 ```text

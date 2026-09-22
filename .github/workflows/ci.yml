@@ -16,7 +16,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.13.1"
+          cache: npm
+      - name: Install pinned JustBash
+        run: npm ci --ignore-scripts
       - name: Compile Python
         run: python -m compileall -q scripts tests
       - name: Run tests
         run: python -m unittest discover -s tests -v
+      - name: Run JustBash adversarial tests
+        run: npm run test:just-bash-adversarial
