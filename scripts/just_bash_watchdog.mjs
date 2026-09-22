@@ -25,6 +25,7 @@ function readRssBytes(pid) {
     encoding: "utf8", timeout: 1_000,
   });
   if (result.error || result.status !== 0) throw new Error("host RSS measurement unavailable");
+  if (!result.stdout.trim()) throw new Error("host RSS measurement missing");
   const kib = Number(result.stdout.trim());
   if (!Number.isSafeInteger(kib) || kib < 0) throw new Error("host RSS measurement invalid");
   return kib * 1024;

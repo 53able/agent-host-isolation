@@ -16,6 +16,8 @@ Network, JavaScript, Python, custom commands, and tool invocation are disabled. 
 
 The manifest pins the JustBash package, Node.js, agent-host-isolation, and input snapshot identities. It selects `execution_limit_profile: hardened` and fixes call depth, command count, source, filesystem, output, archive, database, wall-clock, and extension-cleanup limits. The template starts with the bounds used by the adversarial harness (8 calls deep, 32 commands, 4 KiB source/output, 128 KiB filesystem, 32 KiB archive/database, 1 s execution, 25 ms cleanup). Validator maxima are ceilings, not recommended defaults. The adversarial harness also runs in a separate Node worker under a host watchdog: 512 MiB worker RSS, 30 s total wall time, and 50 ms polling. These host limits are cross-referenced in Manifest v2 resources and a violation kills the worker process group, invalidating verification. RSS polling is best-effort, not an OS hard memory limit: short allocation spikes and memory held by other processes are outside its guarantee. Workloads requiring a strict host memory boundary need an OS-enforced worker/container limit. A limit violation fails the attempt; partial output is not a successful artifact.
 
+Polling and RSS measurement can also delay wall-time enforcement; a strict deadline needs an OS-enforced worker/container limit.
+
 ## Snapshot and result flow
 
 The host constructs the snapshot before starting JustBash. Every entry records a relative path, regular-file or directory type, size, and hash. Absolute paths, parent traversal, home-relative paths, symlinks, devices, sockets, and FIFOs are rejected. Archive extraction must remain inside the virtual filesystem and within the archive expansion limit.

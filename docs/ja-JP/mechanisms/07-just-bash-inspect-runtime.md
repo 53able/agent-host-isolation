@@ -16,6 +16,8 @@ Network、JavaScript、Python、custom command、tool invocationは無効です�
 
 ManifestはJustBash package、Node.js、agent-host-isolation、input snapshotのidentityを固定します。`execution_limit_profile: hardened`を選び、call depth、command count、source、filesystem、output、archive、database、wall-clock、extension cleanupの上限を固定します。Templateの初期値は敵対的test harnessで使用した値（call depth 8、command 32、source/output 4 KiB、filesystem 128 KiB、archive/database 32 KiB、execution 1秒、cleanup 25 ms）です。Validatorの最大値は推奨初期値ではなく上限です。敵対的test harnessは別Node workerで実行し、host watchdogがworker RSS 512 MiB、全体wall-time 30秒、50 ms間隔で監視します。Manifest v2のresourceにも対応づけ、超過時はprocess groupをkillしてverificationを無効化します。RSSの定期計測はbest-effortであり、OSが強制する厳密なmemory上限ではありません。短時間のallocation spikeや他processのmemoryは保証範囲外です。厳密なhost memory境界が必要ならOS強制のworker/container limitを使います。上限超過はattempt失敗であり、部分outputを成功artifactとして扱いません。
 
+PollingやRSS計測によりwall-timeの停止も遅れる場合があります。厳密なdeadlineにはOS強制のworker/container limitが必要です。
+
 ## Snapshotとresult flow
 
 HostはJustBash起動前にsnapshotを作ります。各entryにはrelative path、regular fileまたはdirectoryのtype、size、hashを記録します。absolute path、parent traversal、home-relative path、symlink、device、socket、FIFOを拒否します。Archive展開はvirtual filesystem内と展開上限内に限定します。
