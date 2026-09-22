@@ -28,8 +28,8 @@
   "workspace": {
     "repository": {
       "url": "https://github.com/53able/agent-host-isolation.git",
-      "commit": "8ed22a321e338ff18e5a5b04f0bae012d9921e62",
-      "tree_hash": "63923b67fe3e0b3894939394088d1bd998230d71"
+      "commit": "e0696931bd891edaea9749cd32cf90750a846935",
+      "tree_hash": "bacefc91458a538a498afbe94f8b1803d2eedcea"
     },
     "snapshot": {
       "id": "just-bash-adversarial-input",
@@ -193,7 +193,7 @@
         "package_version": "3.4.2",
         "node_version": "24.13.1",
         "agent_host_isolation_version": "0.1.0",
-        "manifest_hash": "sha256:36a3704213d6379df763725bb568804514e3814085b9950250a868cb0dcf0b80",
+        "manifest_hash": "sha256:7a5c64ba6d69ab5a7c19a1e14ffb0ff98ffd88d77a515887c6aa4a373b7f3b4e",
         "input_snapshot_hash": "sha256:844f3e4cea5dcb8868cd5e203e2d237a03fd637ce8e2e87700f3734a5e82475a",
         "tests": {
           "mount": true,

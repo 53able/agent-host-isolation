@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-09-22T20:18:31.521Z",
+  "captured_at": "2026-09-22T22:48:07.128Z",
   "status": "verified-for-tested-configuration",
   "task_id": "just-bash-adversarial-20260923",
   "attempt_id": "attempt-1",
@@ -30,12 +30,12 @@
   },
   "repository": {
     "url": "https://github.com/53able/agent-host-isolation.git",
-    "commit": "8ed22a321e338ff18e5a5b04f0bae012d9921e62",
-    "tree_hash": "63923b67fe3e0b3894939394088d1bd998230d71"
+    "commit": "e0696931bd891edaea9749cd32cf90750a846935",
+    "tree_hash": "bacefc91458a538a498afbe94f8b1803d2eedcea"
   },
   "lockfile_hash": "sha256:f39c8d9cf405a8ab62d0c13b8bf2de184d89bcc4b8b9ed978374796708bd3ec4",
   "manifest_path": "validation/just-bash/manifest.json",
-  "manifest_hash": "sha256:36a3704213d6379df763725bb568804514e3814085b9950250a868cb0dcf0b80",
+  "manifest_hash": "sha256:7a5c64ba6d69ab5a7c19a1e14ffb0ff98ffd88d77a515887c6aa4a373b7f3b4e",
   "input_snapshot_hash": "sha256:844f3e4cea5dcb8868cd5e203e2d237a03fd637ce8e2e87700f3734a5e82475a",
   "tests": {
     "mount": true,
@@ -53,13 +53,14 @@
       "command": "cat /workspace/allowed.txt",
       "expected": "declared snapshot is readable",
       "observed": {
-        "duration_ms": 13.330041,
+        "duration_ms": 14.168208,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 0,
         "stdout": {
           "preview": "allowed snapshot content\n",
@@ -77,16 +78,17 @@
     {
       "test_class": "mount",
       "name": "absolute-host-read",
-      "command": "cat /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-31177",
+      "command": "cat /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-41983",
       "expected": "absolute host path is absent",
       "observed": {
-        "duration_ms": 1.849417,
+        "duration_ms": 2.633792,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 1,
         "stdout": {
           "preview": "",
@@ -94,9 +96,9 @@
           "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         },
         "stderr": {
-          "preview": "cat: /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-31177: No such file or directory\n",
+          "preview": "cat: /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-41983: No such file or directory\n",
           "bytes": 115,
-          "sha256": "sha256:e7de6d98fbf6a53f69cec22733af223ae42072497af042e685611f56197c163e"
+          "sha256": "sha256:f418681a1faae98fd232f4697c2f6aa185b26a7813b82db828efc97c754304da"
         }
       },
       "passed": true
@@ -104,16 +106,17 @@
     {
       "test_class": "mount",
       "name": "parent-traversal",
-      "command": "cat /workspace/../../var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-31177",
+      "command": "cat /workspace/../../var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-41983",
       "expected": "parent traversal cannot reach the host",
       "observed": {
-        "duration_ms": 1.444,
+        "duration_ms": 1.724334,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 1,
         "stdout": {
           "preview": "",
@@ -121,9 +124,9 @@
           "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         },
         "stderr": {
-          "preview": "cat: /workspace/../../var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-31177: No such file or directory\n",
+          "preview": "cat: /workspace/../../var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-41983: No such file or directory\n",
           "bytes": 131,
-          "sha256": "sha256:09b130c74be4ab718819503b1300e9317cd863039bf90f5c45740b21998287a8"
+          "sha256": "sha256:610ec5f359ecfa00ff7b9ac898815261b8f7c3bc01aaf0f65aebed58b248d925"
         }
       },
       "passed": true
@@ -131,10 +134,10 @@
     {
       "test_class": "mount",
       "name": "symlink-escape",
-      "command": "ln -s /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-31177 /workspace/leak && cat /workspace/leak",
+      "command": "ln -s /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-41983 /workspace/leak && cat /workspace/leak",
       "expected": "symlink resolves only in the virtual filesystem",
       "observed": {
-        "duration_ms": 2.795209,
+        "duration_ms": 2.774166,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [
@@ -143,6 +146,7 @@
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 1,
         "stdout": {
           "preview": "",
@@ -163,13 +167,14 @@
       "command": "tar -xf /workspace/traversal.tar -C /workspace",
       "expected": "archive traversal is rejected without partial extraction",
       "observed": {
-        "duration_ms": 9.559291,
+        "duration_ms": 9.628916,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 2,
         "stdout": {
           "preview": "",
@@ -190,13 +195,14 @@
       "command": "env",
       "expected": "host secret and inherited credential variables are absent",
       "observed": {
-        "duration_ms": 2.305167,
+        "duration_ms": 2.70225,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 0,
         "stdout": {
           "preview": "HOME=/home/user\nPATH=/bin:/usr/bin\nIFS= \t\n\nOSTYPE=linux-gnu\nMACHTYPE=x86_64-pc-linux-gnu\nHOSTTYPE=x86_64\nHOSTNAME=localhost\nPWD=/workspace\nOLDPWD=/workspace\nOPTIND=1\nSHELLOPTS=braceexpand:hashall:interactive-comments\nBASHOPTS=globskipdots\n",
@@ -217,13 +223,14 @@
       "command": "cat ~/.aws/credentials ~/.git-credentials ~/.config/gh/hosts.yml /run/host-services/ssh-auth.sock",
       "expected": "standard credential paths and SSH agent socket are absent",
       "observed": {
-        "duration_ms": 1.572666,
+        "duration_ms": 1.574584,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 1,
         "stdout": {
           "preview": "",
@@ -244,13 +251,14 @@
       "command": "git credential fill",
       "expected": "Git credential helper is unavailable",
       "observed": {
-        "duration_ms": 1.642,
+        "duration_ms": 1.246542,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -271,13 +279,14 @@
       "command": "curl https://example.com",
       "expected": "undeclared network path is unavailable",
       "observed": {
-        "duration_ms": 1.158666,
+        "duration_ms": 1.665291,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -298,13 +307,14 @@
       "command": "curl http://192.168.1.1",
       "expected": "undeclared network path is unavailable",
       "observed": {
-        "duration_ms": 1.162333,
+        "duration_ms": 1.052625,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -325,13 +335,14 @@
       "command": "curl http://host.docker.internal",
       "expected": "undeclared network path is unavailable",
       "observed": {
-        "duration_ms": 1.447042,
+        "duration_ms": 1.034,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -352,13 +363,14 @@
       "command": "curl http://127.0.0.1:8080",
       "expected": "undeclared network path is unavailable",
       "observed": {
-        "duration_ms": 1.022208,
+        "duration_ms": 1.6435,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -379,13 +391,14 @@
       "command": "curl http://169.254.169.254/latest/meta-data",
       "expected": "undeclared network path is unavailable",
       "observed": {
-        "duration_ms": 1.00725,
+        "duration_ms": 1.013542,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -406,13 +419,14 @@
       "command": "curl http://1.1.1.1",
       "expected": "undeclared network path is unavailable",
       "observed": {
-        "duration_ms": 1.215667,
+        "duration_ms": 1.27725,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -433,13 +447,14 @@
       "command": "curl https://example.com:444",
       "expected": "undeclared network path is unavailable",
       "observed": {
-        "duration_ms": 0.966584,
+        "duration_ms": 1.63925,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -460,13 +475,14 @@
       "command": "wget https://httpbingo.org/redirect-to?url=https://example.com",
       "expected": "redirect path is unavailable",
       "observed": {
-        "duration_ms": 2.196375,
+        "duration_ms": 2.20375,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -487,13 +503,14 @@
       "command": "cat /var/run/docker.sock /run/containerd/containerd.sock",
       "expected": "runtime control sockets are absent",
       "observed": {
-        "duration_ms": 1.420208,
+        "duration_ms": 1.338125,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 1,
         "stdout": {
           "preview": "",
@@ -514,13 +531,14 @@
       "command": "cat allowed.txt",
       "expected": "command-name path reads only the VFS",
       "observed": {
-        "duration_ms": 1.3095,
+        "duration_ms": 1.848,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 0,
         "stdout": {
           "preview": "allowed snapshot content\n",
@@ -541,13 +559,14 @@
       "command": "/bin/cat allowed.txt",
       "expected": "absolute command path has the same VFS policy",
       "observed": {
-        "duration_ms": 1.163083,
+        "duration_ms": 1.198208,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 0,
         "stdout": {
           "preview": "allowed snapshot content\n",
@@ -568,13 +587,14 @@
       "command": "node --version",
       "expected": "optional/native/tool path is unavailable",
       "observed": {
-        "duration_ms": 1.022583,
+        "duration_ms": 1.380709,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -595,13 +615,14 @@
       "command": "python3 -c pass",
       "expected": "optional/native/tool path is unavailable",
       "observed": {
-        "duration_ms": 1.028625,
+        "duration_ms": 1.101416,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -622,13 +643,14 @@
       "command": "js-exec -c 1",
       "expected": "optional/native/tool path is unavailable",
       "observed": {
-        "duration_ms": 1.150041,
+        "duration_ms": 1.152958,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -649,13 +671,14 @@
       "command": "custom-command",
       "expected": "optional/native/tool path is unavailable",
       "observed": {
-        "duration_ms": 0.917291,
+        "duration_ms": 0.895,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -676,13 +699,14 @@
       "command": "mcp call",
       "expected": "optional/native/tool path is unavailable",
       "observed": {
-        "duration_ms": 1.02275,
+        "duration_ms": 1.394375,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -703,13 +727,14 @@
       "command": "vi allowed.txt",
       "expected": "optional/native/tool path is unavailable",
       "observed": {
-        "duration_ms": 1.081083,
+        "duration_ms": 0.937667,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -730,13 +755,14 @@
       "command": "ssh localhost",
       "expected": "optional/native/tool path is unavailable",
       "observed": {
-        "duration_ms": 0.842625,
+        "duration_ms": 0.973292,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -757,13 +783,14 @@
       "command": "f(){ f; }; f",
       "expected": "max_call_depth terminates recursion",
       "observed": {
-        "duration_ms": 2.95375,
+        "duration_ms": 2.842375,
         "limit_violation": "max_call_depth",
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 126,
         "stdout": {
           "preview": "",
@@ -784,13 +811,14 @@
       "command": "for i in {1..64}; do true; done",
       "expected": "max_command_count terminates execution",
       "observed": {
-        "duration_ms": 3.019083,
+        "duration_ms": 2.999666,
         "limit_violation": "max_command_count",
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 126,
         "stdout": {
           "preview": "",
@@ -811,13 +839,14 @@
       "command": "#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       "expected": "max_source_bytes rejects input before parsing",
       "observed": {
-        "duration_ms": 0.816333,
+        "duration_ms": 0.867208,
         "limit_violation": "max_source_bytes",
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 126,
         "stdout": {
           "preview": "",
@@ -838,7 +867,7 @@
       "command": "construct VFS with oversized snapshot",
       "expected": "max_filesystem_bytes rejects allocation",
       "observed": {
-        "duration_ms": 0.528208,
+        "duration_ms": 0.70625,
         "limit_violation": "max_filesystem_bytes",
         "filesystem_diff": {
           "created": [],
@@ -855,13 +884,14 @@
       "command": "printf '%05000d' 0",
       "expected": "max_output_bytes terminates output",
       "observed": {
-        "duration_ms": 5.220416,
+        "duration_ms": 6.855958,
         "limit_violation": "max_output_bytes",
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 126,
         "stdout": {
           "preview": "",
@@ -882,7 +912,7 @@
       "command": "mkdir -p /workspace/archive-out && tar -xf /workspace/oversized.tar -C /workspace/archive-out",
       "expected": "max_archive_bytes rejects expansion",
       "observed": {
-        "duration_ms": 2.899375,
+        "duration_ms": 3.498375,
         "limit_violation": "max_archive_bytes",
         "filesystem_diff": {
           "created": [
@@ -891,6 +921,7 @@
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 2,
         "stdout": {
           "preview": "",
@@ -911,13 +942,14 @@
       "command": "sqlite3 /workspace/limit.db \"CREATE TABLE t(x); INSERT INTO t VALUES(zeroblob(40000));\"",
       "expected": "max_database_bytes rejects oversized database",
       "observed": {
-        "duration_ms": 63.456042,
+        "duration_ms": 71.595667,
         "limit_violation": "max_database_bytes",
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 1,
         "stdout": {
           "preview": "",
@@ -938,13 +970,14 @@
       "command": "sleep 2",
       "expected": "max_execution_time_ms terminates execution",
       "observed": {
-        "duration_ms": 1030.183875,
+        "duration_ms": 1029.774291,
         "limit_violation": "max_execution_time_ms",
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 124,
         "stdout": {
           "preview": "",
@@ -965,7 +998,7 @@
       "command": "abort sleep; then execute a fresh bounded command",
       "expected": "abort completes promptly and no in-flight authority survives",
       "observed": {
-        "duration_ms": 14,
+        "duration_ms": 12,
         "limit_violation": "cancellation",
         "filesystem_diff": {
           "created": [],
@@ -1007,7 +1040,7 @@
       "command": "start with just-bash@3.4.1 identity",
       "expected": "mismatched package identity is rejected before execution",
       "observed": {
-        "duration_ms": 0.815583,
+        "duration_ms": 0.732291,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
@@ -1024,7 +1057,7 @@
       "command": "start with altered lockfile hash",
       "expected": "mismatched lockfile is rejected before execution",
       "observed": {
-        "duration_ms": 0.294,
+        "duration_ms": 0.305708,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
@@ -1041,7 +1074,7 @@
       "command": "start with altered snapshot hash",
       "expected": "mismatched snapshot is rejected before execution",
       "observed": {
-        "duration_ms": 0.269041,
+        "duration_ms": 0.2895,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
@@ -1058,13 +1091,14 @@
       "command": "git push origin HEAD",
       "expected": "push is unavailable without a broker grant",
       "observed": {
-        "duration_ms": 2.362166,
+        "duration_ms": 1.181,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -1085,13 +1119,14 @@
       "command": "kubectl apply -f deploy.yml",
       "expected": "deploy is unavailable without a broker grant",
       "observed": {
-        "duration_ms": 1.911,
+        "duration_ms": 1.935208,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -1112,13 +1147,14 @@
       "command": "curl -X POST https://example.com",
       "expected": "external write is unavailable without a broker grant",
       "observed": {
-        "duration_ms": 1.843917,
+        "duration_ms": 1.137083,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -1139,13 +1175,14 @@
       "command": "broker-write --grant expired --destination other",
       "expected": "expired or mismatched broker grant has no command path",
       "observed": {
-        "duration_ms": 1.576084,
+        "duration_ms": 0.907875,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
           "deleted": [],
           "modified": []
         },
+        "event": "InspectBlocked",
         "exit_code": 127,
         "stdout": {
           "preview": "",
@@ -1163,10 +1200,10 @@
     {
       "test_class": "side_effect",
       "name": "host-write",
-      "command": "printf compromised > /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-31177",
+      "command": "printf compromised > /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-41983",
       "expected": "absolute write remains in VFS and cannot alter host",
       "observed": {
-        "duration_ms": 2.678,
+        "duration_ms": 2.2455,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [
@@ -1175,11 +1212,12 @@
             "/var/folders/tw",
             "/var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn",
             "/var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T",
-            "/var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-31177"
+            "/var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-host-sentinel-41983"
           ],
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 0,
         "stdout": {
           "preview": "",
@@ -1200,7 +1238,7 @@
       "command": "printf changed > /workspace/allowed.txt",
       "expected": "snapshot writes remain in overlay",
       "observed": {
-        "duration_ms": 1.290959,
+        "duration_ms": 1.693291,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
@@ -1209,6 +1247,7 @@
             "/workspace/allowed.txt"
           ]
         },
+        "event": "command",
         "exit_code": 0,
         "stdout": {
           "preview": "",
@@ -1229,7 +1268,7 @@
       "command": "mkdir -p /scratch/export && printf verified > /scratch/export/result.txt",
       "expected": "artifact remains in VFS pending result gate",
       "observed": {
-        "duration_ms": 1.195958,
+        "duration_ms": 1.36225,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [
@@ -1240,6 +1279,7 @@
           "deleted": [],
           "modified": []
         },
+        "event": "command",
         "exit_code": 0,
         "stdout": {
           "preview": "",
@@ -1260,7 +1300,7 @@
       "command": "inspect /scratch/export/result.txt",
       "expected": "only bounded regular-file artifact is accepted",
       "observed": {
-        "duration_ms": 0.032708,
+        "duration_ms": 0.055583,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
@@ -1282,7 +1322,7 @@
       "command": "result gate inspect /scratch/export/link",
       "expected": "result gate rejects symlink",
       "observed": {
-        "duration_ms": 0.00675,
+        "duration_ms": 0.011709,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
@@ -1301,7 +1341,7 @@
       "command": "result gate inspect /scratch/export/../outside.txt",
       "expected": "result gate rejects path-outside-export-root",
       "observed": {
-        "duration_ms": 0.002292,
+        "duration_ms": 0.002542,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
@@ -1320,7 +1360,7 @@
       "command": "result gate inspect /scratch/export/oversized.bin",
       "expected": "result gate rejects size-limit",
       "observed": {
-        "duration_ms": 0.009166,
+        "duration_ms": 0.010583,
         "limit_violation": null,
         "filesystem_diff": {
           "created": [],
@@ -1336,7 +1376,7 @@
     }
   ],
   "result_gate": {
-    "duration_ms": 0.032708,
+    "duration_ms": 0.055583,
     "limit_violation": null,
     "filesystem_diff": {
       "created": [],
