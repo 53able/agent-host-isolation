@@ -1,11 +1,11 @@
 # JustBash adversarial verification
 
 - Overall status: `verified-for-tested-configuration`
-- Captured at: `2026-09-22T22:53:57.537Z`
+- Captured at: `2026-09-22T22:58:04.573Z`
 - Host: `macOS 26.7 (arm64)`
 - JustBash: `3.4.2`
 - Node.js: `24.13.1`
-- Manifest SHA-256: `sha256:875cb092d32acabde193335dce9b74e2a31a7dd4af234ddd873efd7466e09649`
+- Manifest SHA-256: `sha256:e50a7fad5db9c7aff009ed4bac6f3b3f0fac792aeba1869b1bdc842d4b382542`
 - Snapshot SHA-256: `sha256:844f3e4cea5dcb8868cd5e203e2d237a03fd637ce8e2e87700f3734a5e82475a`
 
 ## Test classes
