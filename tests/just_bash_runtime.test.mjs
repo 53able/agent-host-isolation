@@ -10,19 +10,18 @@ import {
 } from "../scripts/just_bash_runtime.mjs";
 
 const manifest = {
-  task: { id: "inspect-task", attempt_id: "attempt-1" },
+  task: { id: "inspect-task", attempt_id: "attempt-1", command: ["rg", "marker", "/workspace"] },
   runtime: { kind: "just-bash", host_shell_fallback: false },
   verification: { status: "unverified", adversarial_evidence: [] },
 };
 
-test("converts JustBash exit 127 to InspectBlocked with source identity", async () => {
+test("blocks an undeclared native command before execution with source identity", async () => {
   const bash = new Bash();
 
   const event = await executeInspectCommand({
     bash,
-    command: "node --version",
+    argv: ["node", "--version"],
     manifest,
-    missingCapability: "native-command",
   });
 
   assert.equal(event.event, INSPECT_BLOCKED_EVENT);
@@ -33,7 +32,7 @@ test("converts JustBash exit 127 to InspectBlocked with source identity", async 
     attempt_id: manifest.task.attempt_id,
     manifest_hash: canonicalManifestHash(manifest),
   });
-  assert.equal(event.missing_capability, "native-command");
+  assert.equal(event.missing_capability, "undeclared-command");
   assert.equal(event.host_shell_fallback, false);
   assert.deepEqual(event.escalation, { automatic: false, requested: false });
 });
@@ -41,13 +40,13 @@ test("converts JustBash exit 127 to InspectBlocked with source identity", async 
 test("rejects an arbitrary executor and never requests fallback", async () => {
   await assert.rejects(executeInspectCommand({
     bash: { exec: async () => ({ exitCode: 127, stdout: "", stderr: "command not found" }) },
-    command: "node --version",
+    argv: ["node", "--version"],
     manifest,
   }), /JustBash instance/);
   const bash = new Bash();
   const event = await executeInspectCommand({
     bash,
-    command: "node --version",
+    argv: ["node", "--version"],
     manifest,
   });
 
@@ -57,15 +56,16 @@ test("rejects an arbitrary executor and never requests fallback", async () => {
 
 test("preserves successful and non-blocked JustBash results", async () => {
   const bash = new Bash();
+  const declared = { ...manifest, task: { ...manifest.task, command: ["rg", "missing", "/workspace/no-file"] } };
   const event = await executeInspectCommand({
     bash,
-    command: "false",
-    manifest,
+    argv: declared.task.command,
+    manifest: declared,
   });
 
   assert.equal(event.event, "command");
   assert.equal(event.outcome, "failed");
-  assert.equal(event.exit_code, 1);
+  assert.notEqual(event.exit_code, 0);
   assert.equal(event.host_shell_fallback, false);
   assert.equal("escalation" in event, false);
 });
@@ -75,27 +75,43 @@ test("derives source identity from the manifest before execution", async () => {
   await assert.rejects(
     executeInspectCommand({
       bash,
-      command: "true",
+      argv: ["rg", "marker", "/workspace"],
       manifest: { ...manifest, task: { id: "inspect-task" } },
     }),
     /manifest\.task\.attempt_id/,
   );
   await assert.rejects(executeInspectCommand({
     bash,
-    command: "true",
+    argv: ["rg", "marker", "/workspace"],
     manifest: { ...manifest, runtime: { kind: "just-bash", host_shell_fallback: true } },
   }), /fallback disabled/);
 });
 
-test("does not misclassify arbitrary 127 or a command with prior side effects", async () => {
+test("rejects a replaced executor on a real JustBash instance", async () => {
   const bash = new Bash();
-  for (const command of ["exit 127", "printf touched > /scratch/touched; missing-command"]) {
-    const event = await executeInspectCommand({ bash, command, manifest });
-    assert.equal(event.exit_code, 127);
-    assert.equal(event.event, "command");
-    assert.equal(event.outcome, "failed");
+  bash.exec = async () => ({ exitCode: 127, stdout: "", stderr: "explicit exit 127" });
+  await assert.rejects(
+    executeInspectCommand({ bash, argv: manifest.task.command, manifest }),
+    /must not be replaced/,
+  );
+});
+
+test("exact argv binding and quoting prevent shell injection and undeclared execution", async () => {
+  const bash = new Bash();
+  for (const injected of [
+    ["printf", "touched > /scratch/touched; missing-command"],
+    ["printf", "don't > /scratch/touched; missing-command"],
+  ]) {
+    const declared = { ...manifest, task: { ...manifest.task, command: injected } };
+    const event = await executeInspectCommand({ bash, argv: injected, manifest: declared });
+    assert.equal(event.exit_code, 0);
+    assert.match(event.result.stdout, /\/scratch\/touched; missing-command/);
   }
-  assert.equal(await bash.fs.readFile("/scratch/touched"), "touched");
+  assert.equal(await bash.fs.exists("/scratch/touched"), false);
+  const declared = { ...manifest, task: { ...manifest.task, command: ["printf", "safe"] } };
+  const blocked = await executeInspectCommand({ bash, argv: ["mkdir", "-p", "/workspace/undeclared"], manifest: declared });
+  assert.equal(blocked.event, "InspectBlocked");
+  assert.equal(await bash.fs.exists("/workspace/undeclared"), false);
 });
 
 test("template hardened defaults support representative inspect commands", async () => {
@@ -118,9 +134,10 @@ test("template hardened defaults support representative inspect commands", async
       maxExtensionCleanupTimeMs: limits.max_extension_cleanup_time_ms,
     },
   });
-  for (const command of ["rg marker data.json", "jq -r .value data.json", "sha256sum data.json", "sed 's/marker/checked/' data.json", "printf checked"]) {
-    const event = await executeInspectCommand({ bash, command, manifest });
-    assert.equal(event.exit_code, 0, `${command}: ${event.result.stderr}`);
+  for (const argv of [["rg", "marker", "data.json"], ["jq", "-r", ".value", "data.json"], ["sha256sum", "data.json"], ["sed", "s/marker/checked/", "data.json"], ["printf", "checked"]]) {
+    manifest.task.command = argv;
+    const event = await executeInspectCommand({ bash, argv, manifest });
+    assert.equal(event.exit_code, 0, `${argv.join(" ")}: ${event.result.stderr}`);
     assert.equal(event.outcome, "completed");
   }
 });

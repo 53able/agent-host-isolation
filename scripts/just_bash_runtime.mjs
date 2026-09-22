@@ -15,7 +15,19 @@ import { Bash } from "just-bash";
 import { createHash } from "node:crypto";
 
 const SAFE_ID = /^[a-z0-9][a-z0-9._-]{0,62}$/;
-const ATOMIC_COMMAND = /^[A-Za-z][A-Za-z0-9._/-]*(?: [A-Za-z0-9._:/?=-]+)*$/;
+const INSPECT_COMMANDS_V1 = new Set([
+  "cat", "ls", "head", "tail", "rg", "grep", "find", "wc", "sed", "awk",
+  "sort", "uniq", "cut", "tr", "jq", "sha256sum", "md5sum", "printf", "echo",
+]);
+
+function validArgv(value) {
+  return Array.isArray(value) && value.length > 0 &&
+    value.every((part) => typeof part === "string" && part.length > 0 && !part.includes("\0"));
+}
+
+function shellQuote(value) {
+  return `'${value.split("'").join("'\"'\"'")}'`;
+}
 
 function requireNonEmptyString(value, name) {
   if (typeof value !== "string" || value.length === 0) {
@@ -56,24 +68,44 @@ function sourceIdentity(manifest) {
 /**
  * Execute exactly one command in an existing JustBash instance.
  *
- * `bash` must be a JustBash instance. A compound command can have side effects
- * before its final exit 127, so only an atomic command-not-found is classified
- * as InspectBlocked.
+ * `bash` must be a JustBash instance. Only the exact declared argv is executed;
+ * each argument is shell-quoted so arguments cannot become shell operators.
  * The returned record is suitable for the command audit stream.  Consumers
  * must submit a separate escalation request after validating a new target
  * manifest; this function never widens the current attempt.
  */
 export async function executeInspectCommand({
   bash,
-  command,
+  argv,
   manifest,
   missingCapability = "unsupported-command",
   options,
 }) {
   if (!(bash instanceof Bash)) throw new TypeError("bash must be a JustBash instance");
-  requireNonEmptyString(command, "command");
+  if (bash.exec !== Bash.prototype.exec) throw new TypeError("JustBash exec method must not be replaced");
   const identity = sourceIdentity(manifest);
   requireNonEmptyString(missingCapability, "missingCapability");
+  if (!validArgv(argv) || !validArgv(manifest.task?.command)) {
+    throw new TypeError("requested and manifest task.command must be non-empty argv arrays");
+  }
+  const command = argv.map(shellQuote).join(" ");
+  if (
+    !INSPECT_COMMANDS_V1.has(manifest.task.command[0]) ||
+    argv.length !== manifest.task.command.length ||
+    argv.some((part, index) => part !== manifest.task.command[index])
+  ) {
+    return {
+      event: INSPECT_BLOCKED_EVENT,
+      outcome: "blocked",
+      command,
+      exit_code: INSPECT_BLOCKED_EXIT_CODE,
+      source: identity,
+      missing_capability: "undeclared-command",
+      host_shell_fallback: false,
+      escalation: { automatic: false, requested: false },
+      result: { exitCode: INSPECT_BLOCKED_EXIT_CODE, stdout: "", stderr: "requested argv is not declared for this inspect attempt" },
+    };
+  }
 
   const result = await bash.exec(command, options);
   if (
@@ -86,7 +118,7 @@ export async function executeInspectCommand({
   }
 
   const exitCode = result.exitCode;
-  if (exitCode === INSPECT_BLOCKED_EXIT_CODE && ATOMIC_COMMAND.test(command) && /command not found/i.test(result.stderr)) {
+  if (exitCode === INSPECT_BLOCKED_EXIT_CODE && /command not found/i.test(result.stderr)) {
     return {
       event: INSPECT_BLOCKED_EVENT,
       outcome: "blocked",

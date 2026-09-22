@@ -24,7 +24,7 @@ Filesystem差分とexport artifactは非信頼outputです。Hostへ取り込む
 
 ## 失敗と昇格
 
-Host側の`scripts/just_bash_runtime.mjs` adapterは、単一のJustBash command-not-found（exit 127）を`InspectBlocked`に変換します。先行する副作用の後に127で終了した複合commandは昇格signalではなく失敗として扱います。AdapterはJustBash instanceだけを受け取り、host executorは受け付けません。Host shellへfallbackせず、現在のattemptの権限も広げません。Native executionが必要なら、**同じTask ID**で新しい`guest-build` manifest、manifest hash、Task attemptを作り、Apple Container runtimeとして再検査してから実行します。昇格はrequestであり、自動許可ではありません。
+Host側の`scripts/just_bash_runtime.mjs` adapterはJustBash instanceとargvを受け取り、検証済みmanifestの`task.command`との完全一致を要求します。各argumentをshell-safeにquoteし、未宣言のargvは実行前に`InspectBlocked`にします。宣言済みの単一commandがcommand-not-found（exit 127）となった場合も`InspectBlocked`です。任意のshell stringや複合commandはadapter経由では実行できません。Host shellへfallbackせず、現在のattemptの権限も広げません。Native executionが必要なら、**同じTask ID**で新しい`guest-build` manifest、manifest hash、Task attemptを作り、Apple Container runtimeとして再検査してから実行します。昇格はrequestであり、自動許可ではありません。
 
 Target manifestの検査後、記録した`InspectBlocked` JSON eventをsource/target manifestと一緒に`scripts/just_bash_contract.py`へ渡します。Generatorはeventのsource Task/attempt/manifest hashとmissing capabilityを検証し、attempt IDの再利用や異なるTask IDを拒否します。Blocked event hashと両manifestのidentityを記録しますが、runtimeは実行しません。
 

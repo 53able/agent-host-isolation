@@ -439,17 +439,10 @@ async function executeTests(manifest, hostSentinel) {
     const before = await filesystemSnapshot(bash);
     const started = process.hrtime.bigint();
     try {
-      const execution = await executeInspectCommand({
-        bash,
-        command,
-        manifest,
-        options,
-      });
-      result = execution.result;
+      result = await bash.exec(command, options);
       const passed = Boolean(await oracle(result));
       const after = await filesystemSnapshot(bash);
       record(testClass, name, command, expected, {
-        event: execution.event,
         ...summarizeResult(result),
         duration_ms: Number(process.hrtime.bigint() - started) / 1_000_000,
         limit_violation: limitViolation(result.stderr ?? ""),
@@ -533,6 +526,23 @@ async function executeTests(manifest, hostSentinel) {
   await execProbe("command_path", "absolute-command-path", bash, "/bin/cat allowed.txt", "absolute command path has the same VFS policy", (r) => r.exitCode === 0 && r.stdout === "allowed snapshot content\n");
   for (const command of ["node --version", "python3 -c pass", "js-exec -c 1", "custom-command", "mcp call", "vi allowed.txt", "ssh localhost"]) {
     await execProbe("command_path", `blocked-${command.split(" ")[0]}`, bash, command, "optional/native/tool path is unavailable", (r) => r.exitCode === 127);
+  }
+  {
+    const before = await filesystemSnapshot(bash);
+    const declared = await executeInspectCommand({ bash, argv: manifest.task.command, manifest });
+    const blocked = await executeInspectCommand({ bash, argv: ["node", "--version"], manifest });
+    const after = await filesystemSnapshot(bash);
+    record("command_path", "manifest-command-binding", "declared rg argv; then undeclared node argv",
+      "only exact declared argv executes; undeclared command becomes InspectBlocked without host fallback",
+      {
+        declared_event: declared.event,
+        blocked_event: blocked.event,
+        blocked_source: blocked.source,
+        host_shell_fallback: blocked.host_shell_fallback,
+        filesystem_diff: filesystemDiff(before, after),
+      },
+      declared.exit_code === 0 && blocked.event === "InspectBlocked" && blocked.exit_code === 127 &&
+      blocked.source.manifest_hash === canonicalManifestHash(manifest) && blocked.host_shell_fallback === false);
   }
 
   await execProbe("resource", "call-depth", makeBash(manifest), "f(){ f; }; f", "max_call_depth terminates recursion", (r) => r.exitCode === 126 && r.stderr.includes("maximum recursion depth"));
