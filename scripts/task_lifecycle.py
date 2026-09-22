@@ -51,7 +51,13 @@ def validate_checkpoint(checkpoint: dict[str, Any], *, task_id: str, manifest_ha
     return errors
 
 
-def validate_event(event: dict[str, Any]) -> list[str]:
+def validate_event(
+    event: dict[str, Any],
+    *,
+    task_id: str,
+    manifest_hash: str,
+    workspace_hash: str,
+) -> list[str]:
     errors: list[str] = []
     required = {"event_version", "type", "timestamp", "task_id", "manifest_hash", "workspace_hash", "source", "payload"}
     missing = required - event.keys()
@@ -63,9 +69,15 @@ def validate_event(event: dict[str, Any]) -> list[str]:
         errors.append("event.type is not recognized.")
     if not isinstance(event.get("task_id"), str) or not event.get("task_id"):
         errors.append("event.task_id must be non-empty.")
+    elif event.get("task_id") != task_id:
+        errors.append("event.task_id does not match the active task contract.")
     for key in ("manifest_hash", "workspace_hash"):
         if not HASH.fullmatch(str(event.get(key, ""))):
             errors.append(f"event.{key} must be a sha256 digest.")
+    if event.get("manifest_hash") != manifest_hash:
+        errors.append("event.manifest_hash does not match the active task contract.")
+    if event.get("workspace_hash") != workspace_hash:
+        errors.append("event.workspace_hash does not match the active task contract.")
     try:
         timestamp = datetime.fromisoformat(str(event.get("timestamp", "")).replace("Z", "+00:00"))
         if timestamp.tzinfo is None:

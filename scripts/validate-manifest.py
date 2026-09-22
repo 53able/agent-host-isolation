@@ -22,7 +22,7 @@ def main() -> int:
         print(f"ERROR: Manifest is not valid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}", file=sys.stderr)
         return 2
 
-    if data.get("manifest_version") != 2:
+    if not isinstance(data, dict) or data.get("manifest_version") != 2:
         print("Manifest validation FAILED:\n- manifest_version 2 is required; v1 manifests are no longer executable and must be migrated.", file=sys.stderr)
         return 1
     errors = validate_v2(data)

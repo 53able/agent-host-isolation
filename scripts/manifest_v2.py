@@ -29,6 +29,10 @@ SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 HEX_ID = re.compile(r"^[0-9a-f]{40,64}$")
 SAFE_ID = re.compile(r"^[a-z0-9][a-z0-9._-]{0,62}$")
 ENV_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+SNAPSHOT_ROOT = PurePosixPath("/var/tmp/agent-host-isolation/snapshots")
+PROTECTED_GUEST_PATHS = tuple(PurePosixPath(path) for path in (
+    "/", "/bin", "/dev", "/etc", "/proc", "/run", "/sbin", "/sys", "/usr",
+))
 
 
 def _mapping(value: Any, path: str, errors: list[str]) -> dict[str, Any]:
@@ -61,6 +65,20 @@ def _absolute_guest_path(value: Any) -> bool:
         and ".." not in PurePosixPath(value).parts
         and "," not in value
         and "\x00" not in value
+    )
+
+
+def _paths_overlap(left: PurePosixPath, right: PurePosixPath) -> bool:
+    return left == right or left.is_relative_to(right) or right.is_relative_to(left)
+
+
+def _safe_mount_target(value: Any) -> bool:
+    if not _absolute_guest_path(value):
+        return False
+    target = PurePosixPath(value)
+    return not any(
+        target == protected or (protected != PurePosixPath("/") and target.is_relative_to(protected))
+        for protected in PROTECTED_GUEST_PATHS
     )
 
 
@@ -140,16 +158,20 @@ def _validate_workspace(value: Any, errors: list[str]) -> None:
     _no_unknown(snapshot, keys, "workspace.snapshot", errors)
     if not isinstance(snapshot.get("id"), str) or not SAFE_ID.fullmatch(snapshot.get("id", "")) or PLACEHOLDER.search(snapshot.get("id", "")):
         errors.append("workspace.snapshot.id must be a concrete logical snapshot identifier.")
+    expected_source = SNAPSHOT_ROOT / str(snapshot.get("id", ""))
     if (
         not isinstance(snapshot.get("source"), str)
-        or not snapshot.get("source", "").startswith("/")
+        or PurePosixPath(snapshot.get("source", "/")) != expected_source
         or "," in snapshot.get("source", "")
         or "\x00" in snapshot.get("source", "")
         or PLACEHOLDER.search(snapshot.get("source", ""))
     ):
-        errors.append("workspace.snapshot.source must be a concrete absolute host snapshot path.")
-    if not _absolute_guest_path(snapshot.get("target")):
-        errors.append("workspace.snapshot.target must be an absolute guest path without '..'.")
+        errors.append(
+            "workspace.snapshot.source must equal the trusted snapshot path "
+            f"{expected_source} derived from workspace.snapshot.id."
+        )
+    if not _safe_mount_target(snapshot.get("target")):
+        errors.append("workspace.snapshot.target must be a non-protected absolute guest path without '..'.")
     if snapshot.get("read_only") is not True:
         errors.append("workspace.snapshot must be read_only: true; writable host mounts are forbidden.")
 
@@ -161,6 +183,7 @@ def _validate_workspace(value: Any, errors: list[str]) -> None:
         not isinstance(image.get("reference"), str)
         or not image.get("reference")
         or image.get("reference", "").startswith("-")
+        or "@" in image.get("reference", "")
         or any(character.isspace() for character in image.get("reference", ""))
         or PLACEHOLDER.search(image.get("reference", ""))
     ):
@@ -176,6 +199,7 @@ def _validate_workspace(value: Any, errors: list[str]) -> None:
         errors.append("workspace.toolchain entries must have concrete string names and pinned string versions.")
     lockfile = _mapping(workspace.get("lockfile"), "workspace.lockfile", errors)
     _required(lockfile, {"path", "sha256"}, "workspace.lockfile", errors)
+    _no_unknown(lockfile, {"path", "sha256"}, "workspace.lockfile", errors)
     if not isinstance(lockfile.get("path"), str) or not lockfile.get("path") or PLACEHOLDER.search(lockfile.get("path", "")):
         errors.append("workspace.lockfile.path must be concrete and non-empty.")
     digest = lockfile.get("sha256")
@@ -196,7 +220,7 @@ def _validate_workspace(value: Any, errors: list[str]) -> None:
 
 def _validate_gateway(value: Any, errors: list[str]) -> None:
     gateway = _mapping(value, "gateway", errors)
-    keys = {"default", "task_network", "ingress_ports", "grants", "credential_broker"}
+    keys = {"default", "task_network", "ingress_ports", "grants", "credential_broker", "egress_gateway"}
     _required(gateway, keys, "gateway", errors)
     _no_unknown(gateway, keys, "gateway", errors)
     if gateway.get("default") != "deny":
@@ -210,6 +234,17 @@ def _validate_gateway(value: Any, errors: list[str]) -> None:
     if broker is not None and (not isinstance(broker, str) or not broker):
         errors.append("gateway.credential_broker must be null or a non-empty broker reference.")
 
+    egress_gateway = gateway.get("egress_gateway")
+    if egress_gateway is not None:
+        egress_gateway = _mapping(egress_gateway, "gateway.egress_gateway", errors)
+        gateway_keys = {"id", "policy_hash"}
+        _required(egress_gateway, gateway_keys, "gateway.egress_gateway", errors)
+        _no_unknown(egress_gateway, gateway_keys, "gateway.egress_gateway", errors)
+        if not isinstance(egress_gateway.get("id"), str) or not SAFE_ID.fullmatch(egress_gateway.get("id", "")):
+            errors.append("gateway.egress_gateway.id must be a concrete safe identifier.")
+        if not isinstance(egress_gateway.get("policy_hash"), str) or not SHA256.fullmatch(egress_gateway.get("policy_hash", "")):
+            errors.append("gateway.egress_gateway.policy_hash must be an immutable sha256 digest.")
+
     grants = gateway.get("grants")
     keys = {"destination", "scope", "protocol", "port", "method", "purpose", "expiry", "max_bytes", "audit_record"}
     if not isinstance(grants, list):
@@ -219,6 +254,11 @@ def _validate_gateway(value: Any, errors: list[str]) -> None:
         errors.append("gateway.task_network cannot be 'none' when egress grants are declared.")
     if not grants and network != "none":
         errors.append("gateway.task_network must be 'none' when no egress grants are declared.")
+    if grants and not isinstance(egress_gateway, dict):
+        errors.append("gateway.egress_gateway is required when egress grants are declared.")
+    if not grants and egress_gateway is not None:
+        errors.append("gateway.egress_gateway must be null when no egress grants are declared.")
+    audit_records: set[str] = set()
     for index, raw_grant in enumerate(grants):
         path = f"gateway.grants[{index}]"
         grant = _mapping(raw_grant, path, errors)
@@ -239,6 +279,11 @@ def _validate_gateway(value: Any, errors: list[str]) -> None:
         for name in ("purpose", "audit_record"):
             if not isinstance(grant.get(name), str) or not grant.get(name) or PLACEHOLDER.search(grant.get(name, "")):
                 errors.append(f"{path}.{name} must be concrete and non-empty.")
+        audit_record = grant.get("audit_record")
+        if isinstance(audit_record, str):
+            if audit_record in audit_records:
+                errors.append(f"{path}.audit_record must uniquely identify one grant budget.")
+            audit_records.add(audit_record)
         try:
             expiry = datetime.fromisoformat(str(grant.get("expiry", "")).replace("Z", "+00:00"))
             if expiry.tzinfo is None:
@@ -292,8 +337,8 @@ def _validate_runtime(value: Any, errors: list[str]) -> None:
         _no_unknown(volume, {"volume", "target"}, f"runtime.{name}", errors)
         if not isinstance(volume.get("volume"), str) or not SAFE_ID.fullmatch(volume.get("volume", "")) or PLACEHOLDER.search(volume.get("volume", "")):
             errors.append(f"runtime.{name}.volume must be a concrete named volume, not a host path.")
-        if not _absolute_guest_path(volume.get("target")):
-            errors.append(f"runtime.{name}.target must be an absolute guest path without '..'.")
+        if not _safe_mount_target(volume.get("target")):
+            errors.append(f"runtime.{name}.target must be a non-protected absolute guest path without '..'.")
 
 
 def _validate_resources(value: Any, errors: list[str]) -> None:
@@ -350,8 +395,11 @@ def _validate_references(root: dict[str, Any], errors: list[str]) -> None:
     gateway = root.get("gateway")
     model = root.get("model")
     resources = root.get("resources")
-    if not all(isinstance(item, dict) for item in (runtime, task, gate, gateway, model, resources)):
+    workspace = root.get("workspace")
+    if not all(isinstance(item, dict) for item in (runtime, task, gate, gateway, model, resources, workspace)):
         return
+    snapshot = workspace.get("snapshot")
+    scratch = runtime.get("scratch")
     output = runtime.get("output")
     artifact_import = gate.get("artifact_import")
     if isinstance(output, dict) and isinstance(artifact_import, dict):
@@ -364,6 +412,30 @@ def _validate_references(root: dict[str, Any], errors: list[str]) -> None:
                 if isinstance(artifact, str) and artifact.startswith("/") and not PurePosixPath(artifact).is_relative_to(base):
                     errors.append("task.expected_artifacts must remain within runtime.output.target.")
                     break
+    mounts = (("workspace.snapshot", snapshot), ("runtime.scratch", scratch), ("runtime.output", output))
+    valid_mounts = [(name, value) for name, value in mounts if isinstance(value, dict)]
+    for index, (left_name, left) in enumerate(valid_mounts):
+        left_target = left.get("target")
+        if not _absolute_guest_path(left_target):
+            continue
+        for right_name, right in valid_mounts[index + 1:]:
+            right_target = right.get("target")
+            if _absolute_guest_path(right_target) and _paths_overlap(PurePosixPath(left_target), PurePosixPath(right_target)):
+                errors.append(f"{left_name}.target and {right_name}.target must not overlap.")
+    if isinstance(scratch, dict) and isinstance(output, dict):
+        if scratch.get("volume") == output.get("volume"):
+            errors.append("runtime.scratch.volume and runtime.output.volume must be distinct.")
+    task_id = task.get("id")
+    if isinstance(task_id, str):
+        for name, volume in (("scratch", scratch), ("output", output)):
+            if isinstance(volume, dict) and isinstance(volume.get("volume"), str):
+                if not volume["volume"].startswith(task_id + "-"):
+                    errors.append(f"runtime.{name}.volume must be task-scoped with prefix '{task_id}-'.")
+        grants = gateway.get("grants")
+        if isinstance(grants, list) and grants:
+            expected_network = f"{task_id}-network"
+            if gateway.get("task_network") != expected_network:
+                errors.append(f"gateway.task_network must equal the task-dedicated name '{expected_network}'.")
     model_broker = model.get("credential_broker_ref")
     gateway_broker = gateway.get("credential_broker")
     if model_broker is not None and model_broker != gateway_broker:
