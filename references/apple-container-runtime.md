@@ -13,7 +13,7 @@ Apple Container supplies a lightweight VM per container. That VM boundary does n
 - explicit CPU, memory, process, open-file, disk, log, VM-count, and wall-time enforcement owners;
 - a task-dedicated network connected to an external default-deny gateway.
 
-`--network` only selects an attachment. It is not evidence of destination-, method-, or scope-level egress enforcement. A manifest with no grants still needs the gateway to deny all egress. If the host cannot provide that gateway, execution is blocked or unverified.
+`--network` only selects an attachment. It is not evidence of destination-, method-, or scope-level egress enforcement. A manifest without grants must use `task_network: "none"`, which Apple Container materializes without a network interface. A manifest with grants must name a task-dedicated network connected to an external default-deny gateway. If the host cannot provide that gateway, execution is blocked or unverified.
 
 ## Command compilation
 
@@ -40,3 +40,12 @@ Inspect, stdio logs, boot logs, JSON stats, Apple system logs, gateway decisions
 Compiler or validator success is static evidence only. The status remains `unverified` until all seven adversarial classes pass on the recorded macOS, Apple Container CLI, and kernel image. Unsupported tests are `blocked`; they never become verified by inference.
 
 Run `python3 scripts/probe_apple_container.py isolation-manifest.json` before execution. The probe records host and CLI versions, required option availability, service status, and system properties without starting services or containers. A successful probe means only `ready for adversarial tests`; it deliberately leaves verification status `unverified`.
+
+After starting Apple Container services with explicit operator authorization, run the bounded denial smoke test:
+
+```bash
+python3 scripts/run_apple_container_smoke.py \
+  --output evidence/apple-container-smoke-YYYYMMDD.json
+```
+
+The smoke test uses a networkless, read-only Alpine container compiled from Manifest v2. It checks mount, credential/socket, network, command-path, capability, resource, supply-chain identity, artifact, observability, and cleanup controls. It creates uniquely named containers and volumes and deletes only those resources.

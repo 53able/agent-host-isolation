@@ -6,6 +6,7 @@
 
 - Add Manifest v2 resources for task, workspace, gateway, model, Apple Container runtime, resources, and result gate.
 - Add strict Manifest v2 validation, allowlisted Apple Container argv compilation, gateway grant decisions, lifecycle/checkpoint contracts, normalized event validation, and non-mutating host readiness probing.
+- Add a bounded, cleanup-aware Apple Container denial smoke test with JSON evidence output.
 
 ### Changed
 

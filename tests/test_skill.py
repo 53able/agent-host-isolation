@@ -40,7 +40,7 @@ def valid_manifest():
     manifest["workspace"]["toolchain"] = {"python": "3.12.7"}
     manifest["workspace"]["lockfile"] = {"path": "requirements.lock", "sha256": "d" * 64}
     manifest["workspace"]["skills"] = [{"id": "agent-host-isolation", "version": "v0.2.0"}]
-    manifest["gateway"]["task_network"] = "ahi-test-task"
+    manifest["gateway"]["task_network"] = "none"
     manifest["model"].update(provider="openai", id="gpt-test")
     manifest["runtime"]["scratch"]["volume"] = "ahi-test-task-scratch"
     manifest["runtime"]["output"]["volume"] = "ahi-test-task-output"
@@ -135,14 +135,33 @@ class ManifestValidatorTests(unittest.TestCase):
             "audit_record": "audit/grant-1.json",
         }
         manifest = valid_manifest()
+        manifest["gateway"]["task_network"] = "ahi-test-task"
         manifest["gateway"]["grants"] = [grant]
         self.assertEqual(self.run_validator(manifest).returncode, 0)
         for key in grant:
             with self.subTest(key=key):
                 self.assert_rejected(
-                    lambda m, key=key: m["gateway"].update(grants=[{k: v for k, v in grant.items() if k != key}]),
+                    lambda m, key=key: m["gateway"].update(
+                        task_network="ahi-test-task",
+                        grants=[{k: v for k, v in grant.items() if k != key}],
+                    ),
                     "gateway.grants[0]",
                 )
+
+    def test_networkless_task_requires_none_and_grants_require_gateway_network(self):
+        self.assert_rejected(
+            lambda m: m["gateway"].update(task_network="ahi-test-task"),
+            "must be 'none' when no egress grants",
+        )
+        self.assert_rejected(
+            lambda m: m["gateway"].update(grants=[{
+                "destination": "api.example.com", "scope": "/v1", "protocol": "https",
+                "port": 443, "method": "GET", "purpose": "probe",
+                "expiry": "2030-01-01T00:00:00Z", "max_bytes": 1,
+                "audit_record": "audit/grant.json",
+            }]),
+            "cannot be 'none' when egress grants",
+        )
 
     def test_rejects_wrong_resource_enforcement_owner(self):
         self.assert_rejected(
