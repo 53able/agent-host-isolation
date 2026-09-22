@@ -1,9 +1,13 @@
 # Isolation verification record
 
 - Task ID:
+- Attempt ID:
 - Date:
 - Host OS and version:
-- Guest runtime and version:
+- Runtime kind and version:
+- Node.js version (when applicable):
+- agent-host-isolation version:
+- Input snapshot SHA-256:
 - Manifest path:
 - Manifest SHA-256:
 - Profile:
@@ -27,6 +31,7 @@
 - Scratch removed:
 - Temporary credentials revoked:
 - Temporary network grants removed:
+- Extension authority revoked after cancellation:
 
 ## Residual risks and blocked checks
 

@@ -27,7 +27,7 @@ The objective is not “absolute safety.” It is to make unauthorized access to
 
 ## How the isolation mechanism works
 
-The mechanism is divided into six boundaries. Each document explains the control, its decision rule, and its failure behavior.
+The mechanism is divided into seven boundaries. Each document explains the control, its decision rule, and its failure behavior.
 
 1. [Capability classification and execution profiles](docs/mechanisms/01-capability-profiles.md)
 2. [Read-only input and guest-local scratch](docs/mechanisms/02-input-and-scratch.md)
@@ -35,6 +35,7 @@ The mechanism is divided into six boundaries. Each document explains the control
 4. [Result gate and host-side broker](docs/mechanisms/04-result-gate-and-broker.md)
 5. [Resource limits, watchdogs, and cleanup](docs/mechanisms/05-resource-governance.md)
 6. [Adversarial verification and status recording](docs/mechanisms/06-adversarial-verification.md)
+7. [JustBash inspect runtime contract](docs/mechanisms/07-just-bash-inspect-runtime.md)
 
 ## Install
 
@@ -78,7 +79,7 @@ A restricted interpreter such as JustBash can reduce capabilities for inspection
 
 ### 2. Create a task manifest
 
-Copy the bundled template:
+Copy the template for the selected runtime. For a guest build:
 
 ```bash
 cp assets/isolation-manifest.template.json isolation-manifest.json
@@ -86,13 +87,21 @@ cp assets/isolation-manifest.template.json isolation-manifest.json
 
 Manifest v2 separates `task`, `workspace`, `gateway`, `model`, `runtime`, `resources`, and `resultGate`. Define the exact input snapshot, network policy, credential references, resource enforcement owners, immutable image identity, result gate, and audit record. Keep unspecified capabilities denied. Legacy v1 manifests are rejected rather than silently translated into an executable configuration.
 
+For a JustBash inspect task, use Manifest v2:
+
+```bash
+cp assets/just-bash-inspect-manifest.template.json isolation-manifest.json
+```
+
+The JustBash template uses the same top-level Manifest v2 resources and specializes `runtime.kind`, the minimum snapshot, interpreter limits, and `InspectBlocked` escalation policy.
+
 ### 3. Validate before execution
 
 ```bash
 python3 scripts/validate-manifest.py isolation-manifest.json
 ```
 
-The validator rejects common unsafe configurations, including writable input mounts, unrestricted networking, host integration, control sockets, direct credentials without a scoped broker, missing resource limits, and mutable image identities.
+The validator rejects legacy v1 manifests and validates both Apple Container and JustBash through the shared Manifest v2 contract. For standard JustBash it rejects incompatible profiles, unpinned versions, unsafe snapshots, optional capabilities, network grants, unknown runtime fields, unbounded limits, host-shell fallback, and incomplete escalation identities. A separately declared `network-derived` variant accepts only task-bound exact-origin grants with path, method, byte, expiry, redirect-revalidation, purpose, and audit constraints.
 
 ### 4. Compile Apple Container argv
 
@@ -147,11 +156,11 @@ references/
 scripts/
 docs/
   mechanisms/
-    01-...md through 06-...md
+    01-...md through 07-...md
   ja-JP/
     README.md
     mechanisms/
-      01-...md through 06-...md
+      01-...md through 07-...md
 tests/
 .github/workflows/
 ```

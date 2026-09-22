@@ -1,0 +1,100 @@
+{
+  "manifest_version": 2,
+  "task": {
+    "id": "replace-with-unique-task-id",
+    "attempt_id": "attempt-1",
+    "goal": "replace-with-bounded-inspection-goal",
+    "profile": "inspect",
+    "command": ["rg", "replace-with-pattern", "/workspace"],
+    "command_classes": ["read", "search", "text-processing", "structured-data", "hash", "deterministic-transform"],
+    "expected_artifacts": ["/scratch/export"],
+    "lifecycle": {"stop_timeout_seconds": 5, "checkpoint": "application-level"}
+  },
+  "workspace": {
+    "repository": {
+      "url": "https://example.invalid/owner/repository.git",
+      "commit": "replace-with-full-commit-hash",
+      "tree_hash": "replace-with-tree-hash"
+    },
+    "snapshot": {
+      "id": "replace-with-snapshot-id",
+      "target": "/workspace",
+      "read_only": true,
+      "hash": "sha256:replace-with-input-snapshot-hash",
+      "paths": [
+        {"path": "src", "type": "directory", "size_bytes": 0, "hash": "sha256:replace-with-entry-hash"}
+      ]
+    },
+    "image": null,
+    "toolchain": {
+      "node": "replace-with-exact-version",
+      "just-bash": "replace-with-exact-version",
+      "agent-host-isolation": "replace-with-exact-version"
+    },
+    "lockfile": {"path": "package-lock.json", "sha256": "replace-with-lockfile-sha256"},
+    "mcps": [],
+    "skills": [{"id": "agent-host-isolation", "version": "replace-with-version-or-commit"}]
+  },
+  "gateway": {
+    "default": "deny",
+    "task_network": null,
+    "ingress_ports": [],
+    "grants": [],
+    "credential_broker": null
+  },
+  "model": {"provider": "none", "id": "none", "credential_broker_ref": null},
+  "runtime": {
+    "kind": "just-bash",
+    "package_version": "replace-with-exact-version",
+    "node_version": "replace-with-exact-version",
+    "agent_host_isolation_version": "replace-with-exact-version",
+    "profile_variant": "standard",
+    "execution_limit_profile": "hardened",
+    "javascript": false,
+    "python": false,
+    "custom_commands": [],
+    "tool_invocation": false,
+    "inherit_host_environment": false,
+    "filesystem": {"implementation": "in-memory", "host_root": "input-snapshot-only", "writes": "task-local-overlay"},
+    "limits": {
+      "max_call_depth": 100,
+      "max_command_count": 20000,
+      "max_source_bytes": 8388608,
+      "max_filesystem_bytes": 268435456,
+      "max_output_bytes": 33554432,
+      "max_archive_bytes": 268435456,
+      "max_database_bytes": 134217728,
+      "max_execution_time_ms": 30000,
+      "max_extension_cleanup_time_ms": 25
+    },
+    "unsupported_command": "InspectBlocked",
+    "host_shell_fallback": false,
+    "audit_events": ["runtime_identity", "command", "stdout_stderr", "filesystem_diff", "artifact", "failure", "limit_violation", "result_gate", "cleanup"],
+    "escalation": {
+      "target_profile": "guest-build",
+      "runtime_kind": "apple-container",
+      "require_new_manifest": true,
+      "require_new_attempt": true,
+      "automatic": false
+    }
+  },
+  "resources": {
+    "max_call_depth": {"limit": 100, "enforced_by": "just-bash", "on_exceed": "terminate"},
+    "max_command_count": {"limit": 20000, "enforced_by": "just-bash", "on_exceed": "terminate"},
+    "max_source_bytes": {"limit": 8388608, "enforced_by": "just-bash", "on_exceed": "block"},
+    "max_filesystem_bytes": {"limit": 268435456, "enforced_by": "just-bash", "on_exceed": "block"},
+    "max_output_bytes": {"limit": 33554432, "enforced_by": "just-bash", "on_exceed": "terminate"},
+    "max_archive_bytes": {"limit": 268435456, "enforced_by": "just-bash", "on_exceed": "block"},
+    "max_database_bytes": {"limit": 134217728, "enforced_by": "just-bash", "on_exceed": "block"},
+    "max_execution_time_ms": {"limit": 30000, "enforced_by": "just-bash", "on_exceed": "terminate"},
+    "max_extension_cleanup_time_ms": {"limit": 25, "enforced_by": "just-bash", "on_exceed": "terminate"}
+  },
+  "resultGate": {
+    "required": true,
+    "filesystem_diff": true,
+    "artifact_import": {"source": "/scratch/export", "max_bytes": 33554432, "reject_symlinks": true, "reject_path_traversal": true},
+    "allowed_side_effects": [],
+    "audit_record": "replace-with-audit-location"
+  },
+  "verification": {"status": "unverified", "adversarial_evidence": []}
+}

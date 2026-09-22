@@ -11,3 +11,5 @@ Run every test against the target host, guest runtime, and manifest. Adapt exact
 7. **Side-effect test:** Attempt push, deploy, and external writes without a valid broker grant; then attempt a mismatched destination or expired grant. Expect denial.
 
 A successful normal task does not substitute for these tests. Record every untestable oracle as `blocked`.
+
+For JustBash, also test `../`, absolute paths, symlink and archive escapes; access to host environment and Node.js internals; child/native execution; undeclared JavaScript, Python, custom commands, and tools; redirect, IP-literal, and alternate-port network bypasses; command, output, filesystem, archive, database, and time limits; cancellation revocation; and attempted host writes outside the result gate. Record the exact JustBash package, Node.js, agent-host-isolation, manifest, and snapshot hashes. Leave the profile `unverified` until these tests run in the target embedding environment.

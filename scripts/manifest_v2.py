@@ -8,6 +8,8 @@ from datetime import datetime
 from pathlib import PurePosixPath
 from typing import Any
 
+from just_bash_manifest import validate_just_bash_v2
+
 TOP_LEVEL_KEYS = {
     "manifest_version", "task", "workspace", "gateway", "model", "runtime",
     "resources", "resultGate",
@@ -63,6 +65,8 @@ def _absolute_guest_path(value: Any) -> bool:
 
 
 def validate_v2(data: Any) -> list[str]:
+    if isinstance(data, dict) and isinstance(data.get("runtime"), dict) and data["runtime"].get("kind") == "just-bash":
+        return validate_just_bash_v2(data)
     errors: list[str] = []
     root = _mapping(data, "manifest", errors)
     _required(root, TOP_LEVEL_KEYS, "manifest", errors)
@@ -83,12 +87,16 @@ def validate_v2(data: Any) -> list[str]:
 
 def _validate_task(value: Any, errors: list[str]) -> None:
     task = _mapping(value, "task", errors)
-    keys = {"id", "goal", "profile", "command", "expected_artifacts", "lifecycle"}
-    _required(task, keys, "task", errors)
-    _no_unknown(task, keys, "task", errors)
+    required_keys = {"id", "goal", "profile", "command", "expected_artifacts", "lifecycle"}
+    allowed_keys = required_keys | {"attempt_id"}
+    _required(task, required_keys, "task", errors)
+    _no_unknown(task, allowed_keys, "task", errors)
     task_id = task.get("id")
     if not isinstance(task_id, str) or not SAFE_ID.fullmatch(task_id) or PLACEHOLDER.search(task_id):
         errors.append("task.id must be a non-placeholder lowercase task identifier.")
+    attempt_id = task.get("attempt_id")
+    if attempt_id is not None and (not isinstance(attempt_id, str) or not SAFE_ID.fullmatch(attempt_id) or PLACEHOLDER.search(attempt_id)):
+        errors.append("task.attempt_id must be a concrete lowercase identifier when present.")
     if not isinstance(task.get("goal"), str) or not task.get("goal") or PLACEHOLDER.search(task.get("goal", "")):
         errors.append("task.goal must be concrete and non-empty.")
     if task.get("profile") not in {"guest-build", "elevated-release"}:

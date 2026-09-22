@@ -21,6 +21,7 @@ description: Designs and verifies capability-based execution boundaries for AI a
 4. Keep the control plane on the host only when it must retain interactive authentication or policy authority. Keep the execution plane in the selected restricted host.
 5. Read `references/execution-profiles.md` before selecting a profile other than `inspect` or `guest-build`.
 6. For Apple Container, read `references/apple-container-runtime.md`; do not infer egress isolation from `--network`.
+7. For JustBash, copy `assets/just-bash-inspect-manifest.template.json` and follow `docs/mechanisms/07-just-bash-inspect-runtime.md`. Treat it as an in-process `inspect` runtime, never as a VM boundary.
 
 **Step 3: Materialize minimum capabilities.**
 1. Create a read-only input snapshot containing only the repository paths required by the task. Do not mount a parent workspace or home directory.
@@ -51,6 +52,8 @@ description: Designs and verifies capability-based execution boundaries for AI a
 
 - If `scripts/validate-manifest.py` reports a writable host mount, replace it with a read-only input snapshot and guest-local scratch storage.
 - If the validator reports a secret, socket, host integration, or unrestricted network grant, remove it or narrow it to a task-scoped broker capability; then rerun validation.
-- If a task cannot run without a capability absent from the manifest, stop execution, add the capability with a bounded scope, and rerun validation.
+- If JustBash lacks a command or requires native execution, record `InspectBlocked`; do not fall back to a host shell. Create a new `guest-build` manifest and Task attempt for Apple Container, then rerun validation.
+- Generate the escalation record with `scripts/just_bash_contract.py` only after the target Apple Container manifest validates. The target attempt ID and manifest hash must differ from the blocked source attempt.
+- If standard JustBash needs JavaScript, Python, a custom command, tool invocation, or network, create a separately reviewed derived profile with explicit grants and adversarial tests. Do not widen the running attempt.
 - If an adversarial test reaches a protected asset or unintended endpoint, stop the profile rollout, preserve evidence, revoke temporary grants, and treat the profile as failed.
 - If the guest runtime cannot provide the requested enforcement, select a stronger execution host or record the task as blocked. Do not substitute a stricter prompt for missing enforcement.

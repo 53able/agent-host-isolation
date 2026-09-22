@@ -24,7 +24,7 @@ AIエージェントを、能力ベースの実行境界に置くための Agent
 
 ## 隔離の仕組み
 
-仕組みを六つの境界に分けました。各ドキュメントでは、制御対象、選択規則、失敗時の動作を説明します。
+仕組みを七つの境界に分けました。各ドキュメントでは、制御対象、選択規則、失敗時の動作を説明します。
 
 1. [capability分類とexecution profile](mechanisms/01-capability-profiles.md)
 2. [read-only inputとguest-local scratch](mechanisms/02-input-and-scratch.md)
@@ -32,6 +32,7 @@ AIエージェントを、能力ベースの実行境界に置くための Agent
 4. [result gateとhost-side broker](mechanisms/04-result-gate-and-broker.md)
 5. [resource limit、watchdog、cleanup](mechanisms/05-resource-governance.md)
 6. [adversarial testと検証状態](mechanisms/06-adversarial-verification.md)
+7. [JustBash inspect runtime contract](mechanisms/07-just-bash-inspect-runtime.md)
 
 ## インストール
 
@@ -83,13 +84,21 @@ cp assets/isolation-manifest.template.json isolation-manifest.json
 
 Manifest v2は`task`、`workspace`、`gateway`、`model`、`runtime`、`resources`、`resultGate`を分離します。入力snapshot、network policy、credential参照、resource enforcement担当、immutableなimage identity、result gate、audit recordを具体化します。旧v1 manifestは暗黙変換せず拒否します。
 
+JustBashのinspect taskではManifest v2 templateを使います。
+
+```bash
+cp assets/just-bash-inspect-manifest.template.json isolation-manifest.json
+```
+
+JustBash templateも同じtop-level Manifest v2 resourceを使い、`runtime.kind`、最小snapshot、interpreter limit、`InspectBlocked`昇格policyだけを特化します。
+
 ### 3. 実行前に検査する
 
 ```bash
 python3 scripts/validate-manifest.py isolation-manifest.json
 ```
 
-validatorは、書込み可能なinput mount、無制限network、host integration、control socket、scoped brokerを介さないcredential、resource limitの欠落、変更可能なimage identityなどを拒否します。
+Validatorは旧v1 manifestを拒否し、Apple ContainerとJustBashを共通Manifest v2 contractで検査します。標準JustBashでは不整合なprofile、未固定version、安全でないsnapshot、追加capability、network grant、未知のruntime field、無制限resource、host-shell fallback、不完全な昇格identityを拒否します。明示的な`network-derived` variantでは、taskに束縛したexact origin、path、method、転送量、expiry、redirect再評価、purpose、auditの制約を満たすgrantだけを許可します。
 
 ### 4. Apple Container argvを生成する
 

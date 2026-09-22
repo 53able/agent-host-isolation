@@ -20,6 +20,8 @@
 
 任意のnative binaryが不要な場合だけ`inspect`を使います。package manager、compiler、test runner、生成プログラム、未知のbinaryを動かす時点で`guest-build`を選びます。`elevated-release`は指定されたrelease操作だけに使い、探索には使いません。
 
+JustBashはManifest v2で定義する`inspect` runtimeです。HostのNode.js process内で動作し、VM境界ではありません。[JustBash runtime contract](07-just-bash-inspect-runtime.md)に従い、`guest-build`や`elevated-release`とは組み合わせません。
+
 ## 失敗時の動作
 
-選択したprofileでtaskを実行できなくても、より広いhost shellへ置き換えません。不足したcapabilityを記録し、強制可能な最小範囲だけを追加してmanifestを再検査します。
+JustBashでtaskを実行できない場合は`InspectBlocked`を記録します。Native executionが必要なら、新しい`guest-build` manifestとTask attemptを作ります。Host shellへ置き換えたり、実行中attemptの権限を広げたりしません。Nativeでない追加capabilityも、別途reviewする派生profileで扱います。
