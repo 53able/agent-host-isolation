@@ -67,6 +67,7 @@
       "max_execution_time_ms": 1000,
       "max_extension_cleanup_time_ms": 25
     },
+    "host_watchdog": {"max_rss_bytes": 536870912, "wall_time_ms": 30000, "poll_interval_ms": 50},
     "unsupported_command": "InspectBlocked",
     "host_shell_fallback": false,
     "audit_events": ["runtime_identity", "command", "stdout_stderr", "filesystem_diff", "artifact", "failure", "limit_violation", "result_gate", "cleanup"],
@@ -87,7 +88,9 @@
     "max_archive_bytes": {"limit": 32768, "enforced_by": "just-bash", "on_exceed": "block"},
     "max_database_bytes": {"limit": 32768, "enforced_by": "just-bash", "on_exceed": "block"},
     "max_execution_time_ms": {"limit": 1000, "enforced_by": "just-bash", "on_exceed": "terminate"},
-    "max_extension_cleanup_time_ms": {"limit": 25, "enforced_by": "just-bash", "on_exceed": "terminate"}
+    "max_extension_cleanup_time_ms": {"limit": 25, "enforced_by": "just-bash", "on_exceed": "terminate"},
+    "sampled_worker_rss_bytes": {"limit": 536870912, "enforced_by": "host-watchdog", "on_exceed": "terminate"},
+    "host_wall_time_ms": {"limit": 30000, "enforced_by": "host-watchdog", "on_exceed": "terminate"}
   },
   "resultGate": {
     "required": true,

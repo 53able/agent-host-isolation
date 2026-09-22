@@ -18,7 +18,7 @@ RUNTIME_KEYS = {
     "kind", "package_version", "node_version", "agent_host_isolation_version", "profile_variant",
     "execution_limit_profile", "javascript", "python", "custom_commands",
     "tool_invocation", "inherit_host_environment", "filesystem", "limits",
-    "unsupported_command", "host_shell_fallback", "audit_events", "escalation",
+    "host_watchdog", "unsupported_command", "host_shell_fallback", "audit_events", "escalation",
 }
 LIMIT_MAXIMA = {
     "max_call_depth": 100,
@@ -31,6 +31,7 @@ LIMIT_MAXIMA = {
     "max_execution_time_ms": 30_000,
     "max_extension_cleanup_time_ms": 1_000,
 }
+HOST_WATCHDOG_MAXIMA = {"max_rss_bytes": 2_147_483_648, "wall_time_ms": 120_000, "poll_interval_ms": 1_000}
 ALLOWED_COMMAND_CLASSES = {"read", "search", "text-processing", "structured-data", "hash", "deterministic-transform"}
 INSPECT_COMMAND_POLICY_V1 = {
     "cat": ("read", 1), "ls": ("read", 0), "head": ("read", 1), "tail": ("read", 1),
@@ -120,7 +121,7 @@ def validate_just_bash_v2(data: Any) -> list[str]:
     _validate_gateway(root.get("gateway"), runtime_value.get("profile_variant"), task_value.get("id"), errors)
     _validate_model(root.get("model"), errors)
     limits = _validate_runtime(root.get("runtime"), errors)
-    _validate_resources(root.get("resources"), limits, errors)
+    _validate_resources(root.get("resources"), limits, runtime_value.get("host_watchdog"), errors)
     _validate_result_gate(root.get("resultGate"), limits, errors)
     _validate_verification(root, errors)
     _validate_references(root, snapshot_total, limits, errors)
@@ -398,6 +399,15 @@ def _validate_runtime(value: Any, errors: list[str]) -> dict[str, int]:
             errors.append(f"runtime.limits.{name} must be a positive integer no greater than {maximum}.")
         else:
             limits[name] = limit
+    watchdog = _mapping(runtime.get("host_watchdog"), "runtime.host_watchdog", errors)
+    _required(watchdog, set(HOST_WATCHDOG_MAXIMA), "runtime.host_watchdog", errors)
+    _no_unknown(watchdog, set(HOST_WATCHDOG_MAXIMA), "runtime.host_watchdog", errors)
+    for name, maximum in HOST_WATCHDOG_MAXIMA.items():
+        value = watchdog.get(name)
+        if type(value) is not int or not 0 < value <= maximum:
+            errors.append(f"runtime.host_watchdog.{name} must be a positive integer no greater than {maximum}.")
+    if type(watchdog.get("wall_time_ms")) is int and watchdog["wall_time_ms"] <= limits.get("max_execution_time_ms", 0):
+        errors.append("runtime.host_watchdog.wall_time_ms must exceed the per-command execution limit.")
     if runtime.get("unsupported_command") != "InspectBlocked":
         errors.append("runtime.unsupported_command must be InspectBlocked.")
     if runtime.get("host_shell_fallback") is not False:
@@ -416,10 +426,11 @@ def _validate_runtime(value: Any, errors: list[str]) -> dict[str, int]:
     return limits
 
 
-def _validate_resources(value: Any, limits: dict[str, int], errors: list[str]) -> None:
+def _validate_resources(value: Any, limits: dict[str, int], watchdog_value: Any, errors: list[str]) -> None:
     resources = _mapping(value, "resources", errors)
-    _required(resources, set(LIMIT_MAXIMA), "resources", errors)
-    _no_unknown(resources, set(LIMIT_MAXIMA), "resources", errors)
+    host_keys = {"sampled_worker_rss_bytes", "host_wall_time_ms"}
+    _required(resources, set(LIMIT_MAXIMA) | host_keys, "resources", errors)
+    _no_unknown(resources, set(LIMIT_MAXIMA) | host_keys, "resources", errors)
     for name in LIMIT_MAXIMA:
         policy = _mapping(resources.get(name), f"resources.{name}", errors)
         keys = {"limit", "enforced_by", "on_exceed"}
@@ -431,6 +442,15 @@ def _validate_resources(value: Any, limits: dict[str, int], errors: list[str]) -
             errors.append(f"resources.{name}.enforced_by must be just-bash.")
         if policy.get("on_exceed") not in {"block", "terminate"}:
             errors.append(f"resources.{name}.on_exceed must be block or terminate.")
+    watchdog = watchdog_value if isinstance(watchdog_value, dict) else {}
+    for name, source in (("sampled_worker_rss_bytes", "max_rss_bytes"), ("host_wall_time_ms", "wall_time_ms")):
+        policy = _mapping(resources.get(name), f"resources.{name}", errors)
+        _required(policy, {"limit", "enforced_by", "on_exceed"}, f"resources.{name}", errors)
+        _no_unknown(policy, {"limit", "enforced_by", "on_exceed"}, f"resources.{name}", errors)
+        if policy.get("limit") != watchdog.get(source):
+            errors.append(f"resources.{name}.limit must equal runtime.host_watchdog.{source}.")
+        if policy.get("enforced_by") != "host-watchdog" or policy.get("on_exceed") != "terminate":
+            errors.append(f"resources.{name} must be terminated by host-watchdog.")
 
 
 def _validate_result_gate(value: Any, limits: dict[str, int], errors: list[str]) -> None:

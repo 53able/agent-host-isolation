@@ -449,6 +449,12 @@ class JustBashManifestTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertLess(limits[name], ceiling)
                 self.assertEqual(manifest["resources"][name]["limit"], limits[name])
+        watchdog = manifest["runtime"]["host_watchdog"]
+        for name, ceiling in just_bash_manifest.HOST_WATCHDOG_MAXIMA.items():
+            with self.subTest(name=name):
+                self.assertLess(watchdog[name], ceiling)
+        self.assertEqual(manifest["resources"]["sampled_worker_rss_bytes"]["limit"], watchdog["max_rss_bytes"])
+        self.assertEqual(manifest["resources"]["host_wall_time_ms"]["limit"], watchdog["wall_time_ms"])
 
     def test_rejects_incompatible_profile_and_native_command_class(self):
         for profile in ("guest-build", "elevated-release"):
@@ -598,6 +604,18 @@ class JustBashManifestTests(unittest.TestCase):
         self.assert_rejected(
             lambda m: m["resultGate"].update(audit_record="../audit.json"),
             "concrete relative path",
+        )
+        self.assert_rejected(
+            lambda m: m["resources"]["sampled_worker_rss_bytes"].update(limit=1),
+            "must equal runtime.host_watchdog.max_rss_bytes",
+        )
+        self.assert_rejected(
+            lambda m: m["resources"]["host_wall_time_ms"].update(enforced_by="just-bash"),
+            "terminated by host-watchdog",
+        )
+        self.assert_rejected(
+            lambda m: m["runtime"]["host_watchdog"].update(max_rss_bytes=0),
+            "runtime.host_watchdog.max_rss_bytes",
         )
 
     def test_rejects_host_shell_fallback_and_incomplete_escalation_policy(self):

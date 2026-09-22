@@ -7,7 +7,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { arch, platform, release, tmpdir } from "node:os";
+import { arch, platform, release } from "node:os";
 import { basename, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import { Bash, DefenseInDepthBox } from "just-bash";
 import { invalidateVerification } from "./invalidate_just_bash_verification.mjs";
 import { canonicalManifestHash, executeInspectCommand } from "./just_bash_runtime.mjs";
+import { HOST_WATCHDOG } from "./just_bash_watchdog.mjs";
 
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const INPUT = join(ROOT, "validation", "just-bash", "input", "allowed.txt");
@@ -206,6 +207,7 @@ function buildManifest() {
         writes: "task-local-overlay",
       },
       limits,
+      host_watchdog: HOST_WATCHDOG,
       unsupported_command: "InspectBlocked",
       host_shell_fallback: false,
       audit_events: [
@@ -237,6 +239,8 @@ function buildManifest() {
       max_database_bytes: resource("max_database_bytes", "block"),
       max_execution_time_ms: resource("max_execution_time_ms", "terminate"),
       max_extension_cleanup_time_ms: resource("max_extension_cleanup_time_ms", "terminate"),
+      sampled_worker_rss_bytes: { limit: HOST_WATCHDOG.max_rss_bytes, enforced_by: "host-watchdog", on_exceed: "terminate" },
+      host_wall_time_ms: { limit: HOST_WATCHDOG.wall_time_ms, enforced_by: "host-watchdog", on_exceed: "terminate" },
     },
     resultGate: {
       required: true,
@@ -666,6 +670,9 @@ async function main() {
   if (process.env.npm_lifecycle_event !== "test:just-bash-adversarial") {
     throw new Error("run through 'npm run test:just-bash-adversarial' so the clean-install pretest executes");
   }
+  if (process.env.AHI_WATCHDOG_CHILD !== "1") {
+    throw new Error("JustBash adversarial tests require the host watchdog entry point");
+  }
   assertCleanExecutionInputs();
   const manifest = buildManifest();
   writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -673,7 +680,8 @@ async function main() {
   assertRuntimeIdentity(manifest);
 
   const secret = randomBytes(24).toString("hex");
-  const sentinel = join(tmpdir(), `ahi-just-bash-host-sentinel-${process.pid}`);
+  const sentinel = process.env.AHI_HOST_SENTINEL_PATH;
+  if (!sentinel) throw new Error("host watchdog sentinel path is missing");
   const previousSecret = process.env.JB_HOST_SECRET;
   process.env.JB_HOST_SECRET = secret;
   writeFileSync(sentinel, `host-secret:${secret}\n`, { mode: 0o600 });

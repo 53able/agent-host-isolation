@@ -7,7 +7,7 @@
   },
   "scripts": {
     "pretest:just-bash-adversarial": "node scripts/invalidate_just_bash_verification.mjs && npm ci --ignore-scripts",
-    "test:just-bash-adversarial": "node scripts/run_just_bash_adversarial.mjs"
+    "test:just-bash-adversarial": "node scripts/just_bash_watchdog.mjs"
   },
   "devDependencies": {
     "just-bash": "3.4.2"
