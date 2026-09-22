@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "task": {
     "id": "just-bash-adversarial-20260923",
-    "attempt_id": "attempt-1",
+    "attempt_id": "attempt-6e375ac7b196fe99245d300a",
     "goal": "verify the standard JustBash inspect embedding with denial-oriented adversarial probes",
     "profile": "inspect",
     "command": [
@@ -28,8 +28,8 @@
   "workspace": {
     "repository": {
       "url": "https://github.com/53able/agent-host-isolation.git",
-      "commit": "fd8662dc695ecee6a8a33f2e22fbb0ec151f783a",
-      "tree_hash": "680fba9bab8d0e1418aecfa506d8799648be28d9"
+      "commit": "d96fe7e457387cc34c7c82021fb04b3eb47b9a63",
+      "tree_hash": "047ae764c2190735b702c84a1f728bfc62709abb"
     },
     "snapshot": {
       "id": "just-bash-adversarial-input",
@@ -208,7 +208,7 @@
         "package_version": "3.4.2",
         "node_version": "24.13.1",
         "agent_host_isolation_version": "0.1.0",
-        "manifest_hash": "sha256:16119fc5cae893b95b29f60af2b0e159f128ebcc2e62eb30c7a99c9696f217ed",
+        "manifest_hash": "sha256:c54cd2487e4f4ae329a4efd86d8b7eb068f889adc8bac5151a872d8f0998ac80",
         "input_snapshot_hash": "sha256:844f3e4cea5dcb8868cd5e203e2d237a03fd637ce8e2e87700f3734a5e82475a",
         "tests": {
           "mount": true,
