@@ -7,13 +7,13 @@ This contract applies to Manifest v2 documents whose `runtime.kind` is `apple-co
 Apple Container supplies a lightweight VM per container. That VM boundary does not revoke capabilities explicitly passed through host mounts, SSH forwarding, published sockets, nested virtualization, environment inheritance, published ports, or networking. The standard profile rejects those capabilities and requires:
 
 - an immutable OCI digest;
-- a read-only root filesystem and input snapshot;
+- a read-only root filesystem and controller-staged input snapshot beneath `/var/tmp/agent-host-isolation/snapshots`;
 - named, size-limited scratch and output volumes;
 - all Linux capabilities dropped;
 - explicit CPU, memory, process, open-file, disk, log, VM-count, and wall-time enforcement owners;
-- a task-dedicated network connected to an external default-deny gateway.
+- no network for tasks without grants; a task-dedicated network connected to an externally attested default-deny gateway for tasks with grants.
 
-`--network` only selects an attachment. It is not evidence of destination-, method-, or scope-level egress enforcement. A manifest without grants must use `task_network: "none"`, which Apple Container materializes without a network interface. A manifest with grants must name a task-dedicated network connected to an external default-deny gateway. If the host cannot provide that gateway, execution is blocked or unverified.
+`--network` only selects an attachment. It is not evidence of destination-, method-, or scope-level egress enforcement. A manifest without grants must use `task_network: "none"`, which Apple Container materializes without a network interface. A manifest with grants must name `<task-id>-network`, identify the external gateway and immutable policy hash, and provide a host-issued attestation binding the task, manifest hash, network, gateway, policy, and default-deny mode. Missing or mismatched attestation blocks compilation.
 
 ## Command compilation
 
@@ -27,11 +27,17 @@ Create/run always generates `--read-only`, `--cap-drop ALL`, explicit resource l
 
 The caller must execute the array directly. Joining it into a string and evaluating it through a shell violates this contract.
 
+Before compiling create/run, the compiler resolves the snapshot path and rejects missing directories, symlinks, or paths escaping the controller-owned snapshot root. Before compiling start/stop/delete/logs/stats, the caller supplies labels observed from `container inspect`; all three ownership labels must match. Named volumes carry the same labels.
+
+Gateway decisions require an atomic cumulative usage ledger. `max_bytes` is a grant-wide budget, not a per-request limit. The included in-memory ledger is for local tests only; a production gateway must provide a durable transactional equivalent.
+
 ## Lifecycle
 
 The allowed state transitions are implemented in `scripts/task_lifecycle.py`. `stop` followed by `start` restarts the container process while retaining its filesystems; it is not a memory checkpoint.
 
 Application-level resume is a separate `Stopped -> Resuming -> Running` path. The checkpoint must bind the task ID, manifest hash, workspace hash, and state hash. Checkpoints containing directly inherited credentials are rejected. Credential and network leases must be checked and reissued before entering `Running`.
+
+Guest output remains untrusted. `scripts/import_artifacts.py` rejects symlinks, special files, undeclared paths, cumulative size overruns, content changes during import, and pre-existing destination files while recording a SHA-256 digest for every imported file.
 
 ## Evidence and verification
 

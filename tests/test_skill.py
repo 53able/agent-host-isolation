@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -25,6 +26,7 @@ def load_script(name):
 compiler = load_script("apple_container_compiler")
 gateway_policy = load_script("gateway_policy")
 lifecycle = load_script("task_lifecycle")
+artifact_importer = load_script("import_artifacts")
 
 
 def valid_manifest():
@@ -33,7 +35,10 @@ def valid_manifest():
     manifest["workspace"]["repository"].update(
         url="https://github.com/53able/agent-host-isolation.git", commit="a" * 40, tree_hash="b" * 40,
     )
-    manifest["workspace"]["snapshot"].update(id="snapshot-test-task", source="/var/tmp/agent-inputs/test-task")
+    manifest["workspace"]["snapshot"].update(
+        id="snapshot-test-task",
+        source="/var/tmp/agent-host-isolation/snapshots/snapshot-test-task",
+    )
     manifest["workspace"]["image"].update(
         reference="ghcr.io/example/agent-build:1.0", digest="sha256:" + "c" * 64,
     )
@@ -42,8 +47,8 @@ def valid_manifest():
     manifest["workspace"]["skills"] = [{"id": "agent-host-isolation", "version": "v0.2.0"}]
     manifest["gateway"]["task_network"] = "none"
     manifest["model"].update(provider="openai", id="gpt-test")
-    manifest["runtime"]["scratch"]["volume"] = "ahi-test-task-scratch"
-    manifest["runtime"]["output"]["volume"] = "ahi-test-task-output"
+    manifest["runtime"]["scratch"]["volume"] = "test-task-scratch"
+    manifest["runtime"]["output"]["volume"] = "test-task-output"
     manifest["resultGate"]["audit_record"] = "audit/test-task.json"
     return manifest
 
@@ -96,6 +101,12 @@ class ManifestValidatorTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("v1 manifests are no longer executable", result.stderr)
 
+    def test_rejects_non_object_manifest_without_traceback(self):
+        result = self.run_validator([])
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("v1 manifests are no longer executable", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_rejects_unknown_fields(self):
         self.assert_rejected(lambda m: m.update({"extra_args": ["--ssh"]}), "unknown keys: extra_args")
 
@@ -112,11 +123,26 @@ class ManifestValidatorTests(unittest.TestCase):
             "snapshot.source",
         )
 
+    def test_rejects_snapshot_outside_controller_root(self):
+        for source in ("/", "/Users", "/var/run"):
+            with self.subTest(source=source):
+                self.assert_rejected(
+                    lambda m, source=source: m["workspace"]["snapshot"].update(source=source),
+                    "trusted snapshot path",
+                )
+
     def test_rejects_mutable_image_without_digest(self):
         self.assert_rejected(lambda m: m["workspace"]["image"].update(digest="latest"), "immutable sha256 digest")
 
     def test_rejects_option_shaped_image_reference(self):
         self.assert_rejected(lambda m: m["workspace"]["image"].update(reference="--ssh"), "image.reference")
+        self.assert_rejected(
+            lambda m: m["workspace"]["image"].update(reference="example/image@sha256:" + "e" * 64),
+            "image.reference",
+        )
+
+    def test_rejects_unknown_lockfile_fields(self):
+        self.assert_rejected(lambda m: m["workspace"]["lockfile"].update(extra=True), "unknown keys: extra")
 
     def test_rejects_dangerous_apple_container_capabilities(self):
         for key in ("ssh_forwarding", "socket_publishing", "nested_virtualization"):
@@ -135,14 +161,16 @@ class ManifestValidatorTests(unittest.TestCase):
             "audit_record": "audit/grant-1.json",
         }
         manifest = valid_manifest()
-        manifest["gateway"]["task_network"] = "ahi-test-task"
+        manifest["gateway"]["task_network"] = "test-task-network"
+        manifest["gateway"]["egress_gateway"] = {"id": "gateway-a", "policy_hash": "sha256:" + "e" * 64}
         manifest["gateway"]["grants"] = [grant]
         self.assertEqual(self.run_validator(manifest).returncode, 0)
         for key in grant:
             with self.subTest(key=key):
                 self.assert_rejected(
                     lambda m, key=key: m["gateway"].update(
-                        task_network="ahi-test-task",
+                        task_network="test-task-network",
+                        egress_gateway={"id": "gateway-a", "policy_hash": "sha256:" + "e" * 64},
                         grants=[{k: v for k, v in grant.items() if k != key}],
                     ),
                     "gateway.grants[0]",
@@ -150,7 +178,7 @@ class ManifestValidatorTests(unittest.TestCase):
 
     def test_networkless_task_requires_none_and_grants_require_gateway_network(self):
         self.assert_rejected(
-            lambda m: m["gateway"].update(task_network="ahi-test-task"),
+            lambda m: m["gateway"].update(task_network="test-task-network"),
             "must be 'none' when no egress grants",
         )
         self.assert_rejected(
@@ -162,6 +190,15 @@ class ManifestValidatorTests(unittest.TestCase):
             }]),
             "cannot be 'none' when egress grants",
         )
+
+    def test_rejects_mount_overlap_and_cross_task_volumes(self):
+        self.assert_rejected(lambda m: m["runtime"]["output"].update(target="/"), "non-protected")
+        self.assert_rejected(lambda m: m["runtime"]["output"].update(target="/workspace/out"), "must not overlap")
+        self.assert_rejected(
+            lambda m: m["runtime"]["output"].update(volume=m["runtime"]["scratch"]["volume"]),
+            "must be distinct",
+        )
+        self.assert_rejected(lambda m: m["runtime"]["output"].update(volume="another-task-output"), "task-scoped")
 
     def test_rejects_wrong_resource_enforcement_owner(self):
         self.assert_rejected(
@@ -191,6 +228,17 @@ class ManifestValidatorTests(unittest.TestCase):
 
 
 class AppleContainerCompilerTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.snapshot = Path("/var/tmp/agent-host-isolation/snapshots/snapshot-test-task")
+        cls.created_snapshot = not cls.snapshot.exists()
+        cls.snapshot.mkdir(parents=True, exist_ok=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.created_snapshot:
+            shutil.rmtree(cls.snapshot)
+
     def test_create_is_allowlisted_argv_with_pinned_identity(self):
         manifest = valid_manifest()
         argv = compiler.compile_command(manifest, "create")
@@ -203,7 +251,21 @@ class AppleContainerCompilerTests(unittest.TestCase):
         mounts = [argv[index + 1] for index, item in enumerate(argv[:-1]) if item == "--mount"]
         self.assertIn("readonly", mounts[0])
         self.assertNotIn("readonly", mounts[1])
-        self.assertNotIn("/var/tmp/agent-inputs/test-task", mounts[1:])
+        self.assertNotIn("/var/tmp/agent-host-isolation/snapshots/snapshot-test-task", mounts[1:])
+
+    def test_rejects_snapshot_symlink_escape_at_compilation(self):
+        manifest = valid_manifest()
+        manifest["workspace"]["snapshot"].update(
+            id="snapshot-symlink-test",
+            source="/var/tmp/agent-host-isolation/snapshots/snapshot-symlink-test",
+        )
+        link = Path(manifest["workspace"]["snapshot"]["source"])
+        link.symlink_to("/var/tmp", target_is_directory=True)
+        try:
+            with self.assertRaisesRegex(ValueError, "trusted snapshot root|symlinks|snapshot source"):
+                compiler.compile_command(manifest, "create")
+        finally:
+            link.unlink(missing_ok=True)
 
     def test_only_explicit_environment_values_are_emitted(self):
         manifest = valid_manifest()
@@ -214,10 +276,35 @@ class AppleContainerCompilerTests(unittest.TestCase):
 
     def test_lifecycle_and_observability_commands_are_fixed(self):
         manifest = valid_manifest()
-        self.assertEqual(compiler.compile_command(manifest, "start"), ["container", "start", "test-task"])
-        self.assertEqual(compiler.compile_command(manifest, "stop"), ["container", "stop", "--time", "10", "test-task"])
-        self.assertEqual(compiler.compile_command(manifest, "delete"), ["container", "delete", "test-task"])
-        self.assertEqual(compiler.compile_command(manifest, "stats"), ["container", "stats", "--format", "json", "--no-stream", "test-task"])
+        labels = compiler.expected_labels(manifest)
+        self.assertEqual(compiler.compile_command(manifest, "start", observed_labels=labels), ["container", "start", "test-task"])
+        self.assertEqual(compiler.compile_command(manifest, "stop", observed_labels=labels), ["container", "stop", "--time", "10", "test-task"])
+        self.assertEqual(compiler.compile_command(manifest, "delete", observed_labels=labels), ["container", "delete", "test-task"])
+        self.assertEqual(compiler.compile_command(manifest, "stats", observed_labels=labels), ["container", "stats", "--format", "json", "--no-stream", "test-task"])
+
+    def test_existing_resource_actions_require_matching_ownership(self):
+        manifest = valid_manifest()
+        with self.assertRaisesRegex(ValueError, "ownership labels"):
+            compiler.compile_command(manifest, "stop")
+        labels = compiler.expected_labels(manifest)
+        labels["org.agent-host-isolation.workspace-hash"] = "sha256:" + "0" * 64
+        with self.assertRaisesRegex(ValueError, "ownership mismatch"):
+            compiler.compile_command(manifest, "delete", observed_labels=labels)
+
+    def test_grant_network_requires_host_attestation(self):
+        manifest = GatewayPolicyTests().grant_manifest()
+        with self.assertRaisesRegex(ValueError, "gateway attestation"):
+            compiler.compile_command(manifest, "create")
+        gateway = manifest["gateway"]["egress_gateway"]
+        attestation = {
+            "task_id": "test-task",
+            "manifest_hash": compiler.canonical_hash(manifest),
+            "network": "test-task-network",
+            "gateway_id": gateway["id"],
+            "policy_hash": gateway["policy_hash"],
+            "default": "deny",
+        }
+        self.assertEqual(compiler.compile_command(manifest, "create", network_attestation=attestation)[:2], ["container", "create"])
 
     def test_volume_creation_uses_cli_1_2_size_flag(self):
         argv = compiler.compile_command(valid_manifest(), "create-scratch-volume")
@@ -268,9 +355,13 @@ class LifecycleTests(unittest.TestCase):
             "task_id": "test-task", "manifest_hash": digest, "workspace_hash": digest,
             "source": "container stats --format json --no-stream", "payload": {},
         }
-        self.assertEqual(lifecycle.validate_event(event), [])
+        self.assertEqual(lifecycle.validate_event(
+            event, task_id="test-task", manifest_hash=digest, workspace_hash=digest,
+        ), [])
         event.pop("manifest_hash")
-        self.assertTrue(lifecycle.validate_event(event))
+        self.assertTrue(lifecycle.validate_event(
+            event, task_id="test-task", manifest_hash=digest, workspace_hash=digest,
+        ))
 
     def test_unrun_adversarial_tests_are_never_verified(self):
         self.assertEqual(lifecycle.verification_status({}), "unverified")
@@ -285,6 +376,8 @@ class LifecycleTests(unittest.TestCase):
 class GatewayPolicyTests(unittest.TestCase):
     def grant_manifest(self):
         manifest = valid_manifest()
+        manifest["gateway"]["task_network"] = "test-task-network"
+        manifest["gateway"]["egress_gateway"] = {"id": "gateway-a", "policy_hash": "sha256:" + "e" * 64}
         manifest["gateway"]["grants"] = [{
             "destination": "api.example.com", "scope": "/v1/responses", "protocol": "https",
             "port": 443, "method": "POST", "purpose": "model inference",
@@ -303,7 +396,8 @@ class GatewayPolicyTests(unittest.TestCase):
         from datetime import datetime, timezone
 
         decision = gateway_policy.decide(
-            self.grant_manifest(), self.request(), now=datetime(2029, 1, 1, tzinfo=timezone.utc),
+            self.grant_manifest(), self.request(), ledger=gateway_policy.InMemoryUsageLedger(),
+            now=datetime(2029, 1, 1, tzinfo=timezone.utc),
         )
         self.assertTrue(decision["allowed"])
         self.assertEqual(decision["audit_record"], "audit/grant-1.json")
@@ -321,7 +415,59 @@ class GatewayPolicyTests(unittest.TestCase):
         cases.append((self.request(), datetime(2031, 1, 1, tzinfo=timezone.utc)))
         for request, now in cases:
             with self.subTest(request=request, now=now):
-                self.assertFalse(gateway_policy.decide(self.grant_manifest(), request, now=now)["allowed"])
+                self.assertFalse(gateway_policy.decide(
+                    self.grant_manifest(), request, ledger=gateway_policy.InMemoryUsageLedger(), now=now,
+                )["allowed"])
+
+    def test_enforces_cumulative_grant_budget(self):
+        from datetime import datetime, timezone
+
+        ledger = gateway_policy.InMemoryUsageLedger()
+        manifest = self.grant_manifest()
+        now = datetime(2029, 1, 1, tzinfo=timezone.utc)
+        self.assertTrue(gateway_policy.decide(manifest, self.request(), ledger=ledger, now=now)["allowed"])
+        self.assertTrue(gateway_policy.decide(manifest, self.request(), ledger=ledger, now=now)["allowed"])
+        self.assertFalse(gateway_policy.decide(manifest, self.request(), ledger=ledger, now=now)["allowed"])
+
+    def test_denies_without_ledger_or_with_invalid_manifest(self):
+        from datetime import datetime, timezone
+
+        now = datetime(2029, 1, 1, tzinfo=timezone.utc)
+        self.assertFalse(gateway_policy.decide(self.grant_manifest(), self.request(), now=now)["allowed"])
+        self.assertEqual(gateway_policy.decide([], self.request(), ledger=gateway_policy.InMemoryUsageLedger())["reason"], "manifest validation failed")
+
+
+class ArtifactImportTests(unittest.TestCase):
+    def test_imports_only_expected_regular_files(self):
+        manifest = valid_manifest()
+        manifest["task"]["expected_artifacts"] = ["/output/result.txt"]
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            destination = Path(directory) / "destination"
+            source.mkdir()
+            (source / "result.txt").write_text("ok", encoding="utf-8")
+            records = artifact_importer.import_artifacts(manifest, source, destination)
+            self.assertEqual(records[0]["path"], "result.txt")
+            self.assertEqual((destination / "result.txt").read_text(encoding="utf-8"), "ok")
+
+    def test_rejects_symlinks_unexpected_files_and_cumulative_size(self):
+        manifest = valid_manifest()
+        manifest["task"]["expected_artifacts"] = ["/output/result.txt"]
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            source.mkdir()
+            (source / "result.txt").write_text("ok", encoding="utf-8")
+            (source / "link").symlink_to("result.txt")
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                artifact_importer.inspect_artifacts(manifest, source)
+            (source / "link").unlink()
+            (source / "unexpected.txt").write_text("no", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unexpected artifact"):
+                artifact_importer.inspect_artifacts(manifest, source)
+            (source / "unexpected.txt").unlink()
+            manifest["resultGate"]["artifact_import"]["max_bytes"] = 1
+            with self.assertRaisesRegex(ValueError, "cumulative byte limit"):
+                artifact_importer.inspect_artifacts(manifest, source)
 
 
 if __name__ == "__main__":

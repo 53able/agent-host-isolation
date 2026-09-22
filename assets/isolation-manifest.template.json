@@ -16,7 +16,7 @@
     },
     "snapshot": {
       "id": "replace-with-snapshot-id",
-      "source": "replace-with-absolute-snapshot-path",
+      "source": "/var/tmp/agent-host-isolation/snapshots/replace-with-snapshot-id",
       "target": "/workspace",
       "read_only": true
     },
@@ -34,7 +34,8 @@
     "task_network": "none",
     "ingress_ports": [],
     "grants": [],
-    "credential_broker": null
+    "credential_broker": null,
+    "egress_gateway": null
   },
   "model": {
     "provider": "replace-with-provider",

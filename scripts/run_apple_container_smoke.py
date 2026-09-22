@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import time
@@ -68,7 +69,7 @@ def build_manifest(task_id: str) -> dict[str, Any]:
     })
     manifest["workspace"]["snapshot"].update({
         "id": f"{task_id}-input",
-        "source": str(SNAPSHOT.resolve()),
+        "source": f"/var/tmp/agent-host-isolation/snapshots/{task_id}-input",
     })
     manifest["workspace"]["image"] = {"reference": IMAGE, "digest": image_digest()}
     manifest["workspace"]["toolchain"] = {
@@ -138,16 +139,22 @@ def wait_until_stopped(task_id: str, timeout: float) -> dict[str, Any]:
     raise TimeoutError(f"container {task_id} did not stop within {timeout} seconds")
 
 
-def cleanup(task_id: str, volumes: list[str]) -> list[str]:
+def cleanup(manifest: dict[str, Any], container_created: bool, volumes: list[str]) -> list[str]:
     errors: list[str] = []
-    inspect = run(["container", "inspect", task_id], timeout=10, check=False)
-    if inspect.returncode == 0:
-        stop = run(["container", "stop", "--time", "2", task_id], timeout=10, check=False)
-        if stop.returncode not in {0, 1}:
-            errors.append("container stop failed")
-        delete = run(["container", "delete", task_id], timeout=10, check=False)
-        if delete.returncode != 0:
-            errors.append("container delete failed")
+    task_id = manifest["task"]["id"]
+    if container_created:
+        inspect = run(["container", "inspect", task_id], timeout=10, check=False)
+        if inspect.returncode == 0:
+            try:
+                labels = json.loads(inspect.stdout)[0]["configuration"]["labels"]
+                stop = run(compile_command(manifest, "stop", observed_labels=labels), timeout=10, check=False)
+                if stop.returncode not in {0, 1}:
+                    errors.append("container stop failed")
+                delete = run(compile_command(manifest, "delete", observed_labels=labels), timeout=10, check=False)
+                if delete.returncode != 0:
+                    errors.append("container delete failed")
+            except (KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                errors.append(f"container ownership check failed: {exc}")
     for volume in volumes:
         deleted = run(["container", "volume", "delete", volume], timeout=10, check=False)
         if deleted.returncode != 0:
@@ -159,7 +166,9 @@ def execute() -> dict[str, Any]:
     suffix = uuid.uuid4().hex[:8]
     task_id = f"ahi-smoke-{suffix}"
     manifest = build_manifest(task_id)
-    volumes = [manifest["runtime"][name]["volume"] for name in ("scratch", "output")]
+    staged_snapshot = Path(manifest["workspace"]["snapshot"]["source"])
+    created_volumes: list[str] = []
+    container_created = False
     evidence: dict[str, Any] = {
         "captured_at": datetime.now(timezone.utc).isoformat(),
         "task_id": task_id,
@@ -172,6 +181,10 @@ def execute() -> dict[str, Any]:
         "status": "failed",
     }
     try:
+        if staged_snapshot.exists() or staged_snapshot.is_symlink():
+            raise RuntimeError(f"refusing to reuse snapshot path: {staged_snapshot}")
+        staged_snapshot.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(SNAPSHOT, staged_snapshot, symlinks=False)
         status = run(["container", "system", "status"], timeout=10)
         properties = run(["container", "system", "property", "list"], timeout=10)
         evidence["host"] = {
@@ -185,14 +198,20 @@ def execute() -> dict[str, Any]:
             argv = compile_command(manifest, action)
             evidence["commands"][action] = argv
             run(argv, timeout=30)
-        start_argv = compile_command(manifest, "start")
+            if action.endswith("volume"):
+                created_volumes.append(manifest["runtime"]["scratch" if "scratch" in action else "output"]["volume"])
+            elif action == "create":
+                container_created = True
+        ownership_inspect = json.loads(run(compile_command(manifest, "inspect"), timeout=10).stdout)[0]
+        labels = ownership_inspect["configuration"]["labels"]
+        start_argv = compile_command(manifest, "start", observed_labels=labels)
         evidence["commands"]["start"] = start_argv
         run(start_argv, timeout=10)
-        evidence["stats"] = json.loads(run(compile_command(manifest, "stats"), timeout=10).stdout)
+        evidence["stats"] = json.loads(run(compile_command(manifest, "stats", observed_labels=labels), timeout=10).stdout)
         running_inspect = json.loads(run(compile_command(manifest, "inspect"), timeout=10).stdout)[0]
         evidence["running_inspect"] = running_inspect
         evidence["final_inspect"] = wait_until_stopped(task_id, 15)
-        logs = run(compile_command(manifest, "logs"), timeout=10).stdout
+        logs = run(compile_command(manifest, "logs", observed_labels=labels), timeout=10).stdout
         evidence["logs"] = logs
         pinned_image = (
             f"{manifest['workspace']['image']['reference'].split('@', 1)[0]}"
@@ -208,7 +227,9 @@ def execute() -> dict[str, Any]:
         validate_evidence(evidence)
         evidence["status"] = "passed"
     finally:
-        evidence["cleanup_errors"] = cleanup(task_id, volumes)
+        evidence["cleanup_errors"] = cleanup(manifest, container_created, created_volumes)
+        if staged_snapshot.exists() and not staged_snapshot.is_symlink():
+            shutil.rmtree(staged_snapshot)
         if evidence["cleanup_errors"]:
             evidence["status"] = "cleanup-failed"
     return evidence

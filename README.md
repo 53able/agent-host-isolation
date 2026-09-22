@@ -100,15 +100,15 @@ Generate one allowlisted operation at a time:
 
 ```bash
 python3 scripts/apple_container_compiler.py isolation-manifest.json create
-python3 scripts/apple_container_compiler.py isolation-manifest.json start
-python3 scripts/apple_container_compiler.py isolation-manifest.json stats
-python3 scripts/apple_container_compiler.py isolation-manifest.json stop
-python3 scripts/apple_container_compiler.py isolation-manifest.json delete
+python3 scripts/apple_container_compiler.py isolation-manifest.json start --resource-labels observed-labels.json
+python3 scripts/apple_container_compiler.py isolation-manifest.json stats --resource-labels observed-labels.json
+python3 scripts/apple_container_compiler.py isolation-manifest.json stop --resource-labels observed-labels.json
+python3 scripts/apple_container_compiler.py isolation-manifest.json delete --resource-labels observed-labels.json
 ```
 
-The compiler emits a JSON argv array, not a shell command. It always pins the image digest and emits the task, manifest, and workspace hashes as labels. It has no arbitrary-extra-argument input, so options such as `--ssh`, `--publish-socket`, `--virtualization`, `--cap-add`, undeclared mounts, ports, networks, and inherited host environment variables cannot pass through.
+The compiler emits a JSON argv array, not a shell command. It always pins the image digest and emits the task, manifest, and workspace hashes as labels. It has no arbitrary-extra-argument input, so options such as `--ssh`, `--publish-socket`, `--virtualization`, `--cap-add`, undeclared mounts, ports, networks, and inherited host environment variables cannot pass through. Input snapshots must be controller-staged beneath `/var/tmp/agent-host-isolation/snapshots/<snapshot-id>`; arbitrary host paths are rejected.
 
-Apple Container network attachment is not a destination allowlist. The standard profile therefore requires a task-dedicated network whose egress is mediated by an external gateway or broker. See [the Apple Container runtime contract](references/apple-container-runtime.md).
+Apple Container network attachment is not a destination allowlist. Networkless tasks must use `none`. A task with grants requires a task-dedicated network, an explicit external default-deny gateway identity, and a matching host-issued attestation before `create` or `run` argv can be generated. Existing-container actions also require matching task, manifest, and workspace labels. See [the Apple Container runtime contract](references/apple-container-runtime.md).
 
 Collect non-mutating host readiness evidence before execution:
 
@@ -127,7 +127,7 @@ python3 scripts/run_apple_container_smoke.py \
 
 ### 5. Execute and import through a result gate
 
-Run arbitrary binaries only inside the selected guest VM. Export patches, logs, and generated files to guest output storage. Before importing them, inspect paths, symlinks, file types, sizes, hashes, and the destination repository.
+Run arbitrary binaries only inside the selected guest VM. Export patches, logs, and generated files to guest output storage. Before importing them, inspect paths, symlinks, file types, cumulative sizes, hashes, and the destination repository. `scripts/import_artifacts.py` implements the regular-file-only host import gate and refuses unexpected files or an existing destination.
 
 Keep Git push, deployment, publishing, external writes, and credential-bound operations outside the guest. A host-side broker should validate the task, destination, scope, expiry, and audit record before performing an elevated operation.
 
