@@ -141,5 +141,11 @@ async function main() {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  await main();
+  try {
+    await main();
+  } catch (error) {
+    invalidateVerification(`host watchdog failed: ${error.message}`);
+    process.stderr.write(`JustBash host watchdog failed: ${error.message}\n`);
+    process.exitCode = 1;
+  }
 }
