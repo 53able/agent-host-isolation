@@ -458,7 +458,7 @@ class JustBashManifestTests(unittest.TestCase):
             lambda m: m["task"].update(command_classes=["package-manager"]),
             "standard inspect command classes",
         )
-        for command in ("curl", "node", "/bin/sh"):
+        for command in ("curl", "node", "/bin/sh", "find", "awk", "sed"):
             with self.subTest(command=command):
                 self.assert_rejected(
                     lambda m, command=command: m["task"].update(command=[command, "--version"], command_classes=["read"]),
@@ -467,6 +467,17 @@ class JustBashManifestTests(unittest.TestCase):
         self.assert_rejected(
             lambda m: m["task"].update(command_classes=["read"]),
             "its class declared",
+        )
+        self.assert_rejected(
+            lambda m: m["task"].update(command=["rg", "--pre", "python3", "/workspace"]),
+            "versioned standard inspect command",
+        )
+        self.assert_rejected(
+            lambda m: m["task"].update(
+                command=["find", "/workspace", "-exec", "rm", "-f", "{}", ";"],
+                command_classes=["search"],
+            ),
+            "versioned standard inspect command",
         )
 
     def test_rejects_unpinned_or_unsupported_versions(self):

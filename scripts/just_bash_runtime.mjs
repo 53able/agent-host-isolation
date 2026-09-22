@@ -15,14 +15,23 @@ import { Bash } from "just-bash";
 import { createHash } from "node:crypto";
 
 const SAFE_ID = /^[a-z0-9][a-z0-9._-]{0,62}$/;
-const INSPECT_COMMANDS_V1 = new Set([
-  "cat", "ls", "head", "tail", "rg", "grep", "find", "wc", "sed", "awk",
-  "sort", "uniq", "cut", "tr", "jq", "sha256sum", "md5sum", "printf", "echo",
-]);
+const INSPECT_COMMAND_MIN_ARGS_V1 = {
+  cat: 1, ls: 0, head: 1, tail: 1, rg: 2, grep: 2,
+  wc: 1, sort: 1, uniq: 1, jq: 2, sha256sum: 1, md5sum: 1,
+  printf: 1, echo: 0,
+};
 
 function validArgv(value) {
   return Array.isArray(value) && value.length > 0 &&
     value.every((part) => typeof part === "string" && part.length > 0 && !part.includes("\0"));
+}
+
+function allowedInspectArgv(argv) {
+  if (!Object.hasOwn(INSPECT_COMMAND_MIN_ARGS_V1, argv[0])) return false;
+  const minimum = INSPECT_COMMAND_MIN_ARGS_V1[argv[0]];
+  let args = argv.slice(1);
+  if (argv[0] === "jq" && args[0] === "-r") args = args.slice(1);
+  return args.length >= minimum && args.every((part) => !part.startsWith("-"));
 }
 
 function shellQuote(value) {
@@ -90,7 +99,7 @@ export async function executeInspectCommand({
   }
   const command = argv.map(shellQuote).join(" ");
   if (
-    !INSPECT_COMMANDS_V1.has(manifest.task.command[0]) ||
+    !allowedInspectArgv(manifest.task.command) ||
     argv.length !== manifest.task.command.length ||
     argv.some((part, index) => part !== manifest.task.command[index])
   ) {

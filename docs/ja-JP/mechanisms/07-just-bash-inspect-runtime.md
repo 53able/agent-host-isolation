@@ -10,7 +10,7 @@
 
 ## 標準capability
 
-標準profileが公開するのは宣言済みsnapshotだけです。filesystemはin-memory、または作成済みsnapshotだけをrootとするoverlayです。書込みはtask-localなvirtual overlayに残します。repository root、親workspace、home directory、host environment、child process、native binary、control socket、credentialは公開しません。
+標準profileが公開するのは宣言済みsnapshotだけです。filesystemはin-memory、または作成済みsnapshotだけをrootとするoverlayです。書込みはtask-localなvirtual overlayに残します。repository root、親workspace、home directory、host environment、child process、native binary、control socket、credentialは公開しません。Versioned command preflightは少数のinspect commandと位置引数のみを許可し、optionによるsubcommandは拒否します。特に`find`、`awk`、`sed`は引数経由で別command実行や追加書込みが可能なため、標準allowlistに入れません。
 
 Network、JavaScript、Python、custom command、tool invocationは無効です。標準validatorはnetwork attachmentとgrantをすべて拒否します。`network-derived`はgrant宣言が妥当でも現在は拒否します。JustBashにはexact origin、path、method、expiry、転送量、redirect各hopの再評価を実行時に強制するGateway adapterがありません。grant宣言だけでnetwork accessは有効になりません。full Internet accessは常に無効です。その他の追加capabilityも別途仕様化・reviewした派生profileで扱い、実行中の標準attemptを変更しません。
 

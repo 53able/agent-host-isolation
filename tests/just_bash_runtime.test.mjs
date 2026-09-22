@@ -114,6 +114,19 @@ test("exact argv binding and quoting prevent shell injection and undeclared exec
   assert.equal(await bash.fs.exists("/workspace/undeclared"), false);
 });
 
+test("rejects nested command execution in find before touching the virtual filesystem", async () => {
+  const bash = new Bash({ files: { "/workspace/a": "keep" } });
+  const dangerous = ["find", "/workspace", "-exec", "rm", "-f", "{}", ";"];
+  const declared = { ...manifest, task: { ...manifest.task, command: dangerous } };
+  const event = await executeInspectCommand({ bash, argv: dangerous, manifest: declared });
+  assert.equal(event.event, "InspectBlocked");
+  assert.equal(await bash.fs.readFile("/workspace/a"), "keep");
+  const preprocessor = ["rg", "--pre", "python3", "/workspace"];
+  const rgManifest = { ...manifest, task: { ...manifest.task, command: preprocessor } };
+  const preBlocked = await executeInspectCommand({ bash, argv: preprocessor, manifest: rgManifest });
+  assert.equal(preBlocked.event, "InspectBlocked");
+});
+
 test("template hardened defaults support representative inspect commands", async () => {
   const manifest = JSON.parse(readFileSync(new URL("../assets/just-bash-inspect-manifest.template.json", import.meta.url), "utf8"));
   manifest.task.id = "inspect-task";
@@ -134,7 +147,7 @@ test("template hardened defaults support representative inspect commands", async
       maxExtensionCleanupTimeMs: limits.max_extension_cleanup_time_ms,
     },
   });
-  for (const argv of [["rg", "marker", "data.json"], ["jq", "-r", ".value", "data.json"], ["sha256sum", "data.json"], ["sed", "s/marker/checked/", "data.json"], ["printf", "checked"]]) {
+  for (const argv of [["rg", "marker", "data.json"], ["jq", "-r", ".value", "data.json"], ["sha256sum", "data.json"], ["sort", "data.json"], ["printf", "checked"]]) {
     manifest.task.command = argv;
     const event = await executeInspectCommand({ bash, argv, manifest });
     assert.equal(event.exit_code, 0, `${argv.join(" ")}: ${event.result.stderr}`);

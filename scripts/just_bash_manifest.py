@@ -32,14 +32,25 @@ LIMIT_MAXIMA = {
     "max_extension_cleanup_time_ms": 1_000,
 }
 ALLOWED_COMMAND_CLASSES = {"read", "search", "text-processing", "structured-data", "hash", "deterministic-transform"}
-INSPECT_COMMAND_CLASS_V1 = {
-    "cat": "read", "ls": "read", "head": "read", "tail": "read",
-    "rg": "search", "grep": "search", "find": "search",
-    "wc": "text-processing", "sed": "text-processing", "awk": "text-processing",
-    "sort": "text-processing", "uniq": "text-processing", "cut": "text-processing", "tr": "text-processing",
-    "jq": "structured-data", "sha256sum": "hash", "md5sum": "hash",
-    "printf": "deterministic-transform", "echo": "deterministic-transform",
+INSPECT_COMMAND_POLICY_V1 = {
+    "cat": ("read", 1), "ls": ("read", 0), "head": ("read", 1), "tail": ("read", 1),
+    "rg": ("search", 2), "grep": ("search", 2),
+    "wc": ("text-processing", 1), "sort": ("text-processing", 1), "uniq": ("text-processing", 1),
+    "jq": ("structured-data", 2), "sha256sum": ("hash", 1), "md5sum": ("hash", 1),
+    "printf": ("deterministic-transform", 1), "echo": ("deterministic-transform", 0),
 }
+
+
+def _safe_inspect_argv(command: list[str]) -> bool:
+    if not command or any(not isinstance(arg, str) for arg in command):
+        return False
+    policy = INSPECT_COMMAND_POLICY_V1.get(command[0])
+    if policy is None:
+        return False
+    args = command[1:]
+    if command[0] == "jq" and args and args[0] == "-r":
+        args = args[1:]
+    return len(args) >= policy[1] and all(not arg.startswith("-") for arg in args)
 REQUIRED_AUDIT_EVENTS = {"runtime_identity", "command", "stdout_stderr", "filesystem_diff", "artifact", "failure", "limit_violation", "result_gate", "cleanup"}
 REQUIRED_TESTS = {"mount", "credential", "network", "command_path", "resource", "supply_chain", "side_effect"}
 PLACEHOLDER = re.compile(r"(?:replace-with|placeholder|example\.invalid)", re.I)
@@ -140,8 +151,8 @@ def _validate_task(value: Any, errors: list[str]) -> None:
     ):
         errors.append("task.command_classes must be a unique non-empty subset of standard inspect command classes.")
     if isinstance(command, list) and command and isinstance(command[0], str):
-        required_class = INSPECT_COMMAND_CLASS_V1.get(command[0])
-        if required_class is None or not isinstance(classes, list) or required_class not in classes:
+        policy = INSPECT_COMMAND_POLICY_V1.get(command[0])
+        if policy is None or not isinstance(classes, list) or policy[0] not in classes or not _safe_inspect_argv(command):
             errors.append("task.command must be a versioned standard inspect command with its class declared in task.command_classes.")
     artifacts = task.get("expected_artifacts")
     if not isinstance(artifacts, list) or any(not _absolute_guest_path(item) for item in artifacts):

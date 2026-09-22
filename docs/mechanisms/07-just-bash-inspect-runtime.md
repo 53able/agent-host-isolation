@@ -10,7 +10,7 @@ Use `assets/just-bash-inspect-manifest.template.json` for this runtime. Manifest
 
 ## Standard capabilities
 
-The standard profile exposes only the declared snapshot to an in-memory filesystem or an overlay rooted at the already-created snapshot. Writes remain in a task-local virtual overlay. The repository root, parent workspace, home directory, host environment, child processes, native binaries, control sockets, and credentials are not exposed.
+The standard profile exposes only the declared snapshot to an in-memory filesystem or an overlay rooted at the already-created snapshot. Writes remain in a task-local virtual overlay. The repository root, parent workspace, home directory, host environment, child processes, native binaries, control sockets, and credentials are not exposed. The versioned command preflight allows a small set of inspection commands with positional arguments; option-led subcommands are denied. In particular, `find`, `awk`, and `sed` are not in the standard allowlist because their argument languages can delegate execution or perform additional writes.
 
 Network, JavaScript, Python, custom commands, and tool invocation are disabled. The standard validator rejects every network attachment and grant. `network-derived` is currently rejected, including when its grant declaration is well formed: no request-time gateway adapter enforces exact origin, path, method, expiry, byte limits, and redirect-hop revalidation for JustBash. Declaring a grant does not enable network access. Full Internet access is never valid. Other optional capabilities require separately specified and reviewed derived profiles; they never mutate a running standard attempt.
 
