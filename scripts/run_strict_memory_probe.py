@@ -20,6 +20,11 @@ from manifest_v2 import validate_v2
 from run_apple_container_smoke import build_manifest, cleanup, run, SNAPSHOT
 
 
+def create_tracked_volume(manifest: dict, action: str, volume_key: str, volumes: list[str]) -> None:
+    volumes.append(manifest["runtime"][volume_key]["volume"])
+    run(compile_command(manifest, action))
+
+
 def cleanup_volumes(manifest: dict, volumes: list[str]) -> list[str]:
     errors: list[str] = []
     for volume in volumes:
@@ -91,8 +96,7 @@ def execute() -> dict:
                 raise RuntimeError("probe input must contain regular files only")
             (snapshot / file.name).write_bytes(file.read_bytes())
         for action, volume_key in (("create-scratch-volume", "scratch"), ("create-output-volume", "output")):
-            volumes.append(manifest["runtime"][volume_key]["volume"])
-            run(compile_command(manifest, action))
+            create_tracked_volume(manifest, action, volume_key, volumes)
         created = True
         run(compile_command(manifest, "create"))
         inspected = json.loads(run(compile_command(manifest, "inspect")).stdout)[0]

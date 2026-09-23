@@ -35,6 +35,14 @@ strict_memory_probe = load_script("run_strict_memory_probe")
 
 
 class StrictMemoryProbeCleanupTests(unittest.TestCase):
+    def test_tracks_volume_before_failed_create(self):
+        manifest = valid_manifest()
+        volumes = []
+        with patch.object(strict_memory_probe, "run", side_effect=RuntimeError("CLI failed")):
+            with self.assertRaisesRegex(RuntimeError, "CLI failed"):
+                strict_memory_probe.create_tracked_volume(manifest, "create-scratch-volume", "scratch", volumes)
+        self.assertEqual(volumes, [manifest["runtime"]["scratch"]["volume"]])
+
     def test_deletes_only_volume_with_matching_ownership_labels(self):
         manifest = valid_manifest()
         volume = manifest["runtime"]["scratch"]["volume"]
