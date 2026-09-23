@@ -193,7 +193,7 @@ export function createInspectRuntime({ manifest, snapshotFiles }) {
     defenseInDepth: { enabled: "auto", auditMode: false },
   });
   const runtime = Object.freeze(Object.create(null));
-  trustedRuntimes.set(runtime, { bash, manifest: boundManifest, identity, phase: "ready" });
+  trustedRuntimes.set(runtime, { bash, manifest: boundManifest, identity, phase: "ready", abortController: new AbortController() });
   return runtime;
 }
 
@@ -212,6 +212,34 @@ export async function inspectRuntimeFilesystemSnapshot(runtime) {
     }
   }
   return snapshot;
+}
+
+/** Host controller only: stop this attempt when inspection reveals a strict memory requirement. */
+export async function blockInspectForStrictMemory({ runtime }) {
+  const state = trustedRuntimes.get(runtime);
+  if (!state) throw new TypeError("trusted inspect runtime is required");
+  if (state.phase !== "ready" && state.phase !== "executing") {
+    throw new TypeError(`inspect runtime attempt is terminal (${state.phase})`);
+  }
+  const command = state.command ?? state.manifest.task.command.map(shellQuote).join(" ");
+  const event = {
+    event: INSPECT_BLOCKED_EVENT,
+    outcome: "blocked",
+    command,
+    exit_code: INSPECT_BLOCKED_EXIT_CODE,
+    source: state.identity,
+    missing_capability: "strict-memory",
+    host_shell_fallback: false,
+    escalation: { automatic: false, requested: false },
+    result: { exitCode: INSPECT_BLOCKED_EXIT_CODE, stdout: "", stderr: "strict memory requirement discovered by host controller" },
+  };
+  state.strictMemoryEvent = event;
+  state.phase = "blocked";
+  state.abortController.abort();
+  if (state.execution) {
+    try { await state.execution; } catch { /* The blocked event supersedes the aborted command result. */ }
+  }
+  return event;
 }
 
 /**
@@ -234,6 +262,9 @@ export async function executeInspectCommand({
   if (state.phase !== "ready") throw new TypeError(`inspect runtime attempt is terminal (${state.phase})`);
   const { bash, manifest, identity } = state;
   requireNonEmptyString(missingCapability, "missingCapability");
+  if (missingCapability === "strict-memory") {
+    throw new TypeError("strict-memory requires the host controller stop path");
+  }
   if (!validArgv(argv) || !validArgv(manifest.task?.command)) {
     throw new TypeError("requested and manifest task.command must be non-empty argv arrays");
   }
@@ -258,13 +289,18 @@ export async function executeInspectCommand({
   }
 
   state.phase = "executing";
+  state.command = command;
   let result;
   try {
-    result = await Reflect.apply(BASH_EXEC, bash, [command, signal ? { signal } : undefined]);
+    const executionSignal = signal ? AbortSignal.any([signal, state.abortController.signal]) : state.abortController.signal;
+    state.execution = Reflect.apply(BASH_EXEC, bash, [command, { signal: executionSignal }]);
+    result = await state.execution;
   } catch (error) {
+    if (state.strictMemoryEvent) return state.strictMemoryEvent;
     state.phase = "failed";
     throw error;
   }
+  if (state.strictMemoryEvent) return state.strictMemoryEvent;
   if (
     !result || typeof result !== "object" ||
     !Number.isInteger(result.exitCode) ||
