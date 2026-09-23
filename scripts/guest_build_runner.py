@@ -147,8 +147,8 @@ def _reader_output(manifest: dict[str, Any]) -> bytes:
             labels = _inspect_labels(reader, manifest)
             if labels is not None:
                 run(["container", "stop", "--time", "2", reader], timeout=10, check=False)
-                deleted = run(["container", "delete", reader], timeout=10, check=False)
-                if deleted.returncode != 0 or _inspect_labels(reader, manifest) is not None:
+                run(["container", "delete", reader], timeout=10, check=False)
+                if _inspect_labels(reader, manifest) is not None:
                     raise CleanupError("artifact reader cleanup failed")
         except (OSError, subprocess.SubprocessError, ValueError, RuntimeError, KeyError, IndexError) as exc:
             raise CleanupError(f"artifact reader cleanup failed: {exc}") from exc

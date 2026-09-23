@@ -27,6 +27,30 @@ REQUIRED_CHECKS = {
     "mount", "credential", "network", "command_path", "supply_chain", "side_effect", "resource",
 }
 IMPORT_ROOT = Path("/var/tmp/agent-host-isolation/imports")
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def verify_host_event(event: dict[str, Any]) -> None:
+    source = event.get("source", {})
+    task_id = source.get("task_id")
+    attempt_id = source.get("attempt_id")
+    if not isinstance(task_id, str) or not isinstance(attempt_id, str):
+        raise ValueError("strict-memory event lacks a source attempt")
+    git_dir = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=ROOT,
+                             capture_output=True, text=True, check=True).stdout.strip()
+    claim_key = hashlib.sha256((task_id + "\0" + attempt_id).encode()).hexdigest()
+    claim = (ROOT / git_dir).resolve() / "agent-host-isolation" / "just-bash-attempts-v1" / claim_key
+    metadata = claim.lstat()
+    if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.getuid() or metadata.st_mode & 0o077:
+        raise ValueError("source attempt claim is not private and owned")
+    event_path = claim / "strict-memory-event.json"
+    event_metadata = event_path.lstat()
+    if not stat.S_ISREG(event_metadata.st_mode) or event_metadata.st_uid != os.getuid() or event_metadata.st_mode & 0o077:
+        raise ValueError("strict-memory event record is not private and owned")
+    if json.loads(event_path.read_text()) != event:
+        raise ValueError("strict-memory event differs from the host-issued record")
+    if (claim / "manifest-hash").read_text().strip() != source.get("manifest_hash"):
+        raise ValueError("source claim manifest hash differs from the event")
 
 
 @contextmanager
@@ -34,9 +58,9 @@ def claim_dispatch_attempt(target: dict[str, Any]):
     attempt = target["task"].get("attempt_id")
     if not attempt:
         raise ValueError("automatic target requires an attempt ID")
-    git_dir = subprocess.run(["git", "rev-parse", "--git-common-dir"], capture_output=True,
+    git_dir = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=ROOT, capture_output=True,
                              text=True, check=True).stdout.strip()
-    root = Path(git_dir).resolve() / "agent-host-isolation" / "apple-dispatch-attempts-v1"
+    root = (ROOT / git_dir).resolve() / "agent-host-isolation" / "apple-dispatch-attempts-v1"
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
     metadata = root.lstat()
     if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.getuid() or metadata.st_mode & 0o077:
@@ -149,6 +173,7 @@ def dispatch(source: dict[str, Any], event: dict[str, Any], target: dict[str, An
     request = build_escalation_request(source, event, target, "audit/strict-memory-dispatch.json")
     if request["missing_capability"] != "strict-memory":
         raise ValueError("automatic dispatch accepts only strict-memory InspectBlocked")
+    verify_host_event(event)
     if target["task"]["goal"] != source["task"]["goal"]:
         raise ValueError("automatic target must retain the source task goal")
     if target["workspace"]["repository"] != source["workspace"]["repository"]:

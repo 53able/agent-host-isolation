@@ -136,6 +136,7 @@ function claimAttempt(identity) {
     throw error;
   }
   writeFileSync(join(claim, "manifest-hash"), `${identity.manifest_hash}\n`, { flag: "wx", mode: 0o600 });
+  return claim;
 }
 
 /** Validate and privately construct the standard, networkless inspect runtime. */
@@ -179,7 +180,7 @@ export function createInspectRuntime({ manifest, snapshotFiles }) {
     }
     files[`/workspace/${entry.path}`] = content;
   }
-  claimAttempt(identity);
+  const claim = claimAttempt(identity);
   const bash = new Bash({
     files,
     cwd: "/workspace",
@@ -193,7 +194,7 @@ export function createInspectRuntime({ manifest, snapshotFiles }) {
     defenseInDepth: { enabled: "auto", auditMode: false },
   });
   const runtime = Object.freeze(Object.create(null));
-  trustedRuntimes.set(runtime, { bash, manifest: boundManifest, identity, phase: "ready", abortController: new AbortController() });
+  trustedRuntimes.set(runtime, { bash, manifest: boundManifest, identity, claim, phase: "ready", abortController: new AbortController() });
   return runtime;
 }
 
@@ -235,11 +236,13 @@ export async function blockInspectForStrictMemory({ runtime }) {
   };
   state.strictMemoryEvent = event;
   state.phase = "blocked";
+  const settled = state.execution ? state.execution.then(() => {}, () => {}) : Promise.resolve();
+  state.blockPromise = settled.then(() => {
+    writeFileSync(join(state.claim, "strict-memory-event.json"), JSON.stringify(event), { flag: "wx", mode: 0o600 });
+    return event;
+  });
   state.abortController.abort();
-  if (state.execution) {
-    try { await state.execution; } catch { /* The blocked event supersedes the aborted command result. */ }
-  }
-  return event;
+  return state.blockPromise;
 }
 
 /**
@@ -296,11 +299,11 @@ export async function executeInspectCommand({
     state.execution = Reflect.apply(BASH_EXEC, bash, [command, { signal: executionSignal }]);
     result = await state.execution;
   } catch (error) {
-    if (state.strictMemoryEvent) return state.strictMemoryEvent;
+    if (state.strictMemoryEvent) return state.blockPromise;
     state.phase = "failed";
     throw error;
   }
-  if (state.strictMemoryEvent) return state.strictMemoryEvent;
+  if (state.strictMemoryEvent) return state.blockPromise;
   if (
     !result || typeof result !== "object" ||
     !Number.isInteger(result.exitCode) ||

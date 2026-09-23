@@ -116,7 +116,9 @@ test("controller-issued strict-memory event creates a manual request for a new g
 import json,sys
 sys.path.insert(0,"scripts")
 from just_bash_contract import build_escalation_request
+from strict_memory_dispatch import verify_host_event
 data=json.load(sys.stdin)
+verify_host_event(data["event"])
 print(json.dumps(build_escalation_request(data["source"],data["event"],data["target"],"audit/strict-memory.json")))
 `], { input: JSON.stringify({ source: manifest, event, target }), encoding: "utf8" });
   assert.equal(generated.status, 0, generated.stderr);
