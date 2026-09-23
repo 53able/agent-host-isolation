@@ -2,9 +2,10 @@
   "manifest_version": 2,
   "task": {
     "id": "just-bash-adversarial-20260923",
-    "attempt_id": "attempt-6e375ac7b196fe99245d300a",
+    "attempt_id": "attempt-e6a56fa560627a636162b17a",
     "goal": "verify the standard JustBash inspect embedding with denial-oriented adversarial probes",
     "profile": "inspect",
+    "strict_memory": false,
     "command": [
       "rg",
       "allowed",
@@ -23,14 +24,13 @@
     "lifecycle": {
       "stop_timeout_seconds": 5,
       "checkpoint": "application-level"
-    },
-    "strict_memory": false
+    }
   },
   "workspace": {
     "repository": {
       "url": "https://github.com/53able/agent-host-isolation.git",
-      "commit": "d96fe7e457387cc34c7c82021fb04b3eb47b9a63",
-      "tree_hash": "047ae764c2190735b702c84a1f728bfc62709abb"
+      "commit": "62da4950429fc99a43fb3ef4e5368219d8810803",
+      "tree_hash": "67b13b0776faf3aefbc8206ef4654f2d4fbc83ab"
     },
     "snapshot": {
       "id": "just-bash-adversarial-input",
@@ -50,7 +50,7 @@
     "toolchain": {
       "node": "24.13.1",
       "just-bash": "3.4.2",
-      "agent-host-isolation": "0.1.0"
+      "agent-host-isolation": "0.2.0"
     },
     "lockfile": {
       "path": "package-lock.json",
@@ -60,7 +60,7 @@
     "skills": [
       {
         "id": "agent-host-isolation",
-        "version": "0.1.0"
+        "version": "0.2.0"
       }
     ]
   },
@@ -80,7 +80,7 @@
     "kind": "just-bash",
     "package_version": "3.4.2",
     "node_version": "24.13.1",
-    "agent_host_isolation_version": "0.1.0",
+    "agent_host_isolation_version": "0.2.0",
     "profile_variant": "standard",
     "execution_limit_profile": "hardened",
     "javascript": false,

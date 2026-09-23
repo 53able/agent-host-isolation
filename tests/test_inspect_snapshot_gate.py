@@ -23,11 +23,11 @@ class SnapshotGateTests(unittest.TestCase):
         value["workspace"]["repository"].update(url="https://github.com/53able/agent-host-isolation.git", commit="b" * 40, tree_hash="c" * 40)
         value["workspace"]["snapshot"].update(id="snapshot-imported")
         value["workspace"]["snapshot"]["paths"] = [{"path": "data.json", "type": "regular", "size_bytes": 0, "hash": "sha256:" + "0" * 64}]
-        versions = {"node": "22.18.0", "just-bash": "3.4.2", "agent-host-isolation": "0.1.0"}
+        versions = {"node": "22.18.0", "just-bash": "3.4.2", "agent-host-isolation": "0.2.0"}
         value["workspace"]["toolchain"] = versions
         value["workspace"]["lockfile"]["sha256"] = "sha256:" + "d" * 64
-        value["workspace"]["skills"] = [{"id": "agent-host-isolation", "version": "0.1.0"}]
-        value["runtime"].update(package_version="3.4.2", node_version="22.18.0", agent_host_isolation_version="0.1.0")
+        value["workspace"]["skills"] = [{"id": "agent-host-isolation", "version": "0.2.0"}]
+        value["runtime"].update(package_version="3.4.2", node_version="22.18.0", agent_host_isolation_version="0.2.0")
         value["resultGate"]["audit_record"] = "audit/import.json"
         return value
 

@@ -35,11 +35,11 @@ def manifest():
     value["workspace"]["repository"].update(url="https://github.com/53able/agent-host-isolation.git", commit="b" * 40, tree_hash="c" * 40)
     value["workspace"]["snapshot"].update(id="snapshot-inspect", hash="sha256:" + "a" * 64)
     value["workspace"]["snapshot"]["paths"][0]["hash"] = "sha256:" + "a" * 64
-    versions = {"node": "22.18.0", "just-bash": "3.4.2", "agent-host-isolation": "0.1.0"}
+    versions = {"node": "22.18.0", "just-bash": "3.4.2", "agent-host-isolation": "0.2.0"}
     value["workspace"]["toolchain"] = versions
     value["workspace"]["lockfile"]["sha256"] = "sha256:" + "d" * 64
-    value["workspace"]["skills"] = [{"id": "agent-host-isolation", "version": "0.1.0"}]
-    value["runtime"].update(profile_variant="network-derived", package_version="3.4.2", node_version="22.18.0", agent_host_isolation_version="0.1.0")
+    value["workspace"]["skills"] = [{"id": "agent-host-isolation", "version": "0.2.0"}]
+    value["runtime"].update(profile_variant="network-derived", package_version="3.4.2", node_version="22.18.0", agent_host_isolation_version="0.2.0")
     value["gateway"].update(task_network="inspect-task-network", grants=[{
         "task_id": "inspect-task", "attempt_id": "attempt-1", "origin": "https://api.example.com:443",
         "port": 443, "path_prefix": "/v1/data/", "methods": ["GET", "HEAD"],

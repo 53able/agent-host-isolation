@@ -107,7 +107,7 @@ test("controller-issued strict-memory event creates a manual request for a new g
   target.workspace.image = { reference: "ghcr.io/example/agent-build:1.0", digest: digest("image") };
   target.workspace.toolchain = { node: process.versions.node };
   target.workspace.lockfile = { path: "package-lock.json", sha256: digest("lockfile") };
-  target.workspace.skills = [{ id: "agent-host-isolation", version: "v0.1.0" }];
+  target.workspace.skills = [{ id: "agent-host-isolation", version: "v0.2.0" }];
   target.model = { provider: "none", id: "none", credential_broker_ref: null };
   target.runtime.scratch.volume = `${manifest.task.id}-scratch`;
   target.runtime.output.volume = `${manifest.task.id}-output`;
