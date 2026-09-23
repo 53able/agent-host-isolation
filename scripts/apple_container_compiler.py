@@ -138,9 +138,13 @@ def compile_command(
         return _volume_create(manifest, "scratch")
     if action == "create-output-volume":
         return _volume_create(manifest, "output")
-    if action not in {"create", "run", "create-supervised"}:
+    if action not in {"create", "run", "create-probe", "create-supervised"}:
         raise ValueError(f"unsupported action: {action}")
     supervised = action == "create-supervised"
+    if action in {"create", "run"} and task["strict_memory"]:
+        raise ValueError("strict-memory task requires the supervised create path")
+    if action == "create-probe" and not task["strict_memory"]:
+        raise ValueError("diagnostic create requires a strict-memory probe")
     if supervised:
         disk_bytes = manifest["resources"]["disk_bytes"]
         if disk_bytes["enforced_by"] != "apple-container-tmpfs":
@@ -158,7 +162,7 @@ def compile_command(
     resources = manifest["resources"]
     labels = expected_labels(manifest)
     argv = [
-        "container", "create" if supervised else action,
+        "container", "create" if action in {"create-supervised", "create-probe"} else action,
         "--name", task_id,
         "--read-only",
         "--cap-drop", "ALL",
@@ -210,7 +214,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
     parser.add_argument("action", choices=(
-        "create-scratch-volume", "create-output-volume", "create", "run", "create-supervised",
+        "create-scratch-volume", "create-output-volume", "create", "run", "create-probe", "create-supervised",
         "start", "start-attached", "exec-task", "exec-quiescence", "exec-output",
         "stop", "delete", "inspect", "logs", "boot-logs", "stats",
     ))

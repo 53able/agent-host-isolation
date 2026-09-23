@@ -434,6 +434,15 @@ class AppleContainerCompilerTests(unittest.TestCase):
         self.assertEqual(compiler.compile_command(manifest, "exec-output", observed_labels=labels)[-6:],
                          ["tar", "-C", "/output", "-cf", "-", "."])
 
+    def test_strict_memory_cannot_use_named_volume_create_path(self):
+        manifest = valid_manifest()
+        manifest["task"]["strict_memory"] = True
+        with self.assertRaisesRegex(ValueError, "supervised create path"):
+            compiler.compile_command(manifest, "create")
+        with self.assertRaisesRegex(ValueError, "supervised create path"):
+            compiler.compile_command(manifest, "run")
+        self.assertEqual(compiler.compile_command(manifest, "create-probe")[:2], ["container", "create"])
+
     def test_unrecognized_action_is_not_forwarded(self):
         with self.assertRaisesRegex(ValueError, "unsupported action"):
             compiler.compile_command(valid_manifest(), "exec")

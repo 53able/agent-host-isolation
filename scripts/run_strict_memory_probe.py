@@ -98,7 +98,7 @@ def execute() -> dict:
         for action, volume_key in (("create-scratch-volume", "scratch"), ("create-output-volume", "output")):
             create_tracked_volume(manifest, action, volume_key, volumes)
         created = True
-        run(compile_command(manifest, "create"))
+        run(compile_command(manifest, "create-probe"))
         inspected = json.loads(run(compile_command(manifest, "inspect")).stdout)[0]
         labels = inspected["configuration"]["labels"]
         evidence["configured_memory_bytes"] = inspected["configuration"]["resources"]["memoryInBytes"]
