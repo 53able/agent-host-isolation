@@ -48,7 +48,7 @@ npx skills add 53able/agent-host-isolation
 releaseはGit tagで管理します。versionを固定してinstallする場合:
 
 ```bash
-npx skills add '53able/agent-host-isolation#v0.1.0'
+npx skills add '53able/agent-host-isolation#v0.2.0'
 ```
 
 projectへのinstallでは、sourceと選択したGit refが`skills-lock.json`へ記録されます。同じskill versionを再現する必要があるprojectでは、このfileをcommitします。

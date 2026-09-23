@@ -51,7 +51,7 @@ npx skills add 53able/agent-host-isolation
 Releases use Git tags. To install a fixed version:
 
 ```bash
-npx skills add '53able/agent-host-isolation#v0.1.0'
+npx skills add '53able/agent-host-isolation#v0.2.0'
 ```
 
 A project installation records the source and selected Git ref in `skills-lock.json`. Commit that file when the project must reproduce the same skill version.

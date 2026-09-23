@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## v0.2.0 - 2026-09-23
+
+### Breaking changes
+
+- Legacy v1 manifests are rejected. Recreate them from the Manifest v2 templates and validate them before execution.
 
 ### Added
 
@@ -16,7 +20,6 @@
 
 ### Changed
 
-- Reject legacy v1 manifests instead of treating them as executable configurations.
 - Decouple the logical skill identity from its physical installation directory in tests and deployment guidance.
 - Validate pinned runtime identities, minimum snapshots, optional capabilities, scoped network grants, hardened resource limits, result-gate evidence, and Apple Container escalation requests.
 - Keep direct `network-derived` JustBash execution disabled; use the one-shot host broker and a new standard `inspect` attempt for approved fetched bytes.
