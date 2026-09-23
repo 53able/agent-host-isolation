@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const VALIDATOR = fileURLToPath(new URL("./validate-manifest.py", import.meta.url));
+const FETCH_GATE = fileURLToPath(new URL("./inspect_snapshot_gate.py", import.meta.url));
 const trustedRuntimes = new WeakMap();
 const BASH_EXEC = Bash.prototype.exec;
 export const AGENT_HOST_ISOLATION_VERSION = "0.1.0";
@@ -195,6 +196,47 @@ export function createInspectRuntime({ manifest, snapshotFiles }) {
   const runtime = Object.freeze(Object.create(null));
   trustedRuntimes.set(runtime, { bash, manifest: boundManifest, identity, phase: "ready" });
   return runtime;
+}
+
+/**
+ * Import one host broker result through the Python result gate, then construct
+ * the ordinary standard networkless runtime. This is the only fetch-to-runtime
+ * bridge; createInspectRuntime remains available for local snapshots.
+ */
+export function createInspectRuntimeFromFetch({ sourceManifest, sourceRecord, body, targetManifest, auditStorePath }) {
+  if (!(body instanceof Uint8Array) && !Buffer.isBuffer(body)) {
+    throw new TypeError("fetched body must be bytes");
+  }
+  requireNonEmptyString(auditStorePath, "auditStorePath");
+  const gate = spawnSync("python3", [FETCH_GATE], {
+    cwd: ROOT,
+    input: JSON.stringify({
+      source_manifest: sourceManifest,
+      source_record: sourceRecord,
+      body_base64: Buffer.from(body).toString("base64"),
+      target_manifest: targetManifest,
+      audit_store: auditStorePath,
+    }),
+    encoding: "utf8",
+    timeout: 5_000,
+  });
+  if (gate.error || gate.status !== 0) {
+    throw new TypeError(`fetch result gate denied: ${gate.stderr.trim() || gate.error?.message || "invalid gate response"}`);
+  }
+  let approved;
+  try {
+    approved = JSON.parse(gate.stdout);
+  } catch (error) {
+    throw new TypeError(`fetch result gate returned invalid JSON: ${error.message}`);
+  }
+  if (approved.approved !== true || !approved.manifest || !approved.snapshotFiles) {
+    throw new TypeError("fetch result gate did not approve a runtime input");
+  }
+  const snapshotFiles = Object.fromEntries(Object.entries(approved.snapshotFiles).map(([path, encoded]) => {
+    if (typeof encoded !== "string") throw new TypeError("fetch result gate returned invalid snapshot bytes");
+    return [path, Buffer.from(encoded, "base64")];
+  }));
+  return createInspectRuntime({ manifest: approved.manifest, snapshotFiles });
 }
 
 /** Read-only virtual-filesystem evidence without exposing the Bash instance. */
