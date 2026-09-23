@@ -17,7 +17,7 @@ TOP_LEVEL_KEYS = {
 RESOURCE_ENFORCERS = {
     "cpu": {"apple-container"},
     "memory_bytes": {"apple-container"},
-    "disk_bytes": {"apple-container-volume"},
+    "disk_bytes": {"apple-container-volume", "apple-container-tmpfs"},
     "processes": {"guest-ulimit"},
     "open_files": {"guest-ulimit"},
     "log_bytes": {"host-watchdog"},

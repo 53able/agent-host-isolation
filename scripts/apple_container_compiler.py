@@ -20,6 +20,9 @@ def canonical_hash(value: Any) -> str:
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
+MIB = 1024 * 1024
+
+
 def expected_labels(manifest: dict[str, Any]) -> dict[str, str]:
     return {
         "org.agent-host-isolation.task-id": manifest["task"]["id"],
@@ -93,13 +96,32 @@ def compile_command(
 
     task = manifest["task"]
     task_id = task["id"]
-    existing_resource_actions = {"start", "start-attached", "stop", "delete", "logs", "boot-logs", "stats"}
+    existing_resource_actions = {"start", "start-attached", "exec-task", "exec-quiescence", "exec-output", "stop", "delete", "logs", "boot-logs", "stats"}
     if action in existing_resource_actions:
         require_resource_ownership(manifest, observed_labels)
     if action == "start":
         return ["container", "start", task_id]
     if action == "start-attached":
         return ["container", "start", "--attach", task_id]
+    if action == "exec-task":
+        if manifest["resources"]["disk_bytes"]["enforced_by"] != "apple-container-tmpfs":
+            raise ValueError("supervised task requires tmpfs disk enforcement")
+        processes = manifest["resources"]["processes"]["limit"]
+        files = manifest["resources"]["open_files"]["limit"]
+        limits = (f"ulimit -Su {processes} && ulimit -Hu {processes} && "
+                  f"ulimit -Sn {files} && ulimit -Hn {files} && exec \"$@\"")
+        return ["container", "exec", "--uid", "1000", "--gid", "1000", task_id,
+                "sh", "-c", limits, "ahi-task", *task["command"]]
+    if action == "exec-output":
+        if manifest["resources"]["disk_bytes"]["enforced_by"] != "apple-container-tmpfs":
+            raise ValueError("supervised output requires tmpfs disk enforcement")
+        return ["container", "exec", "--uid", "0", "--gid", "0", task_id,
+                "tar", "-C", manifest["runtime"]["output"]["target"], "-cf", "-", "."]
+    if action == "exec-quiescence":
+        if manifest["resources"]["disk_bytes"]["enforced_by"] != "apple-container-tmpfs":
+            raise ValueError("supervised quiescence requires tmpfs disk enforcement")
+        return ["container", "exec", "--uid", "0", "--gid", "0", task_id,
+                "sh", "-c", "awk '$1 == \"Uid:\" && $2 == 1000 { exit 1 }' /proc/[0-9]*/status"]
     if action == "stop":
         return ["container", "stop", "--time", str(task["lifecycle"]["stop_timeout_seconds"]), task_id]
     if action == "delete":
@@ -116,8 +138,17 @@ def compile_command(
         return _volume_create(manifest, "scratch")
     if action == "create-output-volume":
         return _volume_create(manifest, "output")
-    if action not in {"create", "run"}:
+    if action not in {"create", "run", "create-supervised"}:
         raise ValueError(f"unsupported action: {action}")
+    supervised = action == "create-supervised"
+    if supervised:
+        disk_bytes = manifest["resources"]["disk_bytes"]
+        if disk_bytes["enforced_by"] != "apple-container-tmpfs":
+            raise ValueError("supervised task requires tmpfs disk enforcement")
+        output_mib = (manifest["resultGate"]["artifact_import"]["max_bytes"] + MIB - 1) // MIB + 1
+        scratch_mib = disk_bytes["limit"] // MIB - output_mib - 1  # reserve 1 MiB for /dev/shm
+        if scratch_mib < 1:
+            raise ValueError("disk budget must leave space for scratch and output")
 
     require_snapshot_source(manifest)
     require_network_attestation(manifest, network_attestation)
@@ -127,7 +158,7 @@ def compile_command(
     resources = manifest["resources"]
     labels = expected_labels(manifest)
     argv = [
-        "container", action,
+        "container", "create" if supervised else action,
         "--name", task_id,
         "--read-only",
         "--cap-drop", "ALL",
@@ -139,15 +170,20 @@ def compile_command(
         "--label", f"org.agent-host-isolation.manifest-hash={labels['org.agent-host-isolation.manifest-hash']}",
         "--label", f"org.agent-host-isolation.workspace-hash={labels['org.agent-host-isolation.workspace-hash']}",
         "--mount", _mount("bind", workspace["snapshot"]["source"], workspace["snapshot"]["target"], readonly=True),
-        "--mount", _mount("volume", runtime["scratch"]["volume"], runtime["scratch"]["target"]),
-        "--mount", _mount("volume", runtime["output"]["volume"], runtime["output"]["target"]),
         "--network", manifest["gateway"]["task_network"],
     ]
+    if supervised:
+        argv.extend(["--shm-size", "1M",
+                     "--mount", f"type=tmpfs,target={runtime['scratch']['target']},size={scratch_mib}M,mode=1777",
+                     "--mount", f"type=tmpfs,target={runtime['output']['target']},size={output_mib}M,mode=1777"])
+    else:
+        argv.extend(["--mount", _mount("volume", runtime["scratch"]["volume"], runtime["scratch"]["target"]),
+                     "--mount", _mount("volume", runtime["output"]["volume"], runtime["output"]["target"])])
     for key in sorted(runtime["environment"]):
         argv.extend(["--env", f"{key}={runtime['environment'][key]}"])
     image = workspace["image"]
     argv.append(f"{image['reference'].split('@', 1)[0]}@{image['digest']}")
-    argv.extend(task["command"])
+    argv.extend(["sleep", "120"] if supervised else task["command"])
     return argv
 
 
@@ -174,7 +210,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
     parser.add_argument("action", choices=(
-        "create-scratch-volume", "create-output-volume", "create", "run", "start", "start-attached",
+        "create-scratch-volume", "create-output-volume", "create", "run", "create-supervised",
+        "start", "start-attached", "exec-task", "exec-quiescence", "exec-output",
         "stop", "delete", "inspect", "logs", "boot-logs", "stats",
     ))
     parser.add_argument("--resource-labels", type=Path)

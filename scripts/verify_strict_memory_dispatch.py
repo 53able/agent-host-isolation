@@ -20,15 +20,18 @@ from run_apple_container_smoke import SNAPSHOT, build_manifest, run
 
 
 CASES = {
-    "full_agent_path": (["sh", "-c", "printf passed > /output/result.txt"], 10, 1_048_576, ["/output/result.txt"]),
+    "full_agent_path": (["sh", "-c", "id; printf passed > /output/result.txt"], 10, 1_048_576, ["/output/result.txt"]),
     "wall_time": (["sh", "-c", "sleep 10"], 2, 1_048_576, []),
     "log": (["sh", "-c", "yes x"], 5, 32_768, []),
     "disk": (["sh", "-c", "if dd if=/dev/zero of=/scratch/big bs=1M count=40; then echo disk-limit-bypassed; exit 3; else echo disk-limit-denied; fi"], 5, 1_048_576, []),
-    "process": (["sh", "-c", "n=0; for i in $(seq 1 40); do sleep 2 & kill -0 $! && n=$((n+1)); done; echo spawned:$n; if [ $n -lt 40 ]; then echo process-limit-denied; exit 0; else echo process-limit-bypassed; exit 3; fi"], 5, 1_048_576, []),
+    "output_disk": (["sh", "-c", "if dd if=/dev/zero of=/output/big bs=1M count=4; then echo output-limit-bypassed; exit 3; else rm -f /output/big; echo output-limit-denied; fi"], 5, 1_048_576, []),
+    "shm_disk": (["sh", "-c", "if dd if=/dev/zero of=/dev/shm/big bs=1M count=4; then echo shm-limit-bypassed; exit 3; else echo shm-limit-denied; fi"], 5, 1_048_576, []),
+    "process": (["sh", "-c", "ulimit -u; n=0; for i in $(seq 1 40); do sleep 2 & kill -0 $! && n=$((n+1)); done; echo spawned:$n; if [ $n -lt 40 ]; then echo process-limit-denied; exit 0; else echo process-limit-bypassed; exit 3; fi"], 5, 1_048_576, []),
     "artifact_symlink": (["sh", "-c", "ln -s /workspace/allowed.txt /output/result.txt"], 5, 1_048_576, ["/output/result.txt"]),
     "artifact_unexpected": (["sh", "-c", "printf unexpected > /output/extra.txt"], 5, 1_048_576, []),
-    "artifact_oversize": (["sh", "-c", "head -c 1048577 /dev/zero > /output/result.txt"], 5, 1_048_576, ["/output/result.txt"]),
+    "artifact_oversize": (["sh", "-c", "head -c 1048576 /dev/zero > /output/result.txt; printf x >> /output/result.txt"], 5, 1_048_576, ["/output/result.txt"]),
     "artifact_partial": (["sh", "-c", "printf partial > /output/result.txt; exit 7"], 5, 1_048_576, ["/output/result.txt"]),
+    "quiescence": (["sh", "-c", "printf partial > /output/result.txt; sleep 20 >/dev/null 2>&1 &"], 5, 1_048_576, ["/output/result.txt"]),
 }
 
 
@@ -66,6 +69,7 @@ def execute(memory_evidence: Path) -> dict:
         task_id = f"ahi-verify-{case.replace('_', '-')[:8]}-{uuid.uuid4().hex[:7]}"
         manifest = build_manifest(task_id)
         manifest["task"].update(strict_memory=True, command=command, expected_artifacts=artifacts)
+        manifest["resources"]["disk_bytes"]["enforced_by"] = "apple-container-tmpfs"
         manifest["resources"]["wall_time_seconds"]["limit"] = wall_seconds
         manifest["resources"]["log_bytes"]["limit"] = log_bytes
         if case == "full_agent_path":
@@ -85,11 +89,11 @@ def execute(memory_evidence: Path) -> dict:
         finally:
             shutil.rmtree(snapshot)
         record["cases"][case] = {"manifest_hash": outcome["manifest_hash"], "outcome": outcome}
-        clean = not outcome["cleanup_errors"] and outcome.get("container_absent") and len(outcome.get("volumes_absent", {})) == 2 and all(outcome["volumes_absent"].values())
+        clean = not outcome["cleanup_errors"] and outcome.get("container_absent") and outcome.get("volumes_absent") == {}
         if not clean:
             record["checks"]["cleanup"] = "blocked"
         if case == "full_agent_path":
-            passed = outcome["status"] == "passed" and artifact_ok
+            passed = outcome["status"] == "passed" and artifact_ok and "uid=1000" in outcome.get("stdout", "")
         elif case in {"wall_time", "log"}:
             expected = "host wall-time limit exceeded" if case == "wall_time" else "host output limit exceeded"
             passed = outcome.get("watchdog_violation") == expected and outcome["status"] == "blocked"
@@ -101,11 +105,19 @@ def execute(memory_evidence: Path) -> dict:
             passed = outcome["status"] == "blocked" and "byte limit" in outcome.get("error", "")
         elif case == "artifact_partial":
             passed = outcome["status"] == "blocked" and outcome.get("exit_code") == 7 and not imported_exists
-        elif case == "disk":
-            passed = outcome["status"] == "passed" and "disk-limit-denied" in outcome.get("stdout", "") and "No space left" in outcome.get("stderr", "")
+        elif case == "quiescence":
+            passed = outcome["status"] == "blocked" and "task processes remain" in outcome.get("error", "") and not imported_exists
+        elif case in {"disk", "output_disk", "shm_disk"}:
+            marker = {"disk": "disk-limit-denied", "output_disk": "output-limit-denied", "shm_disk": "shm-limit-denied"}[case]
+            passed = outcome["status"] == "passed" and marker in outcome.get("stdout", "") and "No space left" in outcome.get("stderr", "")
         else:
-            passed = outcome["status"] == "passed" and "process-limit-denied" in outcome.get("stdout", "") and "process-limit-bypassed" not in outcome.get("stdout", "")
+            passed = (outcome["status"] == "blocked" and outcome.get("stdout", "").startswith("32\n")
+                      and "Resource temporarily unavailable" in outcome.get("stderr", "")
+                      and "process-limit-bypassed" not in outcome.get("stdout", ""))
         record["checks"][case] = "passed" if passed and clean else "blocked"
+    record["checks"]["disk"] = (
+        "passed" if record["checks"]["disk"] == record["checks"]["output_disk"] == record["checks"]["shm_disk"] == "passed" else "blocked"
+    )
     if record["checks"]["cleanup"] != "blocked":
         record["checks"]["cleanup"] = "passed"
     record["checks"]["watchdog"] = "passed" if record["checks"]["wall_time"] == record["checks"]["log"] == "passed" else "blocked"

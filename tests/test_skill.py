@@ -415,6 +415,25 @@ class AppleContainerCompilerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "ownership"):
             compiler.compile_command(manifest, "start-attached", observed_labels={})
 
+    def test_supervised_task_uses_bounded_tmpfs_and_nonroot_exec(self):
+        manifest = valid_manifest()
+        manifest["resources"]["disk_bytes"].update(enforced_by="apple-container-tmpfs", limit=16 * 1024 * 1024)
+        manifest["resultGate"]["artifact_import"]["max_bytes"] = 1024 * 1024
+        argv = compiler.compile_command(manifest, "create-supervised")
+        mounts = [argv[index + 1] for index, value in enumerate(argv[:-1]) if value == "--mount"]
+        self.assertIn("type=tmpfs,target=/scratch,size=13M,mode=1777", mounts)
+        self.assertIn("type=tmpfs,target=/output,size=2M,mode=1777", mounts)
+        self.assertEqual(argv[argv.index("--shm-size") + 1], "1M")
+        self.assertFalse(any("type=volume" in mount for mount in mounts))
+        self.assertEqual(argv[-2:], ["sleep", "120"])
+        labels = compiler.expected_labels(manifest)
+        command = compiler.compile_command(manifest, "exec-task", observed_labels=labels)
+        self.assertEqual(command[:7], ["container", "exec", "--uid", "1000", "--gid", "1000", "test-task"])
+        self.assertIn(f"ulimit -Hu {manifest['resources']['processes']['limit']}", command[9])
+        self.assertEqual(command[-3:], manifest["task"]["command"])
+        self.assertEqual(compiler.compile_command(manifest, "exec-output", observed_labels=labels)[-6:],
+                         ["tar", "-C", "/output", "-cf", "-", "."])
+
     def test_unrecognized_action_is_not_forwarded(self):
         with self.assertRaisesRegex(ValueError, "unsupported action"):
             compiler.compile_command(valid_manifest(), "exec")

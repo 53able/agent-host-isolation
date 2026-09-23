@@ -23,7 +23,7 @@ from verify_strict_memory_dispatch import execute as verify_dispatch
 
 REQUIRED_CHECKS = {
     "memory", "process", "disk", "log", "wall_time", "watchdog",
-    "cleanup", "artifact_result_gate", "full_agent_path", "open_files", "cpu", "vm_count",
+    "cleanup", "artifact_result_gate", "full_agent_path", "quiescence", "open_files", "cpu", "vm_count",
     "mount", "credential", "network", "command_path", "supply_chain", "side_effect", "resource",
 }
 IMPORT_ROOT = Path("/var/tmp/agent-host-isolation/imports")
