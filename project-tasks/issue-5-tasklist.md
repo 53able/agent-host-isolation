@@ -18,7 +18,7 @@ Issue: [network-derived inspect 用の request-time gateway を実装・検証�
 > - 標準 `inspect` の default-deny network は不変
 > - 許可外 origin/path/method、期限切れ、redirect、byte budget 超過の拒否証跡を残す
 
-## Current state at `b832257`
+## Baseline before remaining work at `b832257`
 
 Completed in `7e37b33`, `fb36e09`, and `b832257`:
 
@@ -27,7 +27,7 @@ Completed in `7e37b33`, `fb36e09`, and `b832257`:
 - [x] Broker tests cover allowed fetches and denial cases; returned records remain `result_gate: pending` and `verification: unverified`.
 - [x] Standard `inspect` remains networkless/default-deny, and the documentation explicitly keeps `network-derived` unavailable.
 
-## Remaining work, in dependency order
+## Completed work, in dependency order
 
 ### 1. Persist and validate broker audit evidence — PASS (78 Python tests; QA attempt 3)
 
@@ -48,17 +48,17 @@ Completed in `7e37b33`, `fb36e09`, and `b832257`:
 - [x] Keep the broker unable to pass a network handle or directly enable `network-derived` in JustBash.
 - Validation: successful import produces a content/hash-checked snapshot and standard networkless manifest; result-gate rejection produces no runtime; mutate bytes, record hash, task/attempt, or manifest and assert fail-closed rejection with audit evidence.
 
-### 4. Add real-runtime adversarial evidence — BLOCKED (QA failed after 3 attempts; status `unverified`)
+### 4. Add real-runtime adversarial evidence — PASS (verified for the tested configuration; independent QA)
 
-- [ ] Run and record tests against the exact JustBash package, Node.js version, host, manifest, snapshot, and embedding configuration for the broker/import path: origin/path/method, DNS/IP literal, alternate port, every redirect hop, header/credential override, expiry, byte budget, timeout, cancellation, and cleanup/revocation. Live DNS/TLS fetch, live redirect denial, and the gate-to-JustBash path passed; the remaining matrix uses injected transport.
-- [x] Preserve the verification status as `unverified` (or `blocked`) for any unrun, unsupported, ambiguous, or failed test; do not infer verification from static validation or mocked unit tests.
-- Validation: evidence contains package/runtime/host/manifest/snapshot hashes, all required test decisions, and cleanup results; the verifier accepts `verified-for-tested-configuration` only when every required class passes and exact identities match.
+- [x] Run and record tests against the exact JustBash package, Node.js version, host, manifest, snapshot, and embedding configuration for the broker/import path: origin/path/method, DNS/IP literal, alternate port, every redirect hop, header/credential override, expiry, byte budget, timeout, cancellation, and cleanup/revocation. The real broker matrix and gate-to-standard-JustBash path passed all 26 probes; deterministic injected-transport probes remain as supplementary evidence.
+- [x] Require a complete passing live matrix and committed execution inputs before setting `verified-for-tested-configuration`. An incomplete, failed, or dirty rerun returns to `unverified`.
+- Validation: evidence contains package/runtime/host/manifest/snapshot hashes, all required live decisions, and cleanup results; the verifier accepts `verified-for-tested-configuration` only when every required class passes against committed execution inputs and exact identities match.
 
 ### 5. Decide and implement the explicit enablement gate — PASS (fail closed; QA verified)
 
-- [x] Keep direct `network-derived` execution rejected while Task 4 lacks the required production-equivalent adversarial evidence.
-- [x] Retain the fail-closed rejection and document the blocking evidence. The only broker-result bridge consumes a registered, active grant's allowed event through the one-shot result gate and constructs a new standard, networkless `inspect` attempt; replay and revoked grants are denied.
-- Validation: direct `network-derived` runtime construction remains rejected before and after gate integration; standard `inspect` remains default-deny. The host broker-to-gate-to-standard-runtime path has focused integration coverage, but the full live denial matrix is still Task 4's blocker.
+- [x] Keep direct `network-derived` JustBash execution rejected; the host broker is the supported request-time gateway path.
+- [x] Retain the fail-closed rejection and document the supported boundary. The broker-result bridge consumes a registered, active grant's allowed event through the one-shot result gate and constructs a new standard, networkless `inspect` attempt; replay and revoked grants are denied.
+- Validation: direct `network-derived` runtime construction remains rejected before and after gate integration; standard `inspect` remains default-deny. The host broker-to-gate-to-standard-runtime path and required live denial matrix are verified for the captured configuration.
 
 ## Scope boundaries
 
