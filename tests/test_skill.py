@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_FILE = ROOT / "SKILL.md"
@@ -30,6 +31,44 @@ lifecycle = load_script("task_lifecycle")
 just_bash_contract = load_script("just_bash_contract")
 just_bash_manifest = load_script("just_bash_manifest")
 artifact_importer = load_script("import_artifacts")
+strict_memory_probe = load_script("run_strict_memory_probe")
+
+
+class StrictMemoryProbeCleanupTests(unittest.TestCase):
+    def test_tracks_volume_before_failed_create(self):
+        manifest = valid_manifest()
+        volumes = []
+        with patch.object(strict_memory_probe, "run", side_effect=RuntimeError("CLI failed")):
+            with self.assertRaisesRegex(RuntimeError, "CLI failed"):
+                strict_memory_probe.create_tracked_volume(manifest, "create-scratch-volume", "scratch", volumes)
+        self.assertEqual(volumes, [manifest["runtime"]["scratch"]["volume"]])
+
+    def test_deletes_only_volume_with_matching_ownership_labels(self):
+        manifest = valid_manifest()
+        volume = manifest["runtime"]["scratch"]["volume"]
+        labels = compiler.expected_labels(manifest)
+        inspected = subprocess.CompletedProcess([], 0, json.dumps([{"configuration": {"labels": labels}}]), "")
+        deleted = subprocess.CompletedProcess([], 0, "", "")
+        with patch.object(strict_memory_probe, "run", side_effect=[inspected, deleted]) as mock_run:
+            self.assertEqual(strict_memory_probe.cleanup_volumes(manifest, [volume]), [])
+        self.assertEqual(mock_run.call_args_list[1].args[0], ["container", "volume", "delete", volume])
+
+    def test_keeps_volume_with_mismatched_ownership_labels(self):
+        manifest = valid_manifest()
+        volume = manifest["runtime"]["scratch"]["volume"]
+        inspected = subprocess.CompletedProcess([], 0, json.dumps([{"configuration": {"labels": {}}}]), "")
+        with patch.object(strict_memory_probe, "run", return_value=inspected) as mock_run:
+            errors = strict_memory_probe.cleanup_volumes(manifest, [volume])
+        self.assertIn("ownership check failed", errors[0])
+        mock_run.assert_called_once()
+
+    def test_accepts_absent_volume_after_failed_create(self):
+        manifest = valid_manifest()
+        volume = manifest["runtime"]["scratch"]["volume"]
+        missing = subprocess.CompletedProcess([], 1, "", f"volume not found: {volume}")
+        with patch.object(strict_memory_probe, "run", return_value=missing) as mock_run:
+            self.assertEqual(strict_memory_probe.cleanup_volumes(manifest, [volume]), [])
+        mock_run.assert_called_once()
 
 
 def valid_manifest():
@@ -144,6 +183,13 @@ class ManifestValidatorTests(unittest.TestCase):
         result = self.run_validator(valid_manifest())
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("PASSED", result.stdout)
+
+    def test_requires_explicit_strict_memory_classification(self):
+        manifest = valid_manifest()
+        manifest["task"]["strict_memory"] = True
+        self.assertEqual(self.run_validator(manifest).returncode, 0)
+        self.assert_rejected(lambda m: m["task"].pop("strict_memory"), "task.strict_memory must be a boolean")
+        self.assert_rejected(lambda m: m["task"].update(strict_memory="false"), "task.strict_memory must be a boolean")
 
     def test_rejects_legacy_manifest(self):
         result = self.run_validator({"task_id": "legacy"})
@@ -359,6 +405,44 @@ class AppleContainerCompilerTests(unittest.TestCase):
         argv = compiler.compile_command(valid_manifest(), "create-scratch-volume")
         self.assertEqual(argv[:4], ["container", "volume", "create", "-s"])
 
+    def test_attached_start_is_compiled_and_ownership_checked(self):
+        manifest = valid_manifest()
+        labels = compiler.expected_labels(manifest)
+        self.assertEqual(
+            compiler.compile_command(manifest, "start-attached", observed_labels=labels),
+            ["container", "start", "--attach", manifest["task"]["id"]],
+        )
+        with self.assertRaisesRegex(ValueError, "ownership"):
+            compiler.compile_command(manifest, "start-attached", observed_labels={})
+
+    def test_supervised_task_uses_bounded_tmpfs_and_nonroot_exec(self):
+        manifest = valid_manifest()
+        manifest["resources"]["disk_bytes"].update(enforced_by="apple-container-tmpfs", limit=16 * 1024 * 1024)
+        manifest["resultGate"]["artifact_import"]["max_bytes"] = 1024 * 1024
+        argv = compiler.compile_command(manifest, "create-supervised")
+        mounts = [argv[index + 1] for index, value in enumerate(argv[:-1]) if value == "--mount"]
+        self.assertIn("type=tmpfs,target=/scratch,size=13M,mode=1777", mounts)
+        self.assertIn("type=tmpfs,target=/output,size=2M,mode=1777", mounts)
+        self.assertEqual(argv[argv.index("--shm-size") + 1], "1M")
+        self.assertFalse(any("type=volume" in mount for mount in mounts))
+        self.assertEqual(argv[-2:], ["sleep", "120"])
+        labels = compiler.expected_labels(manifest)
+        command = compiler.compile_command(manifest, "exec-task", observed_labels=labels)
+        self.assertEqual(command[:7], ["container", "exec", "--uid", "1000", "--gid", "1000", "test-task"])
+        self.assertIn(f"ulimit -Hu {manifest['resources']['processes']['limit']}", command[9])
+        self.assertEqual(command[-3:], manifest["task"]["command"])
+        self.assertEqual(compiler.compile_command(manifest, "exec-output", observed_labels=labels)[-6:],
+                         ["tar", "-C", "/output", "-cf", "-", "."])
+
+    def test_strict_memory_cannot_use_named_volume_create_path(self):
+        manifest = valid_manifest()
+        manifest["task"]["strict_memory"] = True
+        with self.assertRaisesRegex(ValueError, "supervised create path"):
+            compiler.compile_command(manifest, "create")
+        with self.assertRaisesRegex(ValueError, "supervised create path"):
+            compiler.compile_command(manifest, "run")
+        self.assertEqual(compiler.compile_command(manifest, "create-probe")[:2], ["container", "create"])
+
     def test_unrecognized_action_is_not_forwarded(self):
         with self.assertRaisesRegex(ValueError, "unsupported action"):
             compiler.compile_command(valid_manifest(), "exec")
@@ -441,6 +525,16 @@ class JustBashManifestTests(unittest.TestCase):
     def test_accepts_shared_v2_just_bash_manifest(self):
         result = self.run_validator(valid_just_bash_manifest())
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_strict_memory_never_enters_just_bash(self):
+        self.assert_rejected(
+            lambda m: m["task"].update(strict_memory=True),
+            "sampled RSS is not an OS hard limit",
+        )
+        self.assert_rejected(
+            lambda m: m["task"].pop("strict_memory"),
+            "task.strict_memory must be false",
+        )
 
     def test_accepts_shared_v2_just_bash_manifest_from_stdin(self):
         result = subprocess.run(
@@ -652,6 +746,26 @@ class JustBashManifestTests(unittest.TestCase):
             just_bash_contract.build_escalation_request(
                 manifest, inspect_blocked_event(manifest), target, "audit/escalation.json",
             )
+
+    def test_strict_memory_escalation_requires_new_manifest_and_attempt(self):
+        source = valid_just_bash_manifest()
+        target = valid_inspect_escalation_target()
+        event = inspect_blocked_event(source, "strict-memory")
+        with self.assertRaisesRegex(ValueError, "task.strict_memory true"):
+            just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        target["task"]["strict_memory"] = True
+        request = just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        self.assertTrue(request["strict_memory"])
+        self.assertEqual(request["target_manifest_hash"], compiler.canonical_hash(target))
+        self.assertFalse(request["automatic"])
+        self.assertNotEqual(request["source_manifest_hash"], request["target_manifest_hash"])
+        self.assertNotEqual(request["source_attempt_id"], request["target_attempt_id"])
+        event = inspect_blocked_event(source, "native-binary")
+        request = just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        self.assertTrue(request["strict_memory"])
+        target["task"]["goal"] = "日本語の目標"
+        request = just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        self.assertEqual(request["target_manifest_hash"], compiler.canonical_hash(target))
 
     def test_escalation_rejects_different_task_id(self):
         source = valid_just_bash_manifest()

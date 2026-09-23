@@ -81,6 +81,7 @@ def import_artifacts(manifest: dict[str, Any], source: Path, destination: Path) 
     destination = parent / destination.name
     source = source.resolve(strict=True)
     staging = Path(tempfile.mkdtemp(prefix=f".{destination.name}.", dir=parent))
+    copied_total = 0
     try:
         for record in records:
             relative = Path(record["path"])
@@ -95,9 +96,12 @@ def import_artifacts(manifest: dict[str, Any], source: Path, destination: Path) 
                 digest = hashlib.sha256()
                 with os.fdopen(descriptor, "rb", closefd=False) as input_file, target.open("xb") as output_file:
                     for chunk in iter(lambda: input_file.read(1024 * 1024), b""):
+                        copied_total += len(chunk)
+                        if copied_total > manifest["resultGate"]["artifact_import"]["max_bytes"]:
+                            raise ValueError("artifact import exceeds the cumulative byte limit during copy")
                         digest.update(chunk)
                         output_file.write(chunk)
-                if digest.hexdigest() != record["sha256"]:
+                if target.stat().st_size != record["size"] or digest.hexdigest() != record["sha256"]:
                     raise ValueError(f"artifact changed during import: {relative}")
             finally:
                 os.close(descriptor)

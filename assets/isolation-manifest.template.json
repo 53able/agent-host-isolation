@@ -4,6 +4,7 @@
     "id": "replace-with-unique-task-id",
     "goal": "replace-with-bounded-goal",
     "profile": "guest-build",
+    "strict_memory": false,
     "command": ["replace-with-program"],
     "expected_artifacts": ["/output"],
     "lifecycle": {"stop_timeout_seconds": 10, "checkpoint": "application-level"}

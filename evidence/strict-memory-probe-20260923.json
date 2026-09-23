@@ -1,0 +1,207 @@
+{
+  "artifact_read_argv": [
+    "container",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--read-only",
+    "--cap-drop",
+    "ALL",
+    "--mount",
+    "type=volume,source=ahi-memory-bf88bb00-output,target=/output,readonly",
+    "docker.io/library/alpine:3.22@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
+    "sh",
+    "-c",
+    "cat /output/cgroup-limit.txt; cat /output/memory-events.txt; test ! -e /output/after-allocation.txt"
+  ],
+  "artifact_read_returncode": 0,
+  "artifact_read_stderr": "[0/6] [0s]\n[1/6] Fetching image [0s]\n[2/6] Unpacking image [0s]\n[3/6] Fetching kernel [0s]\n[4/6] Fetching init image [0s]\n[5/6] Unpacking init image [0s]\n[6/6] Starting container [0s]\n[6/6] Starting container [0s]",
+  "captured_at": "2026-09-23T01:28:05.171440+00:00",
+  "cgroup_memory_events": "low 0\nhigh 0\nmax 53\noom 1\noom_kill 1\noom_group_kill 0",
+  "cgroup_memory_max": "268435456",
+  "checks": {
+    "artifact_result_gate": "unverified",
+    "cleanup": "passed",
+    "disk": "unverified",
+    "full_agent_path": "unverified",
+    "log": "unverified",
+    "memory": "passed",
+    "process": "unverified",
+    "wall_time": "unverified",
+    "watchdog": "unverified"
+  },
+  "cleanup_errors": [],
+  "configured_memory_bytes": 268435456,
+  "container_absent": true,
+  "final_status": {
+    "networks": [],
+    "startedDate": "2026-09-23T01:28:06Z",
+    "state": "stopped"
+  },
+  "host": {
+    "architecture": "arm64",
+    "container_version": "COMPONENT            VERSION                                                              BUILD    COMMIT\ncontainer            1.2.2                                                                release  0190097d06df0b9065f4c2d2c7873c649d81d493\ncontainer-apiserver  container-apiserver version 1.2.2 (build: release, commit: 0190097)  release  0190097d06df0b9065f4c2d2c7873c649d81d493",
+    "macos": "26.7",
+    "system_properties": "[build]\ncpus = 2\nimage = \"ghcr.io/apple/container-builder-shim/builder:0.13.1\"\nmemory = \"2048mb\"\nrosetta = true\n\n[container]\ncpus = 4\nmemory = \"1gb\"\n\n[dns]\n\n[kernel]\nbinaryPath = \"opt/kata/share/kata-containers/vmlinux-6.18.15-186\"\ndigest = \"sha256:f63d54507d1f18635d94475077e4c2330de4d8e05cedf25f7c38f063b0e66a91\"\nurl = \"https://github.com/kata-containers/kata-containers/releases/download/3.28.0/kata-static-3.28.0-arm64.tar.zst\"\n\n[machine]\ncpus = 4\nhomeMount = \"rw\"\nmemory = \"16gb\"\nvirtualization = false\n\n[network]\n\n[registry]\ndomain = \"docker.io\"\n\n[vminit]\nimage = \"ghcr.io/apple/containerization/vminit:0.40.1\""
+  },
+  "logs": "Killed\n",
+  "manifest": {
+    "gateway": {
+      "credential_broker": null,
+      "default": "deny",
+      "egress_gateway": null,
+      "grants": [],
+      "ingress_ports": [],
+      "task_network": "none"
+    },
+    "manifest_version": 2,
+    "model": {
+      "credential_broker_ref": null,
+      "id": "none",
+      "provider": "none"
+    },
+    "resources": {
+      "cpu": {
+        "enforced_by": "apple-container",
+        "limit": 1,
+        "on_exceed": "throttle"
+      },
+      "disk_bytes": {
+        "enforced_by": "apple-container-volume",
+        "limit": 16777216,
+        "on_exceed": "block"
+      },
+      "log_bytes": {
+        "enforced_by": "host-watchdog",
+        "limit": 1048576,
+        "on_exceed": "terminate"
+      },
+      "memory_bytes": {
+        "enforced_by": "apple-container",
+        "limit": 268435456,
+        "on_exceed": "terminate"
+      },
+      "open_files": {
+        "enforced_by": "guest-ulimit",
+        "limit": 64,
+        "on_exceed": "block"
+      },
+      "processes": {
+        "enforced_by": "guest-ulimit",
+        "limit": 32,
+        "on_exceed": "block"
+      },
+      "vm_count": {
+        "enforced_by": "host-scheduler",
+        "limit": 1,
+        "on_exceed": "block"
+      },
+      "wall_time_seconds": {
+        "enforced_by": "host-watchdog",
+        "limit": 20,
+        "on_exceed": "terminate"
+      }
+    },
+    "resultGate": {
+      "allowed_side_effects": [],
+      "artifact_import": {
+        "max_bytes": 1048576,
+        "reject_path_traversal": true,
+        "reject_symlinks": true,
+        "source": "/output"
+      },
+      "audit_record": "evidence/ahi-memory-bf88bb00.json",
+      "required": true
+    },
+    "runtime": {
+      "drop_capabilities": [
+        "ALL"
+      ],
+      "environment": {},
+      "kind": "apple-container",
+      "minimum_macos_version": "26.0",
+      "minimum_version": "1.2.2",
+      "nested_virtualization": false,
+      "output": {
+        "target": "/output",
+        "volume": "ahi-memory-bf88bb00-output"
+      },
+      "rootfs_read_only": true,
+      "scratch": {
+        "target": "/scratch",
+        "volume": "ahi-memory-bf88bb00-scratch"
+      },
+      "socket_publishing": false,
+      "ssh_forwarding": false
+    },
+    "task": {
+      "attempt_id": "attempt-1",
+      "command": [
+        "sh",
+        "-ec",
+        "trap 'cat /sys/fs/cgroup/memory.events > /output/memory-events.txt' EXIT; cat /sys/fs/cgroup/memory.max > /output/cgroup-limit.txt; awk 'BEGIN { x=\"x\"; for (i=0;i<30;i++) x=x x; print length(x) }'; echo unexpected-success > /output/after-allocation.txt"
+      ],
+      "expected_artifacts": [
+        "/output/result.txt"
+      ],
+      "goal": "measure OS-enforced memory exhaustion and cleanup",
+      "id": "ahi-memory-bf88bb00",
+      "lifecycle": {
+        "checkpoint": "disabled",
+        "stop_timeout_seconds": 2
+      },
+      "profile": "guest-build",
+      "strict_memory": true
+    },
+    "workspace": {
+      "image": {
+        "digest": "sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
+        "reference": "docker.io/library/alpine:3.22"
+      },
+      "lockfile": {
+        "path": "scripts/run_strict_memory_probe.py",
+        "sha256": "79ab10f0d6c7c2c14bf4c6eecc74eef08ec0ed0749aa002919c4722aa264e73a"
+      },
+      "mcps": [],
+      "repository": {
+        "commit": "84e9d8febde52bf2c8e17033ea0f8dd83663b046",
+        "tree_hash": "b0bd83b0f6c9fb39c8e99a737564efa3007f7398",
+        "url": "https://github.com/53able/agent-host-isolation.git"
+      },
+      "skills": [
+        {
+          "id": "agent-host-isolation",
+          "version": "84e9d8febde52bf2c8e17033ea0f8dd83663b046"
+        }
+      ],
+      "snapshot": {
+        "id": "ahi-memory-bf88bb00-input",
+        "read_only": true,
+        "source": "/var/tmp/agent-host-isolation/snapshots/ahi-memory-bf88bb00-input",
+        "target": "/workspace"
+      },
+      "toolchain": {
+        "apple-container": "container CLI version 1.2.2 (build: release, commit: 0190097)",
+        "python": "3.14.6"
+      }
+    }
+  },
+  "manifest_hash": "sha256:f4b7b7cacf5234359a842b2d1c584921be4aaae725c629915701e4f7efcd628a",
+  "start_argv": [
+    "container",
+    "start",
+    "--attach",
+    "ahi-memory-bf88bb00"
+  ],
+  "start_returncode": 137,
+  "start_stderr": "Killed",
+  "start_stdout": "",
+  "task_id": "ahi-memory-bf88bb00",
+  "verification_status": "unverified",
+  "volumes_absent": {
+    "ahi-memory-bf88bb00-output": true,
+    "ahi-memory-bf88bb00-scratch": true
+  },
+  "worktree_status_before": []
+}

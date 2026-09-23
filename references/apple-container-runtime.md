@@ -45,6 +45,8 @@ Inspect, stdio logs, boot logs, JSON stats, Apple system logs, gateway decisions
 
 Compiler or validator success is static evidence only. The status remains `unverified` until all seven adversarial classes pass on the recorded macOS, Apple Container CLI, and kernel image. Unsupported tests are `blocked`; they never become verified by inference.
 
+`task.strict_memory` explicitly distinguishes workloads requiring an OS-enforced ceiling. The Apple Container compiler emits `--memory`, but that flag alone does not prove enforcement. `scripts/run_strict_memory_probe.py` records the guest cgroup limit, OOM kill count, exit status, and resource cleanup for one bounded workload. Its remaining process, disk, log, wall-time, watchdog, artifact/result-gate, and full-agent-path checks remain `unverified` until separately exercised. Do not enable automatic strict-memory dispatch from this probe alone.
+
 Run `python3 scripts/probe_apple_container.py isolation-manifest.json` before execution. The probe records host and CLI versions, required option availability, service status, and system properties without starting services or containers. A successful probe means only `ready for adversarial tests`; it deliberately leaves verification status `unverified`.
 
 After starting Apple Container services with explicit operator authorization, run the bounded denial smoke test:

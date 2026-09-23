@@ -1,0 +1,72 @@
+{
+  "artifact_destination": "/var/tmp/agent-host-isolation/imports/ahi-auto-948a5db7/attempt-e87bf85b",
+  "artifact_imported": true,
+  "artifact_sha256": "sha256:4c848e15091f330b74497fe6ee5744839fd7d64eb00a90b54087c038538d03a8",
+  "automatic": true,
+  "blocked_reasons": null,
+  "captured_at": "2026-09-23T05:42:54.326160+00:00",
+  "controller_event": {
+    "event": "InspectBlocked",
+    "missing_capability": "strict-memory",
+    "outcome": "blocked",
+    "source": {
+      "attempt_id": "attempt-2de52a26",
+      "manifest_hash": "sha256:b885c4ba718248249080d06faa14df43c4d9e301a7e7a4ec258ae10d1982ca3a",
+      "task_id": "ahi-auto-948a5db7"
+    }
+  },
+  "dispatch_status": "passed",
+  "guest_result": {
+    "artifact_records": [
+      {
+        "path": "result.txt",
+        "sha256": "4c848e15091f330b74497fe6ee5744839fd7d64eb00a90b54087c038538d03a8",
+        "size": 25
+      }
+    ],
+    "cleanup_errors": [],
+    "container_absent": true,
+    "exit_code": 0,
+    "manifest_hash": "sha256:2d562ada37675888df0a42793dee54c9dc647b2c9d09b7c83fcb9a5ec2ebf541",
+    "status": "passed",
+    "stderr": "",
+    "stdout": "",
+    "task_id": "ahi-auto-948a5db7",
+    "volumes_absent": {},
+    "watchdog_violation": null
+  },
+  "source_attempt_id": "attempt-2de52a26",
+  "source_commit": "471bcab173055adbb4e3130789bd8d8cf5cd8a1c",
+  "target_attempt_id": "attempt-e87bf85b",
+  "task_id": "ahi-auto-948a5db7",
+  "verification_checks": {
+    "artifact_oversize": "passed",
+    "artifact_partial": "passed",
+    "artifact_result_gate": "passed",
+    "artifact_symlink": "passed",
+    "artifact_unexpected": "passed",
+    "cleanup": "passed",
+    "command_injection": "passed",
+    "command_path": "passed",
+    "cpu": "passed",
+    "credential": "passed",
+    "disk": "passed",
+    "full_agent_path": "passed",
+    "log": "passed",
+    "memory": "passed",
+    "mount": "passed",
+    "network": "passed",
+    "open_files": "passed",
+    "output_disk": "passed",
+    "process": "passed",
+    "quiescence": "passed",
+    "resource": "passed",
+    "shm_disk": "passed",
+    "side_effect": "passed",
+    "supply_chain": "passed",
+    "vm_count": "passed",
+    "wall_time": "passed",
+    "watchdog": "passed"
+  },
+  "worktree_status_before": []
+}

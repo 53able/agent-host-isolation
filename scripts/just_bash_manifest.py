@@ -13,7 +13,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 TOP_LEVEL_KEYS = {"manifest_version", "task", "workspace", "gateway", "model", "runtime", "resources", "resultGate", "verification"}
-TASK_KEYS = {"id", "attempt_id", "goal", "profile", "command", "command_classes", "expected_artifacts", "lifecycle"}
+TASK_KEYS = {"id", "attempt_id", "goal", "profile", "command", "command_classes", "expected_artifacts", "lifecycle", "strict_memory"}
 RUNTIME_KEYS = {
     "kind", "package_version", "node_version", "agent_host_isolation_version", "profile_variant",
     "execution_limit_profile", "javascript", "python", "custom_commands",
@@ -140,6 +140,8 @@ def _validate_task(value: Any, errors: list[str]) -> None:
         errors.append("task.goal must be concrete and non-empty.")
     if task.get("profile") != "inspect":
         errors.append("runtime.kind 'just-bash' requires task.profile 'inspect'; guest-build and elevated-release are rejected.")
+    if task.get("strict_memory") is not False:
+        errors.append("task.strict_memory must be false for JustBash; sampled RSS is not an OS hard limit.")
     command = task.get("command")
     if not isinstance(command, list) or not command or any(not isinstance(item, str) or not item or "\x00" in item for item in command):
         errors.append("task.command must be a non-empty argv array of non-empty strings.")
