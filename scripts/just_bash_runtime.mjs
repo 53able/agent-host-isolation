@@ -5,7 +5,8 @@
  *
  * This adapter accepts only a module-owned inspect runtime, never an arbitrary executor.
  * A simple unsupported command with exit code 127 is converted into an InspectBlocked event;
- * there is no host-shell fallback and no automatic escalation here.
+ * there is no host-shell fallback. A preconfigured strict-memory target can
+ * trigger a separate, gated Apple Container attempt after the source stops.
  */
 
 export const INSPECT_BLOCKED_EVENT = "InspectBlocked";
@@ -13,15 +14,18 @@ export const INSPECT_BLOCKED_EXIT_CODE = 127;
 
 import { Bash } from "just-bash";
 import { createHash } from "node:crypto";
-import { spawnSync } from "node:child_process";
-import { lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { spawnSync, execFile } from "node:child_process";
+import { lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const VALIDATOR = fileURLToPath(new URL("./validate-manifest.py", import.meta.url));
 const trustedRuntimes = new WeakMap();
 const BASH_EXEC = Bash.prototype.exec;
+const execFileAsync = promisify(execFile);
 export const AGENT_HOST_ISOLATION_VERSION = "0.1.0";
 
 const SAFE_ID = /^[a-z0-9][a-z0-9._-]{0,62}$/;
@@ -136,10 +140,11 @@ function claimAttempt(identity) {
     throw error;
   }
   writeFileSync(join(claim, "manifest-hash"), `${identity.manifest_hash}\n`, { flag: "wx", mode: 0o600 });
+  return claim;
 }
 
 /** Validate and privately construct the standard, networkless inspect runtime. */
-export function createInspectRuntime({ manifest, snapshotFiles }) {
+export function createInspectRuntime({ manifest, snapshotFiles, strictMemoryTargetManifest }) {
   const boundManifest = structuredClone(manifest);
   const validation = spawnSync("python3", [VALIDATOR, "-"], {
     cwd: ROOT,
@@ -151,6 +156,24 @@ export function createInspectRuntime({ manifest, snapshotFiles }) {
     throw new TypeError(`invalid inspect manifest: ${validation.error?.message ?? validation.stderr.trim()}`);
   }
   assertRuntimeIdentity(boundManifest);
+  let targetManifest;
+  if (strictMemoryTargetManifest !== undefined) {
+    targetManifest = structuredClone(strictMemoryTargetManifest);
+    const targetValidation = spawnSync("python3", [VALIDATOR, "-"], {
+      cwd: ROOT, input: JSON.stringify(targetManifest), encoding: "utf8", timeout: 5_000,
+    });
+    if (targetValidation.error || targetValidation.status !== 0) {
+      throw new TypeError(`invalid strict-memory target manifest: ${targetValidation.error?.message ?? targetValidation.stderr.trim()}`);
+    }
+    if (targetManifest.task?.id !== boundManifest.task.id ||
+        targetManifest.task?.attempt_id === boundManifest.task.attempt_id ||
+        targetManifest.task?.goal !== boundManifest.task.goal ||
+        stableJson(targetManifest.workspace?.repository) !== stableJson(boundManifest.workspace.repository) ||
+        targetManifest.task?.strict_memory !== true || targetManifest.task?.profile !== "guest-build" ||
+        targetManifest.runtime?.kind !== "apple-container") {
+      throw new TypeError("strict-memory target must be a distinct guest attempt for the same task, goal, and repository");
+    }
+  }
   const identity = sourceIdentity(boundManifest);
   if (!snapshotFiles || typeof snapshotFiles !== "object" || Array.isArray(snapshotFiles)) {
     throw new TypeError("snapshotFiles must map declared relative paths to content");
@@ -179,7 +202,7 @@ export function createInspectRuntime({ manifest, snapshotFiles }) {
     }
     files[`/workspace/${entry.path}`] = content;
   }
-  claimAttempt(identity);
+  const claim = claimAttempt(identity);
   const bash = new Bash({
     files,
     cwd: "/workspace",
@@ -193,8 +216,55 @@ export function createInspectRuntime({ manifest, snapshotFiles }) {
     defenseInDepth: { enabled: "auto", auditMode: false },
   });
   const runtime = Object.freeze(Object.create(null));
-  trustedRuntimes.set(runtime, { bash, manifest: boundManifest, identity, phase: "ready" });
+  trustedRuntimes.set(runtime, { bash, manifest: boundManifest, identity, claim, phase: "ready",
+    abortController: new AbortController(), targetManifest,
+    snapshotBytes: regularPaths.map((entry) => [entry.path, Buffer.from(snapshotFiles[entry.path])]) });
   return runtime;
+}
+
+async function dispatchStrictMemory(state, event) {
+  const staging = mkdtempSync(join(tmpdir(), "ahi-auto-dispatch-"));
+  try {
+    const snapshot = join(staging, "snapshot");
+    mkdirSync(snapshot, { mode: 0o700 });
+    for (const [relative, content] of state.snapshotBytes) {
+      const destination = resolve(snapshot, relative);
+      if (!destination.startsWith(snapshot + sep)) throw new TypeError("snapshot path escapes automatic staging");
+      mkdirSync(dirname(destination), { recursive: true, mode: 0o700 });
+      writeFileSync(destination, content, { flag: "wx", mode: 0o600 });
+    }
+    const sourcePath = join(staging, "source.json");
+    const eventPath = join(staging, "event.json");
+    const targetPath = join(staging, "target.json");
+    for (const [path, value] of [[sourcePath, state.manifest], [eventPath, event], [targetPath, state.targetManifest]]) {
+      writeFileSync(path, JSON.stringify(value), { flag: "wx", mode: 0o600 });
+    }
+    const args = [fileURLToPath(new URL("./strict_memory_dispatch.py", import.meta.url)),
+      sourcePath, eventPath, targetPath, snapshot];
+    let stdout;
+    try {
+      ({ stdout } = await execFileAsync("python3", args, { cwd: ROOT, timeout: 180_000, maxBuffer: 4 * 1024 * 1024 }));
+    } catch (error) {
+      stdout = error.stdout;
+      if (!stdout) throw error;
+    }
+    const result = JSON.parse(stdout);
+    if (result.status !== "passed" && result.status !== "blocked") {
+      throw new TypeError("automatic dispatch returned an invalid status");
+    }
+    return result;
+  } finally {
+    rmSync(staging, { recursive: true, force: true });
+  }
+}
+
+/** The controller's recorded result for a preconfigured automatic strict-memory target. */
+export function strictMemoryDispatchResult({ runtime }) {
+  const state = trustedRuntimes.get(runtime);
+  if (!state) throw new TypeError("trusted inspect runtime is required");
+  if (!state.targetManifest) throw new TypeError("no automatic strict-memory target was configured");
+  if (!state.automaticDispatchResult) throw new TypeError("automatic strict-memory dispatch has not finished");
+  return structuredClone(state.automaticDispatchResult);
 }
 
 /** Read-only virtual-filesystem evidence without exposing the Bash instance. */
@@ -214,13 +284,51 @@ export async function inspectRuntimeFilesystemSnapshot(runtime) {
   return snapshot;
 }
 
+/** Host controller only: stop this attempt when inspection reveals a strict memory requirement. */
+export async function blockInspectForStrictMemory({ runtime }) {
+  const state = trustedRuntimes.get(runtime);
+  if (!state) throw new TypeError("trusted inspect runtime is required");
+  if (state.phase !== "ready" && state.phase !== "executing") {
+    throw new TypeError(`inspect runtime attempt is terminal (${state.phase})`);
+  }
+  const command = state.command ?? state.manifest.task.command.map(shellQuote).join(" ");
+  const event = {
+    event: INSPECT_BLOCKED_EVENT,
+    outcome: "blocked",
+    command,
+    exit_code: INSPECT_BLOCKED_EXIT_CODE,
+    source: state.identity,
+    missing_capability: "strict-memory",
+    host_shell_fallback: false,
+    escalation: { automatic: false, requested: false },
+    result: { exitCode: INSPECT_BLOCKED_EXIT_CODE, stdout: "", stderr: "strict memory requirement discovered by host controller" },
+  };
+  state.strictMemoryEvent = event;
+  state.phase = "blocked";
+  const settled = state.execution ? state.execution.then(() => {}, () => {}) : Promise.resolve();
+  state.blockPromise = settled.then(() => {
+    writeFileSync(join(state.claim, "strict-memory-event.json"), JSON.stringify(event), { flag: "wx", mode: 0o600 });
+    return event;
+  });
+  state.abortController.abort();
+  const issued = await state.blockPromise;
+  if (state.targetManifest) {
+    try {
+      state.automaticDispatchResult = await dispatchStrictMemory(state, issued);
+    } catch (error) {
+      state.automaticDispatchResult = { status: "blocked", automatic: false, blocked_reasons: [String(error)] };
+    }
+  }
+  return issued;
+}
+
 /**
  * Execute the declared command once through a privately owned JustBash instance.
  *
  * `runtime` must be created by createInspectRuntime. Only the exact declared argv is executed;
  * each argument is shell-quoted so arguments cannot become shell operators.
  * The returned record is suitable for the command audit stream.  Consumers
- * must submit a separate escalation request after validating a new target
+ * may submit a separate escalation request after validating a new target
  * manifest; this function never widens the current attempt.
  */
 export async function executeInspectCommand({
@@ -234,6 +342,9 @@ export async function executeInspectCommand({
   if (state.phase !== "ready") throw new TypeError(`inspect runtime attempt is terminal (${state.phase})`);
   const { bash, manifest, identity } = state;
   requireNonEmptyString(missingCapability, "missingCapability");
+  if (missingCapability === "strict-memory") {
+    throw new TypeError("strict-memory requires the host controller stop path");
+  }
   if (!validArgv(argv) || !validArgv(manifest.task?.command)) {
     throw new TypeError("requested and manifest task.command must be non-empty argv arrays");
   }
@@ -258,13 +369,18 @@ export async function executeInspectCommand({
   }
 
   state.phase = "executing";
+  state.command = command;
   let result;
   try {
-    result = await Reflect.apply(BASH_EXEC, bash, [command, signal ? { signal } : undefined]);
+    const executionSignal = signal ? AbortSignal.any([signal, state.abortController.signal]) : state.abortController.signal;
+    state.execution = Reflect.apply(BASH_EXEC, bash, [command, { signal: executionSignal }]);
+    result = await state.execution;
   } catch (error) {
+    if (state.strictMemoryEvent) return state.blockPromise;
     state.phase = "failed";
     throw error;
   }
+  if (state.strictMemoryEvent) return state.blockPromise;
   if (
     !result || typeof result !== "object" ||
     !Number.isInteger(result.exitCode) ||

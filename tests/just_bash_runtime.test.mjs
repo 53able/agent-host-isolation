@@ -6,6 +6,7 @@ import test from "node:test";
 
 import { Bash, defineCommand } from "just-bash";
 import {
+  blockInspectForStrictMemory,
   canonicalManifestHash,
   createInspectRuntime,
   executeInspectCommand,
@@ -21,6 +22,7 @@ function fixture(argv = ["rg", "allowed", "/workspace"], snapshotFiles = { "allo
   manifest.task.id = `inspect-${randomUUID()}`;
   manifest.task.attempt_id = `attempt-${randomUUID()}`;
   manifest.task.command = argv;
+  manifest.task.strict_memory = false;
   manifest.task.command_classes = [...new Set([...manifest.task.command_classes, "deterministic-transform"])];
   manifest.verification = { status: "unverified", adversarial_evidence: [] };
   const paths = Object.entries(snapshotFiles).map(([path, value]) => ({
@@ -60,6 +62,82 @@ test("blocks an undeclared native command before execution with source identity"
   });
   assert.notEqual(child.status, 0);
   assert.match(child.stderr, /already claimed/);
+});
+
+test("host controller blocks strict memory before dispatch with a terminal event", async () => {
+  const { manifest, runtime } = fixture();
+  const event = await blockInspectForStrictMemory({ runtime });
+  assert.equal(event.event, "InspectBlocked");
+  assert.equal(event.missing_capability, "strict-memory");
+  assert.deepEqual(event.source, {
+    task_id: manifest.task.id,
+    attempt_id: manifest.task.attempt_id,
+    manifest_hash: canonicalManifestHash(manifest),
+  });
+  assert.equal(event.exit_code, 127);
+  assert.equal(event.result.stdout, "");
+  assert.equal(event.host_shell_fallback, false);
+  assert.deepEqual(event.escalation, { automatic: false, requested: false });
+  await assert.rejects(executeInspectCommand({ runtime, argv: manifest.task.command }), /terminal \(blocked\)/);
+  await assert.rejects(blockInspectForStrictMemory({ runtime }), /terminal \(blocked\)/);
+  await assert.rejects(blockInspectForStrictMemory({ runtime: {} }), /trusted inspect runtime/);
+});
+
+test("host controller aborts an in-flight inspect attempt before issuing strict-memory event", async () => {
+  const { manifest, runtime } = fixture(["cat", "allowed.txt"]);
+  const execution = executeInspectCommand({ runtime, argv: manifest.task.command });
+  const event = await blockInspectForStrictMemory({ runtime });
+  assert.equal(event.missing_capability, "strict-memory");
+  assert.equal(event.outcome, "blocked");
+  assert.deepEqual(await execution, event);
+  await assert.rejects(executeInspectCommand({ runtime, argv: manifest.task.command }), /terminal \(blocked\)/);
+});
+
+test("controller-issued strict-memory event creates a manual request for a new guest attempt", async () => {
+  const { manifest, runtime } = fixture();
+  const event = await blockInspectForStrictMemory({ runtime });
+  const target = JSON.parse(readFileSync(new URL("../assets/isolation-manifest.template.json", import.meta.url), "utf8"));
+  target.task.id = manifest.task.id;
+  target.task.attempt_id = `attempt-${randomUUID()}`;
+  target.task.goal = "run the task with an OS memory limit";
+  target.task.command = ["sh", "-c", "true"];
+  target.task.strict_memory = true;
+  target.workspace.repository = { url: "https://github.com/53able/agent-host-isolation.git", commit: "a".repeat(40), tree_hash: "b".repeat(40) };
+  target.workspace.snapshot = { id: `snapshot-${manifest.task.id}`, source: `/var/tmp/agent-host-isolation/snapshots/snapshot-${manifest.task.id}`, target: "/workspace", read_only: true };
+  target.workspace.image = { reference: "ghcr.io/example/agent-build:1.0", digest: digest("image") };
+  target.workspace.toolchain = { node: process.versions.node };
+  target.workspace.lockfile = { path: "package-lock.json", sha256: digest("lockfile") };
+  target.workspace.skills = [{ id: "agent-host-isolation", version: "v0.1.0" }];
+  target.model = { provider: "none", id: "none", credential_broker_ref: null };
+  target.runtime.scratch.volume = `${manifest.task.id}-scratch`;
+  target.runtime.output.volume = `${manifest.task.id}-output`;
+  target.resultGate.audit_record = "audit/strict-memory.json";
+  const generated = spawnSync("python3", ["-c", `
+import json,sys
+sys.path.insert(0,"scripts")
+from just_bash_contract import build_escalation_request
+from strict_memory_dispatch import verify_host_event
+data=json.load(sys.stdin)
+verify_host_event(data["event"])
+print(json.dumps(build_escalation_request(data["source"],data["event"],data["target"],"audit/strict-memory.json")))
+`], { input: JSON.stringify({ source: manifest, event, target }), encoding: "utf8" });
+  assert.equal(generated.status, 0, generated.stderr);
+  const request = JSON.parse(generated.stdout);
+  assert.equal(request.missing_capability, "strict-memory");
+  assert.equal(request.strict_memory, true);
+  assert.equal(request.automatic, false);
+  assert.equal(request.source_attempt_id, manifest.task.attempt_id);
+  assert.equal(request.target_attempt_id, target.task.attempt_id);
+});
+
+test("command-not-found cannot be relabeled as strict memory by the caller", async () => {
+  const { manifest, runtime } = fixture();
+  await assert.rejects(executeInspectCommand({
+    runtime, argv: manifest.task.command, missingCapability: "strict-memory",
+  }), /host controller stop path/);
+  const result = await executeInspectCommand({ runtime, argv: manifest.task.command });
+  assert.equal(result.outcome, "completed");
+  await assert.rejects(blockInspectForStrictMemory({ runtime }), /terminal \(completed\)/);
 });
 
 test("rejects arbitrary executors and host-backed replacement commands", async () => {
