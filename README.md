@@ -23,11 +23,11 @@ untrusted input
   → run denial-oriented adversarial tests
 ```
 
-The objective is not “absolute safety.” It is to make unauthorized access to named protected assets denyable and testable without relying on the model's judgment.
+The objective is to make unauthorized access to named protected assets denyable and testable without relying on the model's judgment. This does not claim absolute safety.
 
 ## How the isolation mechanism works
 
-The mechanism is divided into seven boundaries. Each document explains the control, its decision rule, and its failure behavior.
+The mechanism is divided into eight boundaries. Each document explains the control, its decision rule, and its failure behavior.
 
 1. [Capability classification and execution profiles](docs/mechanisms/01-capability-profiles.md)
 2. [Read-only input and guest-local scratch](docs/mechanisms/02-input-and-scratch.md)
@@ -36,6 +36,7 @@ The mechanism is divided into seven boundaries. Each document explains the contr
 5. [Resource limits, watchdogs, and cleanup](docs/mechanisms/05-resource-governance.md)
 6. [Adversarial verification and status recording](docs/mechanisms/06-adversarial-verification.md)
 7. [JustBash inspect runtime contract](docs/mechanisms/07-just-bash-inspect-runtime.md)
+8. [Strict-memory dispatch gate](docs/mechanisms/08-strict-memory-dispatch.md)
 
 ## Install
 
@@ -129,7 +130,7 @@ python3 scripts/probe_apple_container.py isolation-manifest.json
 
 The probe never reports `verified`; it only reports whether the recorded host is ready for adversarial tests or why it is blocked.
 
-With Apple Container services running, execute the bounded local denial smoke test and retain its JSON evidence:
+After Apple Container services are running, execute the bounded local denial smoke test and retain its JSON evidence:
 
 ```bash
 python3 scripts/run_apple_container_smoke.py \
@@ -167,11 +168,11 @@ references/
 scripts/
 docs/
   mechanisms/
-    01-...md through 07-...md
+    01-...md through 08-...md
   ja-JP/
     README.md
     mechanisms/
-      01-...md through 07-...md
+      01-...md through 08-...md
 tests/
 .github/workflows/
 ```

@@ -10,12 +10,17 @@
 - Document the JustBash boundary, lifecycle, observability, adversarial tests, and `InspectBlocked` behavior in English and Japanese.
 - Add a bounded, cleanup-aware Apple Container denial smoke test with JSON evidence output.
 - Add a pinned JustBash embedding that runs all seven adversarial test classes and emits hash-bound verification evidence.
+- Add a host-side HTTPS fetch broker with durable grant audit records, bounded DNS resolution, per-hop redirect checks, and a result-gated bridge into a new networkless JustBash snapshot.
+- Add a controller-triggered strict-memory dispatch path that rechecks the target Apple Container profile before running the declared command and importing artifacts.
+- Record live broker, strict-memory, supervised resource, and automatic dispatch verification for their tested host and runtime configurations.
 
 ### Changed
 
 - Reject legacy v1 manifests instead of treating them as executable configurations.
 - Decouple the logical skill identity from its physical installation directory in tests and deployment guidance.
 - Validate pinned runtime identities, minimum snapshots, optional capabilities, scoped network grants, hardened resource limits, result-gate evidence, and Apple Container escalation requests.
+- Keep direct `network-derived` JustBash execution disabled; use the one-shot host broker and a new standard `inspect` attempt for approved fetched bytes.
+- Reject the named-volume/root path for ordinary strict-memory tasks after process and disk limits failed on the tested host; use the supervised tmpfs/non-root path.
 
 ## v0.1.0 - 2026-09-15
 

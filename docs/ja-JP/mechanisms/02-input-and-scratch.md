@@ -4,7 +4,7 @@
 
 ## 目的
 
-guestがtaskに必要なfileを読めるようにしながら、host repositoryや無関係なhost pathへの直接書込みを防ぎます。
+guestがtaskに必要なfileを読めるようにしつつ、host repositoryや無関係なhost pathへの直接書込みを防ぎます。
 
 ## 仕組み
 
@@ -17,7 +17,7 @@ host repository
   → guest-local scratchとoutput
 ```
 
-input snapshotとscratchは役割が異なります。snapshotは変更しないsource materialです。scratchはguestが所有し、破棄できる作業領域です。
+input snapshotとscratchは役割が異なります。snapshotは変更しないsource materialです。scratchはguestが所有する破棄可能な作業領域です。
 
 ## 取込境界
 

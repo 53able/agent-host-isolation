@@ -4,7 +4,7 @@
 
 ## 目的
 
-filesystem、credential、networkの境界を越えなくてもhost capacityを消費するworkloadに上限を設けます。
+filesystem、credential、networkの境界を越えなくてもhost capacityを消費するworkloadに、上限を設けます。
 
 ## 仕組み
 

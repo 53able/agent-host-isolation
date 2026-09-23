@@ -22,7 +22,7 @@ taskの成功を隔離の証明とせず、禁止したcapabilityが拒否され
 
 ## evidence record
 
-host version、runtime version、manifest hash、commandまたはprocedure、期待した拒否、観測結果、cleanup resultを記録します。これらの項目が、結論を適用できる構成を定義します。
+host version、runtime version、manifest hash、commandまたはprocedure、期待した拒否、観測結果、cleanup resultを記録します。これらの項目で、結論を適用できる構成を定義します。
 
 ## 状態の規則
 

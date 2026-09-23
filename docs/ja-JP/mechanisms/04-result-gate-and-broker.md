@@ -4,7 +4,7 @@
 
 ## 目的
 
-非信頼artifactの生成を、hostへの永続的な変更と認証付きの外部副作用から分離します。
+非信頼artifactの生成を、hostへの永続的な変更や認証付きの外部副作用から分離します。
 
 ## result gateの仕組み
 
@@ -16,7 +16,7 @@ guestはpatch、archive、log、生成fileを指定outputへexportします。ho
 - hashとsource identity
 - 要求されたdiffまたはoperation
 
-検査を通った結果だけをhost repositoryへ取り込みます。
+検査を通ったartifactだけをhost repositoryへ取り込みます。
 
 ## brokerの仕組み
 
