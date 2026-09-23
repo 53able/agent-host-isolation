@@ -98,7 +98,7 @@ JustBash templateも同じtop-level Manifest v2 resourceを使い、`runtime.kin
 python3 scripts/validate-manifest.py isolation-manifest.json
 ```
 
-Validatorは旧v1 manifestを拒否し、Apple ContainerとJustBashを共通Manifest v2 contractで検査します。標準JustBashでは不整合なprofile、未固定version、安全でないsnapshot、追加capability、network grant、未知のruntime field、無制限resource、host-shell fallback、不完全な昇格identityを拒否します。`network-derived`のgrant fieldはschema検査しますが、exact origin、path、method、expiry、転送量、redirectの各hopを実行時に強制するGateway adapterができるまではprofile自体を拒否します。
+Validatorは旧v1 manifestを拒否し、Apple ContainerとJustBashを共通Manifest v2 contractで検査します。標準JustBashでは不整合なprofile、未固定version、安全でないsnapshot、追加capability、network grant、未知のruntime field、無制限resource、host-shell fallback、不完全な昇格identityを拒否します。`network-derived`のgrant fieldはschema検査しますが、profile自体は実行可能にしません。Host側fetch brokerはdurableなSQLite audit recordとkill可能なDNS解決を使うone-shot input-snapshot bridgeであり、result gate後に新しい標準networkless JustBash attemptだけへbytesを渡します。production相当のdenial matrixを検証するまで、直接のderived profileは拒否します。
 
 ### 4. Apple Container argvを生成する
 

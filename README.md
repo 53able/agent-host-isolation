@@ -101,7 +101,7 @@ The JustBash template uses the same top-level Manifest v2 resources and speciali
 python3 scripts/validate-manifest.py isolation-manifest.json
 ```
 
-The validator rejects legacy v1 manifests and validates both Apple Container and JustBash through the shared Manifest v2 contract. For standard JustBash it rejects incompatible profiles, unpinned versions, unsafe snapshots, optional capabilities, network grants, unknown runtime fields, unbounded limits, host-shell fallback, and incomplete escalation identities. `network-derived` grant fields are schema-checked but the profile is not executable until a request-time gateway adapter enforces exact origin, path, method, expiry, byte budget, and every redirect hop.
+The validator rejects legacy v1 manifests and validates both Apple Container and JustBash through the shared Manifest v2 contract. For standard JustBash it rejects incompatible profiles, unpinned versions, unsafe snapshots, optional capabilities, network grants, unknown runtime fields, unbounded limits, host-shell fallback, and incomplete escalation identities. `network-derived` grant fields are schema-checked but the profile is not executable. The host-side fetch broker is a one-shot input-snapshot bridge: it uses durable SQLite audit records and killable DNS resolution, then requires a result gate before a new standard, networkless JustBash attempt can read the bytes. The direct derived profile remains rejected until the full production-equivalent denial matrix is verified.
 
 ### 4. Compile Apple Container argv
 
