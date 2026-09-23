@@ -8,4 +8,4 @@
 
 以前のnamed volume/root経路はApple Container 1.2.2で制限が効きませんでした。`nproc=32`のroot guestは40個のprocessを起動でき、16 MiB指定のvolumeには40 MiBを書き込めました。compilerは通常のstrict-memory taskでこの経路を拒否します。`create-probe`だけをmemory OOM実験用の明示的な入口として残します。新しいtmpfs/非root経路では同じhostで拒否probeが通過しました。JustBash inspect runtime作成時に検証済みの`strictMemoryTargetManifest`を設定すると、host controllerによる`blockInspectForStrictMemory`がゲート付きdispatchを自動起動し、`strictMemoryDispatchResult`で結果を取得できます。target未設定時は手動の昇格requestのままです。`scripts/verify_strict_memory_auto.py`でeventから成果物取り込みまで実機検査します。
 
-このprofileのfull pathは選択された`task.command`です。一般的なagent orchestrator、network gateway、credential brokerではなく、別のimage、host、runtime version、resource profileの隔離検証にもなりません。
+実機でeventから取り込みまで通した[記録](../../../evidence/strict-memory-auto-event-20260923.md)に、27項目のpass結果を保存しています。このprofileのfull pathは選択された`task.command`です。一般的なagent orchestrator、network gateway、credential brokerではなく、別のimage、host、runtime version、resource profileの隔離検証にもなりません。
