@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "task": {
     "id": "just-bash-adversarial-20260923",
-    "attempt_id": "attempt-e6a56fa560627a636162b17a",
+    "attempt_id": "attempt-d63cd3877acbe67913598aeb",
     "goal": "verify the standard JustBash inspect embedding with denial-oriented adversarial probes",
     "profile": "inspect",
     "strict_memory": false,
@@ -29,8 +29,8 @@
   "workspace": {
     "repository": {
       "url": "https://github.com/53able/agent-host-isolation.git",
-      "commit": "62da4950429fc99a43fb3ef4e5368219d8810803",
-      "tree_hash": "67b13b0776faf3aefbc8206ef4654f2d4fbc83ab"
+      "commit": "544547e3553c0355098c59c5d88d4d01030ddacc",
+      "tree_hash": "48879df526338b19377a5a1c5e42f5ecdf0b7660"
     },
     "snapshot": {
       "id": "just-bash-adversarial-input",
@@ -200,7 +200,28 @@
     "audit_record": "evidence/just-bash-adversarial-20260923.json"
   },
   "verification": {
-    "status": "unverified",
-    "adversarial_evidence": []
+    "status": "verified-for-tested-configuration",
+    "adversarial_evidence": [
+      {
+        "host_os": "macOS",
+        "host_version": "26.7",
+        "embedding": "scripts/run_just_bash_adversarial.mjs:Bash+InMemoryFs",
+        "package_version": "3.4.2",
+        "node_version": "24.13.1",
+        "agent_host_isolation_version": "0.2.0",
+        "manifest_hash": "sha256:80e9b423bc6f18a7fba87eec4b63c8b4b4f858f2d92bc960f367c0a8542cebce",
+        "input_snapshot_hash": "sha256:844f3e4cea5dcb8868cd5e203e2d237a03fd637ce8e2e87700f3734a5e82475a",
+        "tests": {
+          "mount": true,
+          "credential": true,
+          "network": true,
+          "command_path": true,
+          "resource": true,
+          "supply_chain": true,
+          "side_effect": true
+        },
+        "cleanup_passed": true
+      }
+    ]
   }
 }
