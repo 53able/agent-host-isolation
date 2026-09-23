@@ -1,12 +1,12 @@
 # Agent Host Isolation
 
-AIエージェントを、能力ベースの実行境界に置くための Agent Skill です。
+AIエージェントを能力ベースの実行境界に置くためのAgent Skillです。
 
 **言語:** [English](../../README.md) | 日本語
 
 ## このスキルが必要な理由
 
-プロンプトや承認ダイアログは、エージェントの判断を補助できます。しかし、hostを守る境界にはなりません。エージェントに無制限のshell、書込み可能なhost mount、認証情報、control socket、networkを渡した後で、慎重な指示によって能力を取り消すことはできないためです。
+プロンプトや承認ダイアログは、エージェントの判断を補助できます。しかし、hostを保護する境界にはなりません。エージェントに無制限のshell、書込み可能なhost mount、認証情報、control socket、networkを渡した後で、慎重な指示を与えても能力は取り消せないためです。
 
 このスキルは、安全性の判断を実行環境へ移します。
 
@@ -24,7 +24,7 @@ AIエージェントを、能力ベースの実行境界に置くための Agent
 
 ## 隔離の仕組み
 
-仕組みを七つの境界に分けました。各ドキュメントでは、制御対象、選択規則、失敗時の動作を説明します。
+仕組みを八つの境界に分けています。各ドキュメントで、制御対象、選択規則、失敗時の動作を説明します。
 
 1. [capability分類とexecution profile](mechanisms/01-capability-profiles.md)
 2. [read-only inputとguest-local scratch](mechanisms/02-input-and-scratch.md)
@@ -33,6 +33,7 @@ AIエージェントを、能力ベースの実行境界に置くための Agent
 5. [resource limit、watchdog、cleanup](mechanisms/05-resource-governance.md)
 6. [adversarial testと検証状態](mechanisms/06-adversarial-verification.md)
 7. [JustBash inspect runtime contract](mechanisms/07-just-bash-inspect-runtime.md)
+8. [strict-memory 自動振り分けゲート](mechanisms/08-strict-memory-dispatch.md)
 
 ## インストール
 
@@ -47,7 +48,7 @@ npx skills add 53able/agent-host-isolation
 releaseはGit tagで管理します。versionを固定してinstallする場合:
 
 ```bash
-npx skills add '53able/agent-host-isolation#v0.1.0'
+npx skills add '53able/agent-host-isolation#v0.2.0'
 ```
 
 projectへのinstallでは、sourceと選択したGit refが`skills-lock.json`へ記録されます。同じskill versionを再現する必要があるprojectでは、このfileをcommitします。
@@ -92,7 +93,7 @@ cp assets/just-bash-inspect-manifest.template.json isolation-manifest.json
 
 JustBash templateも同じtop-level Manifest v2 resourceを使い、`runtime.kind`、最小snapshot、interpreter limit、`InspectBlocked`昇格policyだけを特化します。
 
-`task.strict_memory`を明示します。標準JustBashの`inspect`では`false`だけを許可します。worker RSSの定期監視はOS強制の厳密な上限ではありません。strict-memoryの`InspectBlocked`から、新しいmanifestとattemptを持つApple Container `guest-build` requestを生成できます。targetを事前設定するとhost controllerのeventから[ゲート付き自動振り分け](mechanisms/08-strict-memory-dispatch.md)も起動できます。[実機メモリprobe](../../evidence/strict-memory-probe-20260923.md)は記録したhostでOOM上限とcleanupを確認しました。自動振り分けはtarget attemptごとに検証済み構成の全項目を再確認します。
+`task.strict_memory`を明示します。標準JustBashの`inspect`では`false`だけを許可します。worker RSSの定期監視は、OSが強制する厳密な上限ではありません。strict-memoryの`InspectBlocked`から、新しいmanifestとattemptを持つApple Container `guest-build` requestを生成できます。targetを事前設定すると、host controllerのeventから[ゲート付き自動振り分け](mechanisms/08-strict-memory-dispatch.md)も起動できます。[実機メモリprobe](../../evidence/strict-memory-probe-20260923.md)には、記録したhostでOOM上限とcleanupを確認した結果があります。自動振り分けは、target attemptごとに検証済み構成の全項目を再確認します。
 
 ### 3. 実行前に検査する
 
@@ -106,13 +107,13 @@ Validatorは旧v1 manifestを拒否し、Apple ContainerとJustBashを共通Mani
 
 ```bash
 python3 scripts/apple_container_compiler.py isolation-manifest.json create
-python3 scripts/apple_container_compiler.py isolation-manifest.json start
-python3 scripts/apple_container_compiler.py isolation-manifest.json stats
-python3 scripts/apple_container_compiler.py isolation-manifest.json stop
-python3 scripts/apple_container_compiler.py isolation-manifest.json delete
+python3 scripts/apple_container_compiler.py isolation-manifest.json start --resource-labels observed-labels.json
+python3 scripts/apple_container_compiler.py isolation-manifest.json stats --resource-labels observed-labels.json
+python3 scripts/apple_container_compiler.py isolation-manifest.json stop --resource-labels observed-labels.json
+python3 scripts/apple_container_compiler.py isolation-manifest.json delete --resource-labels observed-labels.json
 ```
 
-compilerはshell文字列ではなくJSONのargv配列を返します。image digestとtask/manifest/workspace hashのlabelは常に生成され、任意の追加flagは受け付けません。Apple Containerの`--network`は宛先allowlistではないため、標準profileでは外部gateway/brokerが制御するtask専用networkを要求します。
+compilerはshell文字列ではなくJSONのargv配列を返します。image digestとtask/manifest/workspace hashのlabelは常に生成され、任意の追加flagは受け付けません。既存containerの操作には`container inspect`から得た所有labelの一致が必要です。Apple Containerの`--network`は宛先allowlistではありません。network grantがないtaskは`none`を使い、grantがあるtaskでは外部のdefault-deny gatewayを備えたtask専用networkと、host発行の一致するattestationが必要です。[Apple Container runtime contract](../../references/apple-container-runtime.md)を参照してください。
 
 ### 5. Result gateを通して成果物を取り込む
 

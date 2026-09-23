@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { createInspectRuntimeFromFetch, executeInspectCommand } from "../scripts/just_bash_runtime.mjs";
+import { AGENT_HOST_ISOLATION_VERSION, createInspectRuntimeFromFetch, executeInspectCommand } from "../scripts/just_bash_runtime.mjs";
 
 const root = new URL("../", import.meta.url);
 const digest = (value) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
@@ -22,10 +22,10 @@ test("fetch result gate imports bytes and executes them in standard JustBash", a
   source.workspace.snapshot.hash = digest(JSON.stringify(source.workspace.snapshot.paths));
   source.workspace.repository.commit = "b".repeat(40);
   source.workspace.repository.tree_hash = "c".repeat(40);
-  source.workspace.toolchain = { node: process.versions.node, "just-bash": "3.4.2", "agent-host-isolation": "0.1.0" };
+  source.workspace.toolchain = { node: process.versions.node, "just-bash": "3.4.2", "agent-host-isolation": AGENT_HOST_ISOLATION_VERSION };
   source.runtime.package_version = "3.4.2";
   source.runtime.node_version = process.versions.node;
-  source.runtime.agent_host_isolation_version = "0.1.0";
+  source.runtime.agent_host_isolation_version = AGENT_HOST_ISOLATION_VERSION;
   source.runtime.profile_variant = "network-derived";
   source.gateway.task_network = `${source.task.id}-network`;
   source.gateway.grants = [{ task_id: source.task.id, attempt_id: source.task.attempt_id, origin: "https://api.example.com:443", port: 443,

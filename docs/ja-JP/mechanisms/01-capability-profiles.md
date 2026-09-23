@@ -4,11 +4,11 @@
 
 ## 目的
 
-すべてのtaskを同じ汎用shellで動かさず、taskが実際に必要とするcapabilityからexecution environmentを選びます。
+すべてのtaskを同じ汎用shellで動かさず、taskに必要なcapabilityに応じてexecution environmentを選びます。
 
 ## 仕組み
 
-最初にtaskの要件を、入力、command、出力、network、credential、副作用、resource limitへ分けます。その結果から三つのprofileのいずれかを選びます。
+最初にtaskの要件を、入力、command、出力、network、credential、副作用、resource limitに分けます。その結果から三つのprofileのいずれかを選びます。
 
 | Profile | 実行要件 | 境界 |
 |---|---|---|

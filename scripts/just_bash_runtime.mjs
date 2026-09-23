@@ -27,7 +27,7 @@ const FETCH_GATE = fileURLToPath(new URL("./inspect_snapshot_gate.py", import.me
 const trustedRuntimes = new WeakMap();
 const BASH_EXEC = Bash.prototype.exec;
 const execFileAsync = promisify(execFile);
-export const AGENT_HOST_ISOLATION_VERSION = "0.1.0";
+export const AGENT_HOST_ISOLATION_VERSION = "0.2.0";
 
 const SAFE_ID = /^[a-z0-9][a-z0-9._-]{0,62}$/;
 const INSPECT_COMMAND_MIN_ARGS_V1 = {

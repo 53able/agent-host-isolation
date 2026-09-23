@@ -6,7 +6,7 @@
 
 `runtime.kind: just-bash`は`inspect`専用のin-process interpreterです。上限付きの検索、text processing、structured dataのparse、hash計算、決定的変換に使います。VMやOS security boundaryではなく、package manager、compiler、test runner、native binary、生成program、VM境界を必要とするworkloadには使いません。
 
-このruntimeでは`assets/just-bash-inspect-manifest.template.json`を使います。Manifest v2はtask identity、最小input snapshot、Gateway grant、runtime capability、result gate、audit event、verification statusを分離します。validatorは未知のv2 fieldを黙って許可せず拒否します。
+このruntimeでは`assets/just-bash-inspect-manifest.template.json`を使います。Manifest v2はtask identity、最小input snapshot、gateway grant、runtime capability、result gate、audit event、verification statusを分離します。validatorは未知のv2 fieldを黙って許可せず、拒否します。
 
 ## 標準capability
 
@@ -14,7 +14,7 @@
 
 Network、JavaScript、Python、custom command、tool invocationは無効です。標準validatorはnetwork attachmentとgrantをすべて拒否します。`network-derived`はgrant宣言が妥当でも現在は拒否します。JustBashにはexact origin、path、method、expiry、転送量、redirect各hopの再評価を実行時に強制するGateway adapterがありません。固定したnpm packageのroot entry pointからsecure fetch factoryは公開されていないため、private internalsやrequest前だけの検査に依存してnetworkを有効化しません。grant宣言だけでnetwork accessは有効になりません。full Internet accessは常に無効です。その他の追加capabilityも別途仕様化・reviewした派生profileで扱い、実行中の標準attemptを変更しません。
 
-Host側の`scripts/inspect_fetch_broker.py`は、読み取り専用のsnapshot取得経路です。network-derivedのgrant契約をhost fetchへ使い、公開DNSの解決結果をTLS接続へ固定し、redirectの各hopでexact origin、正規path、method、attempt、purpose、expiry、応答bodyの残byte budgetを再検査します。DNS解決は独立deadline付きのkill可能なchild processで実行します。呼び出し側のheaderは拒否します。拒否・timeoutではattemptを失効させ、成功後を含むcancelは`broker.cancel()`または束縛済み`DurableCancellation.set()`で永続化します。通常の`threading.Event`はrevokeを保存できないためcancel引数では拒否します。brokerにはhost管理の永続SQLite `FetchAuditStore`またはDB pathの明示が必須です。DNS解決後、現在の永続grant状態を照合してrequest開始eventをcommitし、並行revokeとの順序を確定します。revokeより先に開始したrequestは実行中として扱いますが、revoke後の結果はgateを通過できません。返したbyteとSHA-256記録は**result gate未審査**であり、JustBashへ渡す前に新しい標準のnetworkless manifestと内容照合済みinput snapshotを作る必要があります。このbrokerはJustBashでの`network-derived`直接実行を有効化しません。[Issue #5の証跡](../../../evidence/inspect-fetch-issue5-20260923.md)には26件のprobeが記録されています。検証状態は証跡に記録したcommit、host、runtime、manifest、入力に限ります。
+Host側の`scripts/inspect_fetch_broker.py`は、読み取り専用のsnapshot取得経路です。network-derivedのgrant契約をhost fetchへ使い、公開DNSの解決結果をTLS接続へ固定し、redirectの各hopでexact origin、正規path、method、attempt、purpose、expiry、応答bodyの残byte budgetを再検査します。DNS解決は独立deadline付きのkill可能なchild processで実行します。呼び出し側が指定するheaderは拒否します。拒否・timeoutではattemptを失効させ、成功後を含むcancelは`broker.cancel()`または束縛済み`DurableCancellation.set()`で永続化します。通常の`threading.Event`はrevokeを保存できないためcancel引数では拒否します。brokerにはhost管理の永続SQLite `FetchAuditStore`またはDB pathの明示が必須です。DNS解決後、現在の永続grant状態を照合してrequest開始eventをcommitし、並行revokeとの順序を確定します。revokeより先に開始したrequestは実行中として扱いますが、revoke後の結果はgateを通過できません。返したbyteとSHA-256記録は**result gateの審査前**であり、JustBashへ渡す前に新しい標準のnetworkless manifestと内容照合済みinput snapshotを作る必要があります。このbrokerはJustBashでの`network-derived`直接実行を有効化しません。[Issue #5の証跡](../../../evidence/inspect-fetch-issue5-20260923.md)には26件のprobeが記録されています。検証状態の適用範囲は、証跡に記録したcommit、host、runtime、manifest、入力に限られます。
 
 サポートするbridgeはone-shotだけです。`scripts/inspect_snapshot_gate.py`はallowed event、有効期限内かつ未失効のgrant、body hash、target snapshotを照合し、SQLite transactionで一回限りのconsumeを確定してからbytesをimportします。その後`scripts/just_bash_runtime.mjs:createInspectRuntimeFromFetch`がtarget snapshotから新しい標準networkless runtimeを構築します。replay、改ざん、別taskからの再利用、直接の`network-derived` JustBash manifestは拒否します。このbridgeは標準validatorを緩めず、derived profileを有効化しません。
 

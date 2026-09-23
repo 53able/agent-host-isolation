@@ -4,7 +4,7 @@
 
 ## 目的
 
-通常のagent実行が、外部service、internal network、認証済みsystemへの暗黙的なaccessを継承しないようにします。
+通常のagent実行が、外部service、internal network、認証済みのsystemへの暗黙的なaccessを継承しないようにします。
 
 ## networkの仕組み
 
@@ -16,7 +16,7 @@ SSH-agent socket、cloud token、Git credential helper、signing key、secret en
 
 ## 選択規則
 
-一般にtoolが要求するからではなく、task内の特定stepが必要とする場合だけcapabilityを追加します。そのstepがtaskからなくなったらgrantも削除します。
+toolが要求したという理由ではなく、task内の特定stepに必要な場合だけcapabilityを追加します。そのstepがtaskからなくなったらgrantも削除します。
 
 ## 失敗時の動作
 

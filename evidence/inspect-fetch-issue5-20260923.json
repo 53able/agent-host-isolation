@@ -1,6 +1,6 @@
 {
   "all_probes_passed": true,
-  "captured_at": "2026-09-23T06:09:29.320202+00:00",
+  "captured_at": "2026-09-23T07:16:52.376996+00:00",
   "host": {
     "machine": "arm64",
     "os": "Darwin",
@@ -11,9 +11,9 @@
   "input_hashes": {
     "harness": "sha256:20310f418cbfb20635f98c805fd80f76cb06523fc359c547cd63ac3bea17944c",
     "lockfile": "sha256:f39c8d9cf405a8ab62d0c13b8bf2de184d89bcc4b8b9ed978374796708bd3ec4",
-    "source_manifest": "sha256:94a5b4766ce4740b147508eb6167b6999930319a257370001eede30c98abc45c",
+    "source_manifest": "sha256:5fd3ea086c351c44b80bd484296fc60843bb8da236b8e7d4e59f6d1e7f4d754f",
     "source_snapshot": "sha256:e6eef84ad81f124d7935234b4a4a29c3971c7659c8b38774f1e45e0a519083d0",
-    "target_manifest": "sha256:954f6a062c75042f143c65592e8417638013453c5ff742e2085b17d2642afaf2",
+    "target_manifest": "sha256:a2a115f7fe8150251865ccc72359e27e28783f98870dc2afacb659e9a4559551",
     "target_snapshot": "sha256:e6eef84ad81f124d7935234b4a4a29c3971c7659c8b38774f1e45e0a519083d0"
   },
   "live_probes_passed": true,
@@ -37,8 +37,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "d01978b572fb41818ed393faef5df80e",
-            "manifest_hash": "sha256:41357dcbc6f84fdc3878d40312fc3cbddb64b31118d1b5c8b2adcabf22b91332",
+            "event_id": "b6a03969d971480faa3fee01d6768de2",
+            "manifest_hash": "sha256:11a8e1ac5724e9e7d79cd5ad247efe3f6f7871a8cad6d10db82cd4c04901b7e6",
             "method": "GET",
             "origin": "https://evil.example.com:443",
             "path": "/v1/data/item",
@@ -55,8 +55,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "f312156ee98746dd9f363e25c976b79c",
-            "manifest_hash": "sha256:41357dcbc6f84fdc3878d40312fc3cbddb64b31118d1b5c8b2adcabf22b91332",
+            "event_id": "33b43843ea0e4398ad7eab022d94b21b",
+            "manifest_hash": "sha256:11a8e1ac5724e9e7d79cd5ad247efe3f6f7871a8cad6d10db82cd4c04901b7e6",
             "method": "GET",
             "origin": "https://evil.example.com:443",
             "path": "/v1/data/item",
@@ -92,8 +92,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "31cf77b105cf4ffbbf5ca842a7bbc34d",
-            "manifest_hash": "sha256:9ace863e2a069cb827e4579e2f6bfe728032438812bdc70f2d3c20a56336c0d6",
+            "event_id": "4411e920ec574ae89bf3debdfaa39fe5",
+            "manifest_hash": "sha256:4665c2c5a39bc63d5cd218aad8c0e9e2e322623285a8588c7cf225bf03c3f144",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v2/data/item",
@@ -110,8 +110,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "9cc967a845804d33937466d027968160",
-            "manifest_hash": "sha256:9ace863e2a069cb827e4579e2f6bfe728032438812bdc70f2d3c20a56336c0d6",
+            "event_id": "377ceaea50df4ac18f266f1fe26646b0",
+            "manifest_hash": "sha256:4665c2c5a39bc63d5cd218aad8c0e9e2e322623285a8588c7cf225bf03c3f144",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v2/data/item",
@@ -147,8 +147,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "d48a230338094101bb23d2b0413c6fe9",
-            "manifest_hash": "sha256:5e117f3086d6a9ecdf1dc07f526110807e62a46a1978b3340219655dcf3ebc67",
+            "event_id": "b6fa6fb1b84e4ff9826150d2fc6815c8",
+            "manifest_hash": "sha256:b653a420e73b943451a8b479553d00e52d3a458fa853daab91accd38a50bc500",
             "method": "POST",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -165,8 +165,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "b9c0675bab6e4d138adbc5f50b8c44f8",
-            "manifest_hash": "sha256:5e117f3086d6a9ecdf1dc07f526110807e62a46a1978b3340219655dcf3ebc67",
+            "event_id": "b13e82a1a008451393a20235ce34623f",
+            "manifest_hash": "sha256:b653a420e73b943451a8b479553d00e52d3a458fa853daab91accd38a50bc500",
             "method": "POST",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -202,8 +202,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "2b27ca263cc04b18858409a11c54146e",
-            "manifest_hash": "sha256:b22b03f499024981f44d536499f42f8a52b0596342a0c922e26752fb420214a8",
+            "event_id": "620f3d41d6f4460397920b21b8b8a29a",
+            "manifest_hash": "sha256:8c7f89c4eb74d0c50a7f300886f869c363752af4ccfc34645de3828918cb7894",
             "method": "GET",
             "origin": "https://93.184.216.34:443",
             "path": "/v1/data/item",
@@ -220,8 +220,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "28a0f84ece514e30a4d2902f44dd1972",
-            "manifest_hash": "sha256:b22b03f499024981f44d536499f42f8a52b0596342a0c922e26752fb420214a8",
+            "event_id": "974d2c65d7c840cbadc84379ab441c08",
+            "manifest_hash": "sha256:8c7f89c4eb74d0c50a7f300886f869c363752af4ccfc34645de3828918cb7894",
             "method": "GET",
             "origin": "https://93.184.216.34:443",
             "path": "/v1/data/item",
@@ -257,8 +257,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "c25c43af7ac144c5bca2acb6fec0dd8c",
-            "manifest_hash": "sha256:c6dec4ea2f7527612d9cd143c620eec9ee56abb6decf407db736f369704fe2a6",
+            "event_id": "2454d5acb4434b7b8ce17e8601ac1876",
+            "manifest_hash": "sha256:bc05acb4ce015e6c737a88cbff787c7630330d5764e315118e63979a6713d3b5",
             "method": "GET",
             "origin": "https://api.example.com:8443",
             "path": "/v1/data/item",
@@ -275,8 +275,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "c81d79774f114b2a973e45c5ac3cbe59",
-            "manifest_hash": "sha256:c6dec4ea2f7527612d9cd143c620eec9ee56abb6decf407db736f369704fe2a6",
+            "event_id": "e44f6e0e32df4d2986f98767feddeb5c",
+            "manifest_hash": "sha256:bc05acb4ce015e6c737a88cbff787c7630330d5764e315118e63979a6713d3b5",
             "method": "GET",
             "origin": "https://api.example.com:8443",
             "path": "/v1/data/item",
@@ -311,9 +311,9 @@
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "decision": "request",
-            "event_id": "e812ba63fa034f8a8173d3f8d51670c5",
+            "event_id": "587aeb22b77248caaa24f6ecdf680900",
             "hop": 0,
-            "manifest_hash": "sha256:698eaa1fea5e5e7a3646934ce48666de2929870307dc006732f869495da25c45",
+            "manifest_hash": "sha256:c89c821448ab7c3bf0792ab65ee461f731232fa0c43fa37542f65339cb77d245",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -330,9 +330,9 @@
             "bytes": 0,
             "cleanup_outcome": "in_progress",
             "decision": "redirect",
-            "event_id": "bbf0b0ed58cc4a6491b628480e4668c5",
+            "event_id": "80d029c0495e4d89b2706cdb620ec493",
             "hop": 0,
-            "manifest_hash": "sha256:698eaa1fea5e5e7a3646934ce48666de2929870307dc006732f869495da25c45",
+            "manifest_hash": "sha256:c89c821448ab7c3bf0792ab65ee461f731232fa0c43fa37542f65339cb77d245",
             "method": "GET",
             "origin": "https://evil.example.com:443",
             "path": "/v1/data/item",
@@ -349,8 +349,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "6f3e21a4d5eb4cba96ca9f8c6b94337f",
-            "manifest_hash": "sha256:698eaa1fea5e5e7a3646934ce48666de2929870307dc006732f869495da25c45",
+            "event_id": "b2a3e7d95d3d420d9914d29fd0017400",
+            "manifest_hash": "sha256:c89c821448ab7c3bf0792ab65ee461f731232fa0c43fa37542f65339cb77d245",
             "method": "GET",
             "origin": "https://evil.example.com:443",
             "path": "/v1/data/item",
@@ -367,8 +367,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "18c6e81770f349a8910994d56d7222e8",
-            "manifest_hash": "sha256:698eaa1fea5e5e7a3646934ce48666de2929870307dc006732f869495da25c45",
+            "event_id": "ae0ee60825244acb891b0e75c280a17e",
+            "manifest_hash": "sha256:c89c821448ab7c3bf0792ab65ee461f731232fa0c43fa37542f65339cb77d245",
             "method": "GET",
             "origin": "https://evil.example.com:443",
             "path": "/v1/data/item",
@@ -404,8 +404,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "bcd6b7d468df4bfc9c71b7b7dd2f3cfc",
-            "manifest_hash": "sha256:785e722c110b698ceb9cc86eb0da7974d778c66d338289ff8e544643b3019af8",
+            "event_id": "d91a3498d6064200a076c165bc225b6b",
+            "manifest_hash": "sha256:6f1dbe7b3591e6a341c0592ef715655a01c23cbcca552ec4644048eaed21b606",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -422,8 +422,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "17e910c3bc1044b1891bc943d6e5f6f0",
-            "manifest_hash": "sha256:785e722c110b698ceb9cc86eb0da7974d778c66d338289ff8e544643b3019af8",
+            "event_id": "532810675d6849699bf39076b99ebe1a",
+            "manifest_hash": "sha256:6f1dbe7b3591e6a341c0592ef715655a01c23cbcca552ec4644048eaed21b606",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -459,8 +459,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "2d712353166f4028ad16bbe7ead3941c",
-            "manifest_hash": "sha256:c00b74f2e3a335ab9637d8d71939e483b52e1f466f4e393963ebe10e1f22ac65",
+            "event_id": "8479ca8bcde4474baf07dd28ac7d1fca",
+            "manifest_hash": "sha256:14d73aee62cf9e04b224b1701ceec63a483e0b9855eee5d4fc0d0b7f100d5886",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -477,8 +477,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "d4575006d72441fda550c4c0a399f09f",
-            "manifest_hash": "sha256:c00b74f2e3a335ab9637d8d71939e483b52e1f466f4e393963ebe10e1f22ac65",
+            "event_id": "33c87974ab0348e99ffdaab371b6becf",
+            "manifest_hash": "sha256:14d73aee62cf9e04b224b1701ceec63a483e0b9855eee5d4fc0d0b7f100d5886",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -513,9 +513,9 @@
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "decision": "request",
-            "event_id": "7fb5022f571a4e439739ae4fb380989e",
+            "event_id": "b0b717fe70de4afcbea39f35aacd1ee1",
             "hop": 0,
-            "manifest_hash": "sha256:64b21c98e33692500fb212b21225ddfd279eeba9089230e2bc3f893c3a64c8b0",
+            "manifest_hash": "sha256:9ef68ff85b9d8c991df4ca9ab50540ca522fa17c4e8439d1bf513c20b0e7c891",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -532,8 +532,8 @@
             "bytes": 25,
             "cleanup_outcome": "revoke_required",
             "decision": "budget",
-            "event_id": "fcae54b76b1f4fabba5cff0edf697d83",
-            "manifest_hash": "sha256:64b21c98e33692500fb212b21225ddfd279eeba9089230e2bc3f893c3a64c8b0",
+            "event_id": "929e13ef71a649ee94bbf8bb57444afb",
+            "manifest_hash": "sha256:9ef68ff85b9d8c991df4ca9ab50540ca522fa17c4e8439d1bf513c20b0e7c891",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -549,8 +549,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "58cc1a9a530e4af0a4a91e1a0efa89e7",
-            "manifest_hash": "sha256:64b21c98e33692500fb212b21225ddfd279eeba9089230e2bc3f893c3a64c8b0",
+            "event_id": "3f879983892a49da9e0906ae16821f2b",
+            "manifest_hash": "sha256:9ef68ff85b9d8c991df4ca9ab50540ca522fa17c4e8439d1bf513c20b0e7c891",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -567,8 +567,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "190e436a64494aeb9d776fbf9b16fcd7",
-            "manifest_hash": "sha256:64b21c98e33692500fb212b21225ddfd279eeba9089230e2bc3f893c3a64c8b0",
+            "event_id": "6d8c8a337e77455990bd4077e2fa21ed",
+            "manifest_hash": "sha256:9ef68ff85b9d8c991df4ca9ab50540ca522fa17c4e8439d1bf513c20b0e7c891",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -604,8 +604,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "e3267270564b4ed69cd8d81c0b45e67c",
-            "manifest_hash": "sha256:9ec6889085a30f5f7f00a8e0ebb622ae82b6020655edfd12b8a930399950d89e",
+            "event_id": "fe91ec4fa70248e6bfe18bd4515e034f",
+            "manifest_hash": "sha256:06dbf77d17fa0ce0a486dfd9d5e712099cc70c7104c821bcb2ce5265f001bdab",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -622,8 +622,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "fee43bf844b04867b1cf75497d18127c",
-            "manifest_hash": "sha256:9ec6889085a30f5f7f00a8e0ebb622ae82b6020655edfd12b8a930399950d89e",
+            "event_id": "2db474da99994b99b8489f3aecf46adc",
+            "manifest_hash": "sha256:06dbf77d17fa0ce0a486dfd9d5e712099cc70c7104c821bcb2ce5265f001bdab",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -659,8 +659,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "c240129b4c644c28951e91d161d742d1",
-            "manifest_hash": "sha256:fff39f2964a9adf7541f970905206b9f3ae5fc83460379761975edb9ae9d1899",
+            "event_id": "75ffa174fac049808601b4a708bccbc0",
+            "manifest_hash": "sha256:de0daa26068de78684a2f24bb4c86f520458f9303cea20e408abc0fb5531a4e5",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -677,8 +677,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "ba3e8df9d78a461d849eaab30beb2e00",
-            "manifest_hash": "sha256:fff39f2964a9adf7541f970905206b9f3ae5fc83460379761975edb9ae9d1899",
+            "event_id": "bebc78ee880f4debae33bbf0ffe99d36",
+            "manifest_hash": "sha256:de0daa26068de78684a2f24bb4c86f520458f9303cea20e408abc0fb5531a4e5",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -713,9 +713,9 @@
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "decision": "request",
-            "event_id": "2fb9a4a13c484942aa1ca31310435c7d",
+            "event_id": "f90244e237e243498410b58ee96e65ee",
             "hop": 0,
-            "manifest_hash": "sha256:61907fe6695f300b6d8568a393df056611c1f0099072e90eec19fdcd7f10fa80",
+            "manifest_hash": "sha256:424d82ad570f11778d2afd8878c3b8d1ac73ec2c3da2a0ff7cd07aa0a14f61d7",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -732,8 +732,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "a2215261c2c34d2d8892a0ad97370ef0",
-            "manifest_hash": "sha256:61907fe6695f300b6d8568a393df056611c1f0099072e90eec19fdcd7f10fa80",
+            "event_id": "511b83b708b2401c841fe2232b131458",
+            "manifest_hash": "sha256:424d82ad570f11778d2afd8878c3b8d1ac73ec2c3da2a0ff7cd07aa0a14f61d7",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -750,8 +750,8 @@
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "ed9968e94d5e4bcfba96d9f7949d94ec",
-            "manifest_hash": "sha256:61907fe6695f300b6d8568a393df056611c1f0099072e90eec19fdcd7f10fa80",
+            "event_id": "8b7e31f8413d46f8a72757f215bbaea7",
+            "manifest_hash": "sha256:424d82ad570f11778d2afd8878c3b8d1ac73ec2c3da2a0ff7cd07aa0a14f61d7",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -794,7 +794,7 @@
               {
                 "attempt_id": "attempt-success",
                 "audit_record": "audit/inspect-fetch-issue5.json",
-                "expiry": "2026-09-23T06:19:21.441158Z",
+                "expiry": "2026-09-23T07:26:43.908192Z",
                 "max_bytes": 4096,
                 "methods": [
                   "GET"
@@ -887,7 +887,7 @@
             "required": true
           },
           "runtime": {
-            "agent_host_isolation_version": "0.1.0",
+            "agent_host_isolation_version": "0.2.0",
             "audit_events": [
               "runtime_identity",
               "command",
@@ -977,14 +977,14 @@
             },
             "mcps": [],
             "repository": {
-              "commit": "3e78de4036b141c86fbfef39d343120104fc7c22",
-              "tree_hash": "61eb9532268e04efa8f75c203edf0c18efbda68a",
+              "commit": "c254edcc684be0f7039c003e5b914ffd1ed22641",
+              "tree_hash": "ba94db000e826d73c07d18d21d16e0f34e9a76b1",
               "url": "https://github.com/53able/agent-host-isolation.git"
             },
             "skills": [
               {
                 "id": "agent-host-isolation",
-                "version": "0.1.0"
+                "version": "0.2.0"
               }
             ],
             "snapshot": {
@@ -1002,13 +1002,13 @@
               "target": "/workspace"
             },
             "toolchain": {
-              "agent-host-isolation": "0.1.0",
+              "agent-host-isolation": "0.2.0",
               "just-bash": "3.4.2",
               "node": "24.13.1"
             }
           }
         },
-        "source_manifest_hash": "sha256:94a5b4766ce4740b147508eb6167b6999930319a257370001eede30c98abc45c",
+        "source_manifest_hash": "sha256:5fd3ea086c351c44b80bd484296fc60843bb8da236b8e7d4e59f6d1e7f4d754f",
         "tamper_rejected": true,
         "target_manifest": {
           "gateway": {
@@ -1094,7 +1094,7 @@
             "required": true
           },
           "runtime": {
-            "agent_host_isolation_version": "0.1.0",
+            "agent_host_isolation_version": "0.2.0",
             "audit_events": [
               "runtime_identity",
               "command",
@@ -1148,7 +1148,7 @@
             "unsupported_command": "InspectBlocked"
           },
           "task": {
-            "attempt_id": "attempt-import-623c51880c93",
+            "attempt_id": "attempt-import-d5190a241304",
             "command": [
               "cat",
               "data.txt"
@@ -1184,14 +1184,14 @@
             },
             "mcps": [],
             "repository": {
-              "commit": "3e78de4036b141c86fbfef39d343120104fc7c22",
-              "tree_hash": "61eb9532268e04efa8f75c203edf0c18efbda68a",
+              "commit": "c254edcc684be0f7039c003e5b914ffd1ed22641",
+              "tree_hash": "ba94db000e826d73c07d18d21d16e0f34e9a76b1",
               "url": "https://github.com/53able/agent-host-isolation.git"
             },
             "skills": [
               {
                 "id": "agent-host-isolation",
-                "version": "0.1.0"
+                "version": "0.2.0"
               }
             ],
             "snapshot": {
@@ -1209,13 +1209,13 @@
               "target": "/workspace"
             },
             "toolchain": {
-              "agent-host-isolation": "0.1.0",
+              "agent-host-isolation": "0.2.0",
               "just-bash": "3.4.2",
               "node": "24.13.1"
             }
           }
         },
-        "target_manifest_hash": "sha256:954f6a062c75042f143c65592e8417638013453c5ff742e2085b17d2642afaf2",
+        "target_manifest_hash": "sha256:a2a115f7fe8150251865ccc72359e27e28783f98870dc2afacb659e9a4559551",
         "transport": "injected/mock; real installed JustBash standard runtime"
       },
       "passed": true
@@ -1228,13 +1228,13 @@
         "allowed_event": true,
         "audit_events": [
           {
-            "attempt_id": "attempt-5d16c77787a9",
+            "attempt_id": "attempt-8812ddbcd1b6",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "decision": "request",
-            "event_id": "18cc5b84ab28419b92fb832181f13d7a",
+            "event_id": "63f1ea1e6dda4507a6062b465047c07d",
             "hop": 0,
-            "manifest_hash": "sha256:2ad2d230ec0e852b818738b09c933cba7654f6914c3022ef466120673643c73f",
+            "manifest_hash": "sha256:f20fb76e9453a59890fa1f06d07a045a11d55097757fb609114b1bdb67a161ea",
             "method": "GET",
             "origin": "https://example.com:443",
             "path": "/",
@@ -1246,25 +1246,25 @@
             "url": "https://example.com/"
           },
           {
-            "attempt_id": "attempt-5d16c77787a9",
+            "attempt_id": "attempt-8812ddbcd1b6",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 559,
             "decision": "usage",
-            "event_id": "d4c74f84c54e4eae91bcd65a217fcc38",
-            "manifest_hash": "sha256:2ad2d230ec0e852b818738b09c933cba7654f6914c3022ef466120673643c73f",
+            "event_id": "517fe91e696e40959cbe98ff5c596f66",
+            "manifest_hash": "sha256:f20fb76e9453a59890fa1f06d07a045a11d55097757fb609114b1bdb67a161ea",
             "max_bytes": 4096,
             "reason": null,
             "task_id": "inspect-fetch-live-live-example-com",
             "used_bytes": 559
           },
           {
-            "attempt_id": "attempt-5d16c77787a9",
+            "attempt_id": "attempt-8812ddbcd1b6",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 559,
             "cleanup_outcome": "not_required",
             "decision": "allowed",
-            "event_id": "f7755ffb5b0c4aa1bc8a14222113cddc",
-            "manifest_hash": "sha256:2ad2d230ec0e852b818738b09c933cba7654f6914c3022ef466120673643c73f",
+            "event_id": "5dcf8b42acf145ac9552aad012b8eb0f",
+            "manifest_hash": "sha256:f20fb76e9453a59890fa1f06d07a045a11d55097757fb609114b1bdb67a161ea",
             "method": "GET",
             "origin": "https://example.com:443",
             "path": "/",
@@ -1282,7 +1282,7 @@
           }
         ],
         "broker_process": {
-          "pid": 55713,
+          "pid": 56201,
           "returncode": 0,
           "terminated_before_reader": true
         },
@@ -1295,10 +1295,10 @@
         "passed": true,
         "path_prefix": "/",
         "record": {
-          "attempt_id": "attempt-5d16c77787a9",
+          "attempt_id": "attempt-8812ddbcd1b6",
           "audit_record": "audit/inspect-fetch-issue5.json",
-          "event_id": "f7755ffb5b0c4aa1bc8a14222113cddc",
-          "manifest_hash": "sha256:2ad2d230ec0e852b818738b09c933cba7654f6914c3022ef466120673643c73f",
+          "event_id": "5dcf8b42acf145ac9552aad012b8eb0f",
+          "manifest_hash": "sha256:f20fb76e9453a59890fa1f06d07a045a11d55097757fb609114b1bdb67a161ea",
           "method": "GET",
           "purpose": "bounded inspection input",
           "redirect_hops": 0,
@@ -1325,9 +1325,9 @@
             "type": "regular"
           }
         ],
-        "source_manifest_hash": "sha256:2ad2d230ec0e852b818738b09c933cba7654f6914c3022ef466120673643c73f",
+        "source_manifest_hash": "sha256:f20fb76e9453a59890fa1f06d07a045a11d55097757fb609114b1bdb67a161ea",
         "status": "HTTP 2xx",
-        "target_manifest_hash": "sha256:4db6da2398acad14222a40f6621063e90ac033830d307ca52dadc426f0676554",
+        "target_manifest_hash": "sha256:108351ce0f5e8401a4c2d194d96636ac203702b0cf31daa6f816a3eb484ae721",
         "transport": "live public DNS + TLS + HTTPS",
         "url": "https://example.com/"
       },
@@ -1341,13 +1341,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-a11aeecbedcc",
+            "attempt_id": "attempt-7f7952482497",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "decision": "request",
-            "event_id": "c5f61b223e37499ebb6591097bee721f",
+            "event_id": "cacf7a47446a4b9cb8cd5846b629f61a",
             "hop": 0,
-            "manifest_hash": "sha256:af39f9f0e87066f7196426133328ad97ae3fe883f62f11e868881f4ec896c32a",
+            "manifest_hash": "sha256:3c659f66eaac9a14d9868672d834ce0c3839d36362b3ab97e90277b6be1b28af",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/redirect/1",
@@ -1359,14 +1359,14 @@
             "url": "https://httpbin.org/redirect/1"
           },
           {
-            "attempt_id": "attempt-a11aeecbedcc",
+            "attempt_id": "attempt-7f7952482497",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "in_progress",
             "decision": "redirect",
-            "event_id": "863b9d38073a40648b56b329873741c4",
+            "event_id": "12dcbdebf8c84f2eafcbfa93701781c7",
             "hop": 0,
-            "manifest_hash": "sha256:af39f9f0e87066f7196426133328ad97ae3fe883f62f11e868881f4ec896c32a",
+            "manifest_hash": "sha256:3c659f66eaac9a14d9868672d834ce0c3839d36362b3ab97e90277b6be1b28af",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/get",
@@ -1378,13 +1378,13 @@
             "url": "https://httpbin.org/get"
           },
           {
-            "attempt_id": "attempt-a11aeecbedcc",
+            "attempt_id": "attempt-7f7952482497",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "925b84243fcf43dd92cd0fc78abb4626",
-            "manifest_hash": "sha256:af39f9f0e87066f7196426133328ad97ae3fe883f62f11e868881f4ec896c32a",
+            "event_id": "4123bd04c9b040a291b03fb58711301e",
+            "manifest_hash": "sha256:3c659f66eaac9a14d9868672d834ce0c3839d36362b3ab97e90277b6be1b28af",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/get",
@@ -1396,13 +1396,13 @@
             "url": "https://httpbin.org/get"
           },
           {
-            "attempt_id": "attempt-a11aeecbedcc",
+            "attempt_id": "attempt-7f7952482497",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "a008a6ebd97e4d86816a43db1f7e8ffe",
-            "manifest_hash": "sha256:af39f9f0e87066f7196426133328ad97ae3fe883f62f11e868881f4ec896c32a",
+            "event_id": "ed11b9872eaa46acbe1f50548b1c315b",
+            "manifest_hash": "sha256:3c659f66eaac9a14d9868672d834ce0c3839d36362b3ab97e90277b6be1b28af",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/get",
@@ -1415,7 +1415,7 @@
           }
         ],
         "broker_process": {
-          "pid": 55750,
+          "pid": 56238,
           "returncode": 0,
           "terminated_before_reader": true
         },
@@ -1449,13 +1449,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-405a0d0d7b74",
+            "attempt_id": "attempt-c39d85092575",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "c5441201e0fd44fc964fa81a6e1fe012",
-            "manifest_hash": "sha256:e6d8746be681f29c2cd218fcb42eeb8091f2d0cf2f3ecf67176b4c87689a8767",
+            "event_id": "87cc7adbabc64f98877e511aafd8e24d",
+            "manifest_hash": "sha256:6f824da21c883e530f6cdbf1803a423ea04927be79975f35fbcc367460c0773b",
             "method": "GET",
             "origin": "https://evil.example.com:443",
             "path": "/v1/data/item",
@@ -1467,13 +1467,13 @@
             "url": "https://evil.example.com/v1/data/item"
           },
           {
-            "attempt_id": "attempt-405a0d0d7b74",
+            "attempt_id": "attempt-c39d85092575",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "3f156014e02e4930bee0a566e4bb5c2c",
-            "manifest_hash": "sha256:e6d8746be681f29c2cd218fcb42eeb8091f2d0cf2f3ecf67176b4c87689a8767",
+            "event_id": "5822d636069544758ca30ac2f470f999",
+            "manifest_hash": "sha256:6f824da21c883e530f6cdbf1803a423ea04927be79975f35fbcc367460c0773b",
             "method": "GET",
             "origin": "https://evil.example.com:443",
             "path": "/v1/data/item",
@@ -1517,13 +1517,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-3d59ac194f41",
+            "attempt_id": "attempt-882784183ec7",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "b59848c54a24492ba9531462096dcb41",
-            "manifest_hash": "sha256:17bc34271cf8e6fd751e3beb7f211067c65f26f8d827a225af80f386c6614744",
+            "event_id": "fbf896cb6d2746ecb492ef555eb71075",
+            "manifest_hash": "sha256:638227d4e7a34af07ba2c94d9e3b65b316a013b343f02389eeb883a39337ab4d",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v2/data/item",
@@ -1535,13 +1535,13 @@
             "url": "https://api.example.com/v2/data/item"
           },
           {
-            "attempt_id": "attempt-3d59ac194f41",
+            "attempt_id": "attempt-882784183ec7",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "669066ce44c54f719d3d5b2616282496",
-            "manifest_hash": "sha256:17bc34271cf8e6fd751e3beb7f211067c65f26f8d827a225af80f386c6614744",
+            "event_id": "83f1ce98368948f7ada8f8d2602a8fb5",
+            "manifest_hash": "sha256:638227d4e7a34af07ba2c94d9e3b65b316a013b343f02389eeb883a39337ab4d",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v2/data/item",
@@ -1585,13 +1585,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-074977d71dfa",
+            "attempt_id": "attempt-f88caf457ac7",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "89bcb675f1dc4236a7c03df44f1287a1",
-            "manifest_hash": "sha256:584954f943aa2bb8653f47394d7add614bc71cad4cb438c1c26aa82cc0857345",
+            "event_id": "b196f027a6df456e8b76ae2a1a6a47c5",
+            "manifest_hash": "sha256:744f294fc1ae1ef6875dee30a94fe379502ae28318202d85035ffc2464270156",
             "method": "POST",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -1603,13 +1603,13 @@
             "url": "https://api.example.com/v1/data/item"
           },
           {
-            "attempt_id": "attempt-074977d71dfa",
+            "attempt_id": "attempt-f88caf457ac7",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "128be4130abb4f4782f021ddb809ede7",
-            "manifest_hash": "sha256:584954f943aa2bb8653f47394d7add614bc71cad4cb438c1c26aa82cc0857345",
+            "event_id": "74e2ee55e0244a6ea36276c3bafcad40",
+            "manifest_hash": "sha256:744f294fc1ae1ef6875dee30a94fe379502ae28318202d85035ffc2464270156",
             "method": "POST",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -1653,13 +1653,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-438a992c1203",
+            "attempt_id": "attempt-77c6a9ff5c2f",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "2c5b7cdf38d3466e98eb35f1c6b1b674",
-            "manifest_hash": "sha256:7aa6a8085f3fb8c297ad1f8ae61607f379634e1c1d92f2aa04fe344ffeb79d12",
+            "event_id": "65d735b94ea44ff6bdc76f46ad76ca1d",
+            "manifest_hash": "sha256:0f9f93db308b61de8fa1799bf7d1bbd405bc10f38ee7e16a248756b99ec7abb7",
             "method": "GET",
             "origin": "https://93.184.216.34:443",
             "path": "/v1/data/item",
@@ -1671,13 +1671,13 @@
             "url": "https://93.184.216.34/v1/data/item"
           },
           {
-            "attempt_id": "attempt-438a992c1203",
+            "attempt_id": "attempt-77c6a9ff5c2f",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "8a32f7f099954cd09fe29d0fc8d1f85c",
-            "manifest_hash": "sha256:7aa6a8085f3fb8c297ad1f8ae61607f379634e1c1d92f2aa04fe344ffeb79d12",
+            "event_id": "3e96054f555b473291694e18663093f9",
+            "manifest_hash": "sha256:0f9f93db308b61de8fa1799bf7d1bbd405bc10f38ee7e16a248756b99ec7abb7",
             "method": "GET",
             "origin": "https://93.184.216.34:443",
             "path": "/v1/data/item",
@@ -1721,13 +1721,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-0b38b4fab154",
+            "attempt_id": "attempt-a0f408278b33",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "3eb4d7a3390a44eba8211603b5f7efd8",
-            "manifest_hash": "sha256:f8f7976a2c1886860f7b5ac4c82d8a74a44031116b54d158c492fe618eaad072",
+            "event_id": "2cbdc621c58949dea1aced0746e2fcda",
+            "manifest_hash": "sha256:07314b962367090e89b7b959ab67c3f884c288f58b307eb488e2c46732381461",
             "method": "GET",
             "origin": "https://api.example.com:8443",
             "path": "/v1/data/item",
@@ -1739,13 +1739,13 @@
             "url": "https://api.example.com:8443/v1/data/item"
           },
           {
-            "attempt_id": "attempt-0b38b4fab154",
+            "attempt_id": "attempt-a0f408278b33",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "6c59c420ea9743a8b84e6c4f135b1253",
-            "manifest_hash": "sha256:f8f7976a2c1886860f7b5ac4c82d8a74a44031116b54d158c492fe618eaad072",
+            "event_id": "8bbfe7933451443cbff7c55dcf96dd2e",
+            "manifest_hash": "sha256:07314b962367090e89b7b959ab67c3f884c288f58b307eb488e2c46732381461",
             "method": "GET",
             "origin": "https://api.example.com:8443",
             "path": "/v1/data/item",
@@ -1789,13 +1789,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-462141bfd3b0",
+            "attempt_id": "attempt-3fbfe575bb32",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "1ed3df2f29af4efa8fea2a5c76cbedc5",
-            "manifest_hash": "sha256:7a57218900230822433129e7278bbfec6451077ae4d26df945933cc9154f1cc0",
+            "event_id": "2cbd4be2362e4794a655a65efcef1806",
+            "manifest_hash": "sha256:f628ea8aab85c3fddd4711e543f9efac79f9071a5d82e223452eff54f0c69f6b",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -1807,13 +1807,13 @@
             "url": "https://api.example.com/v1/data/item"
           },
           {
-            "attempt_id": "attempt-462141bfd3b0",
+            "attempt_id": "attempt-3fbfe575bb32",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "8f71036731f045b0a98f35ecc626fc1e",
-            "manifest_hash": "sha256:7a57218900230822433129e7278bbfec6451077ae4d26df945933cc9154f1cc0",
+            "event_id": "7eaa913e1e0b41dfa643447092b598dc",
+            "manifest_hash": "sha256:f628ea8aab85c3fddd4711e543f9efac79f9071a5d82e223452eff54f0c69f6b",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -1857,13 +1857,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-b9fe66e0331c",
+            "attempt_id": "attempt-0775d00fae25",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "b7fc1e3b11be4d25be8d5740d9fbc5c8",
-            "manifest_hash": "sha256:8105566261b50ae5414bd2bd04e34ff01af66ad6c7d7df9a41ccb9c285a050d2",
+            "event_id": "9c709633ceca4f1091b3eff0b40f866f",
+            "manifest_hash": "sha256:2033439eac88394c469c021a0606fc47eb97c42dfafa74fc969f66395623b0db",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -1875,13 +1875,13 @@
             "url": "https://api.example.com/v1/data/item"
           },
           {
-            "attempt_id": "attempt-b9fe66e0331c",
+            "attempt_id": "attempt-0775d00fae25",
             "audit_record": null,
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "76c15c81dd9143dc832acf6a48564764",
-            "manifest_hash": "sha256:8105566261b50ae5414bd2bd04e34ff01af66ad6c7d7df9a41ccb9c285a050d2",
+            "event_id": "66b8eb47fab7405ba9f23443315149eb",
+            "manifest_hash": "sha256:2033439eac88394c469c021a0606fc47eb97c42dfafa74fc969f66395623b0db",
             "method": "GET",
             "origin": "https://api.example.com:443",
             "path": "/v1/data/item",
@@ -1925,13 +1925,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-f5fbfa688aa7",
+            "attempt_id": "attempt-227d637ac85a",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "decision": "request",
-            "event_id": "7eb1d44553e4416fae6c86039a90deb5",
+            "event_id": "8a28c74da1184a8b8557764aebac71eb",
             "hop": 0,
-            "manifest_hash": "sha256:fe114ba3fc02f0fc8ae42ab3b23c4941f949862f5b217f211e6128712f97bbc7",
+            "manifest_hash": "sha256:6288c2e4ffbcafe42a0c3bbb45b3fcde35258fd494457820d42d22b5ceb755da",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/bytes/32",
@@ -1943,13 +1943,13 @@
             "url": "https://httpbin.org/bytes/32"
           },
           {
-            "attempt_id": "attempt-f5fbfa688aa7",
+            "attempt_id": "attempt-227d637ac85a",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 32,
             "cleanup_outcome": "revoke_required",
             "decision": "budget",
-            "event_id": "cdb0fb65e87047398e7889d16b51e67e",
-            "manifest_hash": "sha256:fe114ba3fc02f0fc8ae42ab3b23c4941f949862f5b217f211e6128712f97bbc7",
+            "event_id": "67fde5d9033a4605963f0f7c537babbc",
+            "manifest_hash": "sha256:6288c2e4ffbcafe42a0c3bbb45b3fcde35258fd494457820d42d22b5ceb755da",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/bytes/32",
@@ -1960,13 +1960,13 @@
             "task_id": "inspect-fetch-live-live-byte-budget"
           },
           {
-            "attempt_id": "attempt-f5fbfa688aa7",
+            "attempt_id": "attempt-227d637ac85a",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "e47286fff76d4819b29fdb6311f84fa2",
-            "manifest_hash": "sha256:fe114ba3fc02f0fc8ae42ab3b23c4941f949862f5b217f211e6128712f97bbc7",
+            "event_id": "07eb5b1cb6b944e68219fa89e39cf01e",
+            "manifest_hash": "sha256:6288c2e4ffbcafe42a0c3bbb45b3fcde35258fd494457820d42d22b5ceb755da",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/bytes/32",
@@ -1978,13 +1978,13 @@
             "url": "https://httpbin.org/bytes/32"
           },
           {
-            "attempt_id": "attempt-f5fbfa688aa7",
+            "attempt_id": "attempt-227d637ac85a",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "500ddf63a6f24acf81743d27cfd4608e",
-            "manifest_hash": "sha256:fe114ba3fc02f0fc8ae42ab3b23c4941f949862f5b217f211e6128712f97bbc7",
+            "event_id": "ea927002df7e4049949e86348aa7a972",
+            "manifest_hash": "sha256:6288c2e4ffbcafe42a0c3bbb45b3fcde35258fd494457820d42d22b5ceb755da",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/bytes/32",
@@ -2002,13 +2002,13 @@
           "returncode": 0
         },
         "budget_event": {
-          "attempt_id": "attempt-f5fbfa688aa7",
+          "attempt_id": "attempt-227d637ac85a",
           "audit_record": "audit/inspect-fetch-issue5.json",
           "bytes": 32,
           "cleanup_outcome": "revoke_required",
           "decision": "budget",
-          "event_id": "cdb0fb65e87047398e7889d16b51e67e",
-          "manifest_hash": "sha256:fe114ba3fc02f0fc8ae42ab3b23c4941f949862f5b217f211e6128712f97bbc7",
+          "event_id": "67fde5d9033a4605963f0f7c537babbc",
+          "manifest_hash": "sha256:6288c2e4ffbcafe42a0c3bbb45b3fcde35258fd494457820d42d22b5ceb755da",
           "method": "GET",
           "origin": "https://httpbin.org:443",
           "path": "/bytes/32",
@@ -2061,13 +2061,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-280ae4524edd",
+            "attempt_id": "attempt-9126f793ee2d",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "13c2aa71318a46f78fd4a53895dfbbe5",
-            "manifest_hash": "sha256:d1568234860266730d46f180fc3abeae09a07c8bec48d7440718b1fb5fe8a70a",
+            "event_id": "2c98ba8ea32b41eaacb6913fcfe9c649",
+            "manifest_hash": "sha256:ddf191f1dca0d76b72be3fc00822d1335ad16afffcae6057cf0f7a2d7e386ca1",
             "method": "GET",
             "origin": "https://example.com:443",
             "path": "/",
@@ -2079,13 +2079,13 @@
             "url": "https://example.com/"
           },
           {
-            "attempt_id": "attempt-280ae4524edd",
+            "attempt_id": "attempt-9126f793ee2d",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "68b67a669ef744bfb4fe42cc74712105",
-            "manifest_hash": "sha256:d1568234860266730d46f180fc3abeae09a07c8bec48d7440718b1fb5fe8a70a",
+            "event_id": "851ff45961664a36bf51747e801fcb58",
+            "manifest_hash": "sha256:ddf191f1dca0d76b72be3fc00822d1335ad16afffcae6057cf0f7a2d7e386ca1",
             "method": "GET",
             "origin": "https://example.com:443",
             "path": "/",
@@ -2136,13 +2136,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-d20f5aabad46",
+            "attempt_id": "attempt-0aa1645f2af1",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "decision": "request",
-            "event_id": "bd902b43f8434d02b3b0ab3dee4818bf",
+            "event_id": "16a7b6b49f8c42e7bee7fae822dbef4c",
             "hop": 0,
-            "manifest_hash": "sha256:7d0d4475aec5715858700da24ffdffc8187537e486e164718eb89f10c67d766c",
+            "manifest_hash": "sha256:668c8f093bdd7caede5bf84bd8f00a61072e00d2014fc94d6ffa736be4023a6e",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/delay/3",
@@ -2154,13 +2154,13 @@
             "url": "https://httpbin.org/delay/3"
           },
           {
-            "attempt_id": "attempt-d20f5aabad46",
+            "attempt_id": "attempt-0aa1645f2af1",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "3e1bd47f8a424b78b6f2abfad70b62f4",
-            "manifest_hash": "sha256:7d0d4475aec5715858700da24ffdffc8187537e486e164718eb89f10c67d766c",
+            "event_id": "9e0554a56ed847dfaf1a80ae62d49094",
+            "manifest_hash": "sha256:668c8f093bdd7caede5bf84bd8f00a61072e00d2014fc94d6ffa736be4023a6e",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/delay/3",
@@ -2172,13 +2172,13 @@
             "url": "https://httpbin.org/delay/3"
           },
           {
-            "attempt_id": "attempt-d20f5aabad46",
+            "attempt_id": "attempt-0aa1645f2af1",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "1e7294837ea24de889b640b356746cc0",
-            "manifest_hash": "sha256:7d0d4475aec5715858700da24ffdffc8187537e486e164718eb89f10c67d766c",
+            "event_id": "e51363ae48bc4120b2c7e4b59862cc26",
+            "manifest_hash": "sha256:668c8f093bdd7caede5bf84bd8f00a61072e00d2014fc94d6ffa736be4023a6e",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/delay/3",
@@ -2235,13 +2235,13 @@
         "allowed_event": false,
         "audit_events": [
           {
-            "attempt_id": "attempt-e23544427d78",
+            "attempt_id": "attempt-1dc68309f99d",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "decision": "request",
-            "event_id": "1cdd98e15c7a4673bf163b7cbdb24b4d",
+            "event_id": "cb19f3905a434fc795f1113cc4ef75b8",
             "hop": 0,
-            "manifest_hash": "sha256:cf51a4f260777f935f3c7fa01c05a5ed65cbbcd1b92a00b8dad152276a80a956",
+            "manifest_hash": "sha256:c00333913a31f32153f76648bfeb4f9feac770022fb3f96d82b16809acb03b01",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/delay/3",
@@ -2253,13 +2253,13 @@
             "url": "https://httpbin.org/delay/3"
           },
           {
-            "attempt_id": "attempt-e23544427d78",
+            "attempt_id": "attempt-1dc68309f99d",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoke_required",
             "decision": "denied",
-            "event_id": "d4c6923e1bb14b04bb8e9da6cabeec24",
-            "manifest_hash": "sha256:cf51a4f260777f935f3c7fa01c05a5ed65cbbcd1b92a00b8dad152276a80a956",
+            "event_id": "a50c4c35cc74432ea800199f45004d7f",
+            "manifest_hash": "sha256:c00333913a31f32153f76648bfeb4f9feac770022fb3f96d82b16809acb03b01",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/delay/3",
@@ -2271,13 +2271,13 @@
             "url": "https://httpbin.org/delay/3"
           },
           {
-            "attempt_id": "attempt-e23544427d78",
+            "attempt_id": "attempt-1dc68309f99d",
             "audit_record": "audit/inspect-fetch-issue5.json",
             "bytes": 0,
             "cleanup_outcome": "revoked",
             "decision": "revoked",
-            "event_id": "d6ed1fdcb30a437ea3cfc00ed2566564",
-            "manifest_hash": "sha256:cf51a4f260777f935f3c7fa01c05a5ed65cbbcd1b92a00b8dad152276a80a956",
+            "event_id": "38e6c39647084688915c34f20736eb9c",
+            "manifest_hash": "sha256:c00333913a31f32153f76648bfeb4f9feac770022fb3f96d82b16809acb03b01",
             "method": "GET",
             "origin": "https://httpbin.org:443",
             "path": "/delay/3",
@@ -2331,8 +2331,8 @@
   "repository": {
     "dirty_worktree": [],
     "execution_input_dirty_worktree": [],
-    "head": "3e78de4036b141c86fbfef39d343120104fc7c22",
-    "tree": "61eb9532268e04efa8f75c203edf0c18efbda68a",
+    "head": "c254edcc684be0f7039c003e5b914ffd1ed22641",
+    "tree": "ba94db000e826d73c07d18d21d16e0f34e9a76b1",
     "url": "https://github.com/53able/agent-host-isolation.git"
   },
   "runtime": {
@@ -2369,7 +2369,7 @@
         {
           "attempt_id": "attempt-success",
           "audit_record": "audit/inspect-fetch-issue5.json",
-          "expiry": "2026-09-23T06:19:21.441158Z",
+          "expiry": "2026-09-23T07:26:43.908192Z",
           "max_bytes": 4096,
           "methods": [
             "GET"
@@ -2462,7 +2462,7 @@
       "required": true
     },
     "runtime": {
-      "agent_host_isolation_version": "0.1.0",
+      "agent_host_isolation_version": "0.2.0",
       "audit_events": [
         "runtime_identity",
         "command",
@@ -2552,14 +2552,14 @@
       },
       "mcps": [],
       "repository": {
-        "commit": "3e78de4036b141c86fbfef39d343120104fc7c22",
-        "tree_hash": "61eb9532268e04efa8f75c203edf0c18efbda68a",
+        "commit": "c254edcc684be0f7039c003e5b914ffd1ed22641",
+        "tree_hash": "ba94db000e826d73c07d18d21d16e0f34e9a76b1",
         "url": "https://github.com/53able/agent-host-isolation.git"
       },
       "skills": [
         {
           "id": "agent-host-isolation",
-          "version": "0.1.0"
+          "version": "0.2.0"
         }
       ],
       "snapshot": {
@@ -2577,7 +2577,7 @@
         "target": "/workspace"
       },
       "toolchain": {
-        "agent-host-isolation": "0.1.0",
+        "agent-host-isolation": "0.2.0",
         "just-bash": "3.4.2",
         "node": "24.13.1"
       }
@@ -2668,7 +2668,7 @@
       "required": true
     },
     "runtime": {
-      "agent_host_isolation_version": "0.1.0",
+      "agent_host_isolation_version": "0.2.0",
       "audit_events": [
         "runtime_identity",
         "command",
@@ -2722,7 +2722,7 @@
       "unsupported_command": "InspectBlocked"
     },
     "task": {
-      "attempt_id": "attempt-import-623c51880c93",
+      "attempt_id": "attempt-import-d5190a241304",
       "command": [
         "cat",
         "data.txt"
@@ -2758,14 +2758,14 @@
       },
       "mcps": [],
       "repository": {
-        "commit": "3e78de4036b141c86fbfef39d343120104fc7c22",
-        "tree_hash": "61eb9532268e04efa8f75c203edf0c18efbda68a",
+        "commit": "c254edcc684be0f7039c003e5b914ffd1ed22641",
+        "tree_hash": "ba94db000e826d73c07d18d21d16e0f34e9a76b1",
         "url": "https://github.com/53able/agent-host-isolation.git"
       },
       "skills": [
         {
           "id": "agent-host-isolation",
-          "version": "0.1.0"
+          "version": "0.2.0"
         }
       ],
       "snapshot": {
@@ -2783,7 +2783,7 @@
         "target": "/workspace"
       },
       "toolchain": {
-        "agent-host-isolation": "0.1.0",
+        "agent-host-isolation": "0.2.0",
         "just-bash": "3.4.2",
         "node": "24.13.1"
       }
