@@ -16,7 +16,7 @@ import time
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from apple_container_compiler import canonical_hash, compile_command, require_resource_ownership
+from apple_container_compiler import MIB, canonical_hash, compile_command, require_resource_ownership, supervised_storage_mib
 from import_artifacts import import_artifacts
 from manifest_v2 import validate_v2
 from run_apple_container_smoke import cleanup, run
@@ -119,6 +119,43 @@ def _inspect_labels(name: str, manifest: dict[str, Any]) -> dict[str, Any] | Non
     return labels
 
 
+def require_runtime_identity(configuration: dict[str, Any], manifest: dict[str, Any]) -> None:
+    """Reject a container whose observed security boundary differs from the manifest."""
+    require_resource_ownership(manifest, configuration.get("labels"))
+    image = manifest["workspace"]["image"]
+    observed_image = configuration.get("image", {})
+    if observed_image.get("descriptor", {}).get("digest") != image["digest"]:
+        raise ValueError("container image digest differs from the pinned image")
+    if configuration.get("readOnly") is not True or configuration.get("capDrop") != ["ALL"]:
+        raise ValueError("container root or capability policy differs from the manifest")
+    if configuration.get("networks") != [] or configuration.get("ssh") is not False or configuration.get("publishedSockets") != []:
+        raise ValueError("container host bridge or network policy differs from the manifest")
+    resources = configuration.get("resources", {})
+    if resources.get("cpus") != manifest["resources"]["cpu"]["limit"] or resources.get("memoryInBytes") != manifest["resources"]["memory_bytes"]["limit"]:
+        raise ValueError("container CPU or memory policy differs from the manifest")
+    scratch_mib, output_mib = supervised_storage_mib(manifest)
+    snapshot = manifest["workspace"]["snapshot"]
+    runtime = manifest["runtime"]
+    expected_mounts = [
+        (snapshot["target"], snapshot["source"], {"virtiofs": {}}, ["ro"]),
+        (runtime["scratch"]["target"], "", {"tmpfs": {}}, [f"size={scratch_mib * MIB}", "mode=1777"]),
+        (runtime["output"]["target"], "", {"tmpfs": {}}, [f"size={output_mib * MIB}", "mode=1777"]),
+    ]
+    mounts = configuration.get("mounts")
+    if not isinstance(mounts, list) or len(mounts) != len(expected_mounts):
+        raise ValueError("container mount count differs from the manifest")
+    by_target = {mount.get("destination"): mount for mount in mounts}
+    if len(by_target) != len(expected_mounts):
+        raise ValueError("container mount destinations are ambiguous")
+    for target, source, kind, options in expected_mounts:
+        mount = by_target.get(target, {})
+        observed_options = mount.get("options")
+        if (mount.get("source") != source or mount.get("type") != kind
+                or not isinstance(observed_options, list) or len(observed_options) != len(options)
+                or set(observed_options) != set(options)):
+            raise ValueError("container mount differs from the manifest")
+
+
 def _reader_output(manifest: dict[str, Any]) -> bytes:
     labels = _inspect_labels(manifest["task"]["id"], manifest)
     if labels is None:
@@ -144,6 +181,8 @@ def run_guest_build(manifest: dict[str, Any], destination: Path) -> dict[str, An
         raise ValueError("networked tasks require a separate reviewed controller")
     if manifest["gateway"]["credential_broker"] is not None or manifest["model"]["credential_broker_ref"] is not None:
         raise ValueError("credential brokers require a separate reviewed controller")
+    if manifest["runtime"]["environment"]:
+        raise ValueError("supervised guest tasks require an empty explicit environment")
     if manifest["resultGate"]["artifact_import"]["max_bytes"] > MAX_ARTIFACT_BYTES:
         raise ValueError("artifact import exceeds the host ceiling")
     if manifest["resources"]["log_bytes"]["limit"] > MAX_LOG_BYTES:
@@ -163,6 +202,8 @@ def run_guest_build(manifest: dict[str, Any], destination: Path) -> dict[str, An
         labels = _inspect_labels(task_id, manifest)
         if labels is None:
             raise RuntimeError("created container was not found")
+        inspected = run(["container", "inspect", task_id], timeout=10)
+        require_runtime_identity(json.loads(inspected.stdout)[0]["configuration"], manifest)
         run(compile_command(manifest, "start", observed_labels=labels), timeout=10)
         command = compile_command(manifest, "exec-task", observed_labels=labels)
         result = bounded_process(command, seconds=manifest["resources"]["wall_time_seconds"]["limit"],
@@ -175,7 +216,7 @@ def run_guest_build(manifest: dict[str, Any], destination: Path) -> dict[str, An
             raise RuntimeError(result["violation"] or f"guest exited {result['returncode']}")
         inspected = run(["container", "inspect", task_id], timeout=10)
         configuration = json.loads(inspected.stdout)[0]
-        require_resource_ownership(manifest, configuration["configuration"]["labels"])
+        require_runtime_identity(configuration["configuration"], manifest)
         if configuration["status"]["state"] != "running":
             raise RuntimeError("guest was not running for artifact export")
         quiescence = compile_command(manifest, "exec-quiescence", observed_labels=labels)

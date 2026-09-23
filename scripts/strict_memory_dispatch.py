@@ -54,20 +54,26 @@ def verify_host_event(event: dict[str, Any]) -> None:
 
 
 @contextmanager
-def claim_dispatch_attempt(target: dict[str, Any]):
+def claim_dispatch_attempt(target: dict[str, Any], registry_root: Path | None = None):
     attempt = target["task"].get("attempt_id")
     if not attempt:
         raise ValueError("automatic target requires an attempt ID")
-    git_dir = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=ROOT, capture_output=True,
-                             text=True, check=True).stdout.strip()
-    root = (ROOT / git_dir).resolve() / "agent-host-isolation" / "apple-dispatch-attempts-v1"
+    if registry_root is None:
+        git_dir = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=ROOT, capture_output=True,
+                                 text=True, check=True).stdout.strip()
+        root = (ROOT / git_dir).resolve() / "agent-host-isolation" / "apple-dispatch-attempts-v1"
+    else:
+        root = registry_root
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
     metadata = root.lstat()
     if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.getuid() or metadata.st_mode & 0o077:
         raise ValueError("dispatch attempt registry must be a private owned directory")
     attempt_key = hashlib.sha256((target["task"]["id"] + "\0" + attempt).encode()).hexdigest()
-    descriptor = os.open(root / "vm-slot.lock", os.O_CREAT | os.O_RDWR, 0o600)
+    descriptor = os.open(root / "vm-slot.lock", os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
     try:
+        lock_metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(lock_metadata.st_mode) or lock_metadata.st_uid != os.getuid() or lock_metadata.st_mode & 0o077:
+            raise ValueError("VM slot lock must be a private owned file")
         try:
             fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:

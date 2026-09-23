@@ -23,6 +23,17 @@ def canonical_hash(value: Any) -> str:
 MIB = 1024 * 1024
 
 
+def supervised_storage_mib(manifest: dict[str, Any]) -> tuple[int, int]:
+    disk_bytes = manifest["resources"]["disk_bytes"]
+    if disk_bytes["enforced_by"] != "apple-container-tmpfs":
+        raise ValueError("supervised task requires tmpfs disk enforcement")
+    output_mib = (manifest["resultGate"]["artifact_import"]["max_bytes"] + MIB - 1) // MIB + 1
+    scratch_mib = disk_bytes["limit"] // MIB - output_mib - 1  # reserve 1 MiB for /dev/shm
+    if scratch_mib < 1:
+        raise ValueError("disk budget must leave space for scratch and output")
+    return scratch_mib, output_mib
+
+
 def expected_labels(manifest: dict[str, Any]) -> dict[str, str]:
     return {
         "org.agent-host-isolation.task-id": manifest["task"]["id"],
@@ -146,13 +157,9 @@ def compile_command(
     if action == "create-probe" and not task["strict_memory"]:
         raise ValueError("diagnostic create requires a strict-memory probe")
     if supervised:
-        disk_bytes = manifest["resources"]["disk_bytes"]
-        if disk_bytes["enforced_by"] != "apple-container-tmpfs":
-            raise ValueError("supervised task requires tmpfs disk enforcement")
-        output_mib = (manifest["resultGate"]["artifact_import"]["max_bytes"] + MIB - 1) // MIB + 1
-        scratch_mib = disk_bytes["limit"] // MIB - output_mib - 1  # reserve 1 MiB for /dev/shm
-        if scratch_mib < 1:
-            raise ValueError("disk budget must leave space for scratch and output")
+        scratch_mib, output_mib = supervised_storage_mib(manifest)
+        if manifest["runtime"]["environment"]:
+            raise ValueError("supervised task requires an empty explicit environment")
 
     require_snapshot_source(manifest)
     require_network_attestation(manifest, network_attestation)
