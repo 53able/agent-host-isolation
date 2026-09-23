@@ -268,8 +268,14 @@ def _validate_gateway(value: Any, profile_variant: Any, task_id: Any, attempt_id
         if not isinstance(grants, list) or not grants:
             errors.append("network-derived JustBash requires at least one scoped gateway grant.")
         else:
+            audit_records: set[str] = set()
             for index, grant in enumerate(grants):
                 _validate_network_grant(grant, index, task_id, attempt_id, limits, errors)
+                audit_record = grant.get("audit_record") if isinstance(grant, dict) else None
+                if isinstance(audit_record, str):
+                    if audit_record in audit_records:
+                        errors.append(f"gateway.grants[{index}].audit_record must uniquely identify one grant budget.")
+                    audit_records.add(audit_record)
     if gateway.get("ingress_ports") != []:
         errors.append("gateway.ingress_ports must be empty.")
     if gateway.get("credential_broker") is not None:
