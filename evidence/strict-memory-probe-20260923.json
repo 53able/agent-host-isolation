@@ -9,7 +9,7 @@
     "--cap-drop",
     "ALL",
     "--mount",
-    "type=volume,source=ahi-memory-31d6fb8e-output,target=/output,readonly",
+    "type=volume,source=ahi-memory-bf88bb00-output,target=/output,readonly",
     "docker.io/library/alpine:3.22@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
     "sh",
     "-c",
@@ -17,8 +17,8 @@
   ],
   "artifact_read_returncode": 0,
   "artifact_read_stderr": "[0/6] [0s]\n[1/6] Fetching image [0s]\n[2/6] Unpacking image [0s]\n[3/6] Fetching kernel [0s]\n[4/6] Fetching init image [0s]\n[5/6] Unpacking init image [0s]\n[6/6] Starting container [0s]\n[6/6] Starting container [0s]",
-  "captured_at": "2026-09-23T01:21:35.599283+00:00",
-  "cgroup_memory_events": "low 0\nhigh 0\nmax 62\noom 1\noom_kill 1\noom_group_kill 0",
+  "captured_at": "2026-09-23T01:28:05.171440+00:00",
+  "cgroup_memory_events": "low 0\nhigh 0\nmax 53\noom 1\noom_kill 1\noom_group_kill 0",
   "cgroup_memory_max": "268435456",
   "checks": {
     "artifact_result_gate": "unverified",
@@ -36,7 +36,7 @@
   "container_absent": true,
   "final_status": {
     "networks": [],
-    "startedDate": "2026-09-23T01:21:36Z",
+    "startedDate": "2026-09-23T01:28:06Z",
     "state": "stopped"
   },
   "host": {
@@ -111,7 +111,7 @@
         "reject_symlinks": true,
         "source": "/output"
       },
-      "audit_record": "evidence/ahi-memory-31d6fb8e.json",
+      "audit_record": "evidence/ahi-memory-bf88bb00.json",
       "required": true
     },
     "runtime": {
@@ -125,12 +125,12 @@
       "nested_virtualization": false,
       "output": {
         "target": "/output",
-        "volume": "ahi-memory-31d6fb8e-output"
+        "volume": "ahi-memory-bf88bb00-output"
       },
       "rootfs_read_only": true,
       "scratch": {
         "target": "/scratch",
-        "volume": "ahi-memory-31d6fb8e-scratch"
+        "volume": "ahi-memory-bf88bb00-scratch"
       },
       "socket_publishing": false,
       "ssh_forwarding": false
@@ -146,7 +146,7 @@
         "/output/result.txt"
       ],
       "goal": "measure OS-enforced memory exhaustion and cleanup",
-      "id": "ahi-memory-31d6fb8e",
+      "id": "ahi-memory-bf88bb00",
       "lifecycle": {
         "checkpoint": "disabled",
         "stop_timeout_seconds": 2
@@ -165,20 +165,20 @@
       },
       "mcps": [],
       "repository": {
-        "commit": "7631eb38607ea7fa2edd1621b4f2911de3a98bd9",
-        "tree_hash": "3b54d47b6dff7f2a657c491e599313c11926bfd6",
+        "commit": "84e9d8febde52bf2c8e17033ea0f8dd83663b046",
+        "tree_hash": "b0bd83b0f6c9fb39c8e99a737564efa3007f7398",
         "url": "https://github.com/53able/agent-host-isolation.git"
       },
       "skills": [
         {
           "id": "agent-host-isolation",
-          "version": "7631eb38607ea7fa2edd1621b4f2911de3a98bd9"
+          "version": "84e9d8febde52bf2c8e17033ea0f8dd83663b046"
         }
       ],
       "snapshot": {
-        "id": "ahi-memory-31d6fb8e-input",
+        "id": "ahi-memory-bf88bb00-input",
         "read_only": true,
-        "source": "/var/tmp/agent-host-isolation/snapshots/ahi-memory-31d6fb8e-input",
+        "source": "/var/tmp/agent-host-isolation/snapshots/ahi-memory-bf88bb00-input",
         "target": "/workspace"
       },
       "toolchain": {
@@ -187,21 +187,21 @@
       }
     }
   },
-  "manifest_hash": "sha256:3131a1ac79588d6d062bf057b42cad3229602770b4cb2704a82c92f4cd7e6b61",
+  "manifest_hash": "sha256:f4b7b7cacf5234359a842b2d1c584921be4aaae725c629915701e4f7efcd628a",
   "start_argv": [
     "container",
     "start",
     "--attach",
-    "ahi-memory-31d6fb8e"
+    "ahi-memory-bf88bb00"
   ],
   "start_returncode": 137,
   "start_stderr": "Killed",
   "start_stdout": "",
-  "task_id": "ahi-memory-31d6fb8e",
+  "task_id": "ahi-memory-bf88bb00",
   "verification_status": "unverified",
   "volumes_absent": {
-    "ahi-memory-31d6fb8e-output": true,
-    "ahi-memory-31d6fb8e-scratch": true
+    "ahi-memory-bf88bb00-output": true,
+    "ahi-memory-bf88bb00-scratch": true
   },
   "worktree_status_before": []
 }
