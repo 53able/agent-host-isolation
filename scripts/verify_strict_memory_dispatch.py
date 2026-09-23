@@ -25,7 +25,10 @@ CASES = {
     "log": (["sh", "-c", "yes x"], 5, 32_768, []),
     "disk": (["sh", "-c", "if dd if=/dev/zero of=/scratch/big bs=1M count=40; then echo disk-limit-bypassed; exit 3; else echo disk-limit-denied; fi"], 5, 1_048_576, []),
     "process": (["sh", "-c", "n=0; for i in $(seq 1 40); do sleep 2 & kill -0 $! && n=$((n+1)); done; echo spawned:$n; if [ $n -lt 40 ]; then echo process-limit-denied; exit 0; else echo process-limit-bypassed; exit 3; fi"], 5, 1_048_576, []),
-    "artifact_result_gate": (["sh", "-c", "ln -s /workspace/allowed.txt /output/result.txt"], 5, 1_048_576, ["/output/result.txt"]),
+    "artifact_symlink": (["sh", "-c", "ln -s /workspace/allowed.txt /output/result.txt"], 5, 1_048_576, ["/output/result.txt"]),
+    "artifact_unexpected": (["sh", "-c", "printf unexpected > /output/extra.txt"], 5, 1_048_576, []),
+    "artifact_oversize": (["sh", "-c", "head -c 1048577 /dev/zero > /output/result.txt"], 5, 1_048_576, ["/output/result.txt"]),
+    "artifact_partial": (["sh", "-c", "printf partial > /output/result.txt; exit 7"], 5, 1_048_576, ["/output/result.txt"]),
 }
 
 
@@ -42,7 +45,7 @@ def execute(memory_evidence: Path) -> dict:
             "container_version": run(["container", "system", "version"], timeout=10).stdout.strip(),
         },
         "checks": {key: "unverified" for key in (
-            *CASES, "memory", "cleanup", "watchdog", "open_files", "cpu", "vm_count",
+            *CASES, "artifact_result_gate", "memory", "cleanup", "watchdog", "open_files", "cpu", "vm_count",
             "mount", "credential", "network", "command_path", "supply_chain", "side_effect", "resource",
         )},
         "cases": {},
@@ -78,6 +81,7 @@ def execute(memory_evidence: Path) -> dict:
                 destination = Path(temporary) / "imported"
                 outcome = run_guest_build(manifest, destination)
                 artifact_ok = case == "full_agent_path" and (destination / "result.txt").is_file() and (destination / "result.txt").read_bytes() == b"passed"
+                imported_exists = destination.exists()
         finally:
             shutil.rmtree(snapshot)
         record["cases"][case] = {"manifest_hash": outcome["manifest_hash"], "outcome": outcome}
@@ -89,8 +93,14 @@ def execute(memory_evidence: Path) -> dict:
         elif case in {"wall_time", "log"}:
             expected = "host wall-time limit exceeded" if case == "wall_time" else "host output limit exceeded"
             passed = outcome.get("watchdog_violation") == expected and outcome["status"] == "blocked"
-        elif case == "artifact_result_gate":
+        elif case == "artifact_symlink":
             passed = outcome["status"] == "blocked" and "non-regular file" in outcome.get("error", "")
+        elif case == "artifact_unexpected":
+            passed = outcome["status"] == "blocked" and "unexpected artifact" in outcome.get("error", "")
+        elif case == "artifact_oversize":
+            passed = outcome["status"] == "blocked" and "byte limit" in outcome.get("error", "")
+        elif case == "artifact_partial":
+            passed = outcome["status"] == "blocked" and outcome.get("exit_code") == 7 and not imported_exists
         elif case == "disk":
             passed = outcome["status"] == "passed" and "disk-limit-denied" in outcome.get("stdout", "") and "No space left" in outcome.get("stderr", "")
         else:
@@ -99,6 +109,11 @@ def execute(memory_evidence: Path) -> dict:
     if record["checks"]["cleanup"] != "blocked":
         record["checks"]["cleanup"] = "passed"
     record["checks"]["watchdog"] = "passed" if record["checks"]["wall_time"] == record["checks"]["log"] == "passed" else "blocked"
+    record["checks"]["artifact_result_gate"] = (
+        "passed" if all(record["checks"][key] == "passed" for key in
+                        ("artifact_symlink", "artifact_unexpected", "artifact_oversize", "artifact_partial"))
+        else "blocked"
+    )
     return record
 
 

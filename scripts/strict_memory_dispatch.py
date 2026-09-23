@@ -100,7 +100,7 @@ def eligibility_errors(verification: dict[str, Any], target: dict[str, Any]) -> 
     if verification.get("worktree_status_before") != []:
         errors.append("verification did not start from a clean worktree")
     checks = verification.get("checks", {})
-    if set(checks) != REQUIRED_CHECKS:
+    if not REQUIRED_CHECKS.issubset(checks):
         errors.append("verification checks are incomplete")
     for name in sorted(REQUIRED_CHECKS):
         if checks.get(name) != "passed":
