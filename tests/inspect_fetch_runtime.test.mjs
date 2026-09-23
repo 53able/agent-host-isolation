@@ -51,7 +51,7 @@ sys.path.insert(0, 'scripts')
 from inspect_fetch_store import FetchAuditStore
 from just_bash_manifest import canonical_manifest_hash
 r=json.load(sys.stdin); s=r['source']; b=bytes.fromhex(r['body_hex']); store=FetchAuditStore(r['db']); source_hash=canonical_manifest_hash(s); store.register_manifest(s, source_hash)
-e=store.record(task_id=s['task']['id'], attempt_id=s['task']['attempt_id'], manifest_hash=source_hash, decision='allowed', audit_record='audit/network.json', bytes_count=len(b), payload={'purpose':'bounded inspection input','url':'https://api.example.com/v1/data/item','method':'GET','redirect_hops':0,'size_bytes':len(b),'sha256':r['body_hash'],'result_gate':'pending','verification':'unverified'})
+e=store.record_allowed(s['gateway']['grants'][0], source_hash, bytes_count=len(b), payload={'purpose':'bounded inspection input','url':'https://api.example.com/v1/data/item','method':'GET','redirect_hops':0,'size_bytes':len(b),'sha256':r['body_hash'],'result_gate':'pending','verification':'unverified'})
 print(json.dumps(e))`], { input: JSON.stringify({ source, body_hex: body.toString("hex"), body_hash: digest(body), db }), encoding: "utf8", cwd: root.pathname });
   assert.equal(setup.status, 0, setup.stderr);
   const event = JSON.parse(setup.stdout);

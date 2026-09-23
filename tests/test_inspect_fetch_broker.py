@@ -12,9 +12,21 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from inspect_fetch_broker import FetchDenied, InspectFetchBroker
+from inspect_fetch_broker import DurableCancellation, FetchDenied, InspectFetchBroker as _InspectFetchBroker
 from inspect_fetch_resolver import HostDNSResolver
-from inspect_fetch_store import FetchAuditStore
+from inspect_fetch_store import FetchAuditStore, FetchStoreError
+from just_bash_manifest import canonical_manifest_hash
+
+_DEFAULT_STORE_DIRECTORIES = []
+
+
+def InspectFetchBroker(manifest_value, **kwargs):
+    """Keep legacy unit cases isolated while requiring a real durable store."""
+    if "audit_store" not in kwargs and "audit_store_path" not in kwargs:
+        directory = tempfile.TemporaryDirectory()
+        _DEFAULT_STORE_DIRECTORIES.append(directory)
+        kwargs["audit_store_path"] = str(Path(directory.name) / "audit.sqlite3")
+    return _InspectFetchBroker(manifest_value, **kwargs)
 
 
 def manifest():
@@ -122,10 +134,10 @@ class BrokerTests(unittest.TestCase):
         self.assertEqual(Connection.requests[0][5], {"Accept": "*/*"})
 
     def test_final_read_rechecks_cancellation_before_allowed_event(self):
-        cancelled = Event()
+        cancelled = DurableCancellation()
         Connection.responses = [Response(body=b"data", on_read=cancelled.set)]
         broker = InspectFetchBroker(manifest(), cancel=cancelled)
-        with self.assertRaisesRegex(FetchDenied, "cancelled"):
+        with self.assertRaisesRegex(FetchDenied, "cancelled|grant revoked"):
             self.fetch(broker)
         self.assertFalse(any(event["decision"] == "allowed" for event in broker.audit))
 
@@ -201,7 +213,7 @@ class BrokerTests(unittest.TestCase):
         broker = InspectFetchBroker(manifest(), resolver=HostDNSResolver(resolve_fn=private_dns))
         with self.assertRaisesRegex(FetchDenied, "nonpublic"):
             self.fetch(broker)
-        cancelled = Event()
+        cancelled = DurableCancellation()
         cancelled.set()
         broker = InspectFetchBroker(manifest(), cancel=cancelled)
         with self.assertRaisesRegex(FetchDenied, "cancelled"):
@@ -248,6 +260,15 @@ class BrokerTests(unittest.TestCase):
             self.fetch(broker)
         self.assertEqual(broker.audit[-1]["decision"], "revoked")
 
+    def test_socket_timeout_is_recorded_as_timeout_and_revokes(self):
+        broker = InspectFetchBroker(manifest())
+        with patch.object(Connection, "getresponse", side_effect=TimeoutError("socket timed out")):
+            with self.assertRaisesRegex(FetchDenied, "timeout"):
+                self.fetch(broker)
+        self.assertTrue(any(event["decision"] == "denied" and event["reason"] == "timeout"
+                            for event in broker.audit))
+        self.assertEqual(broker.audit[-1]["decision"], "revoked")
+
     def test_invalid_or_standard_manifest_cannot_construct_broker(self):
         value = manifest()
         value["gateway"]["grants"][0]["attempt_id"] = "other-attempt"
@@ -257,6 +278,45 @@ class BrokerTests(unittest.TestCase):
         value["runtime"]["profile_variant"] = "standard"
         with self.assertRaises(FetchDenied):
             InspectFetchBroker(value)
+
+    def test_broker_requires_an_explicit_audit_store(self):
+        with self.assertRaises(FetchDenied):
+            _InspectFetchBroker(manifest())
+
+    def test_plain_event_cannot_bypass_durable_cancellation(self):
+        with self.assertRaisesRegex(FetchDenied, "DurableCancellation"):
+            InspectFetchBroker(manifest(), cancel=Event())
+
+    def test_revoke_during_dns_resolution_prevents_connection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory) / "audit.sqlite3"
+            source = manifest()
+            source_hash = canonical_manifest_hash(source)
+            external_store = FetchAuditStore(str(db))
+
+            class RevokingResolver:
+                def resolve(self, hostname, port, *, deadline, cancel=None):
+                    external_store.revoke(task_id="inspect-task", attempt_id="attempt-1",
+                                          manifest_hash=source_hash, reason="operator cancellation",
+                                          audit_record="audit/network.json")
+                    return {"8.8.8.8"}
+
+            broker = InspectFetchBroker(source, audit_store_path=str(db), resolver=RevokingResolver())
+            with self.assertRaisesRegex(FetchDenied, "grant revoked"):
+                self.fetch(broker)
+            self.assertFalse(Connection.requests)
+
+    def test_denied_event_write_failure_still_revokes_grant(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory) / "audit.sqlite3"
+            broker = InspectFetchBroker(manifest(), audit_store_path=str(db))
+            with patch.object(broker._store, "record", side_effect=FetchStoreError("audit unavailable")):
+                with self.assertRaises(FetchDenied):
+                    self.fetch(broker, "https://api.example.com/admin")
+            reopened = FetchAuditStore(str(db))
+            grant = manifest()["gateway"]["grants"][0]
+            with self.assertRaisesRegex(FetchStoreError, "revoked"):
+                reopened.ensure_active(grant, canonical_manifest_hash(manifest()))
 
     def test_budget_and_revoke_survive_broker_restart(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -299,7 +359,7 @@ class BrokerTests(unittest.TestCase):
         for name, action, expected in cases:
             with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
                 db = Path(directory) / "audit.sqlite3"
-                cancelled = Event() if name == "cancel" else None
+                cancelled = DurableCancellation() if name == "cancel" else None
                 broker = InspectFetchBroker(manifest(), audit_store_path=str(db), cancel=cancelled)
                 if name == "expiry":
                     broker._manifest["gateway"]["grants"][0]["expiry"] = "2000-01-01T00:00:00Z"

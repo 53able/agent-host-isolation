@@ -21,11 +21,11 @@ import time
 import uuid
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from threading import Event, Timer
+from threading import Timer
 from urllib.parse import urlsplit
 
 import inspect_fetch_broker as broker_module
-from inspect_fetch_broker import FetchDenied, InspectFetchBroker
+from inspect_fetch_broker import DurableCancellation, FetchDenied, InspectFetchBroker
 from inspect_fetch_resolver import DNSResolutionError
 from inspect_fetch_store import FetchAuditStore
 from inspect_snapshot_gate import InspectSnapshotGate, SnapshotGateDenied
@@ -69,7 +69,7 @@ def now_expiry(seconds: int = 600) -> str:
 
 
 class InjectedResolver:
-    def __init__(self, addresses=None, error=None, cancel: Event | None = None):
+    def __init__(self, addresses=None, error=None, cancel: DurableCancellation | None = None):
         self.addresses = set(addresses or {"93.184.216.34"})
         self.error = error
         self.cancel = cancel
@@ -274,9 +274,9 @@ def run_live_probe(name: str, url: str, *, origin: str, path_prefix: str, method
     expected = "allowed" if name == "live-example-com" else "denied-after-redirect"
     observed["redirect_event"] = any(e.get("decision") == "redirect" for e in observed.get("audit_events", []))
     decisions = [event.get("decision") for event in observed.get("audit_events", [])]
-    observed["redirect_sequence"] = decisions[:3] if name == "live-redirect-hop" else []
+    observed["redirect_sequence"] = decisions[:4] if name == "live-redirect-hop" else []
     redirect_ok = (name == "live-redirect-hop" and observed["decision"] == "denied" and
-                   observed.get("reason") == expected_reason and observed.get("redirect_sequence") == ["redirect", "denied", "revoked"] and
+                   observed.get("reason") == expected_reason and observed.get("redirect_sequence") == ["request", "redirect", "denied", "revoked"] and
                    not observed.get("allowed_event") and not observed.get("result_import") and observed.get("grant_revoked"))
     success_ok = (name == "live-example-com" and observed["decision"] == "allowed" and
                   observed.get("runtime", {}).get("profile") == "standard" and observed.get("runtime", {}).get("stdout") == body.decode() and
@@ -395,7 +395,7 @@ def run_live_denial_probe(name: str, url: str, *, origin: str, path_prefix: str,
                 "stage": "unknown", "network_attempt": "unknown", "decision": "unavailable", "cancel_phase": "unknown"}
     try:
         child_code = """import json,sys,multiprocessing
-from threading import Event,Timer
+from threading import Timer
 trace={'calls':{},'returns':{}}
 def profiler(frame,event,arg):
  mod=frame.f_globals.get('__name__',''); name=frame.f_code.co_name; self_obj=frame.f_locals.get('self')
@@ -413,8 +413,8 @@ def profiler(frame,event,arg):
  return profiler
 sys.setprofile(profiler)
 sys.path.insert(0, 'scripts')
-from inspect_fetch_broker import InspectFetchBroker,FetchDenied
-r=json.load(sys.stdin); cancel=Event(); timer=None
+from inspect_fetch_broker import InspectFetchBroker,FetchDenied,DurableCancellation
+r=json.load(sys.stdin); cancel=DurableCancellation(); timer=None
 if r.get('cancel_after') is not None:
  timer=Timer(r['cancel_after'], cancel.set); timer.start()
 f=InspectFetchBroker(r['manifest'], timeout=r['timeout'], dns_timeout=r['dns_timeout'], cancel=cancel, audit_store_path=r['db'])
@@ -482,7 +482,7 @@ def main() -> int:
         Probe("expiry-deny", "https://api.example.com/v1/data/item", "denied", grant=grant_for("inspect-fetch-issue5-08", "attempt-08", expiry="2000-01-01T00:00:00Z"), routes={}),
         Probe("byte-budget-deny", "https://api.example.com/v1/data/item", "denied", grant=grant_for("inspect-fetch-issue5-09", "attempt-09", max_bytes=4), routes={("api.example.com", 443, "/v1/data/item"): FakeResponse(body=BODY)}),
         Probe("dns-timeout-deny", "https://api.example.com/v1/data/item", "denied", resolver=InjectedResolver(error="DNS timeout"), routes={}),
-        Probe("cancel-deny", "https://api.example.com/v1/data/item", "denied", resolver=InjectedResolver(error="DNS cancelled"), routes={}, cancel=Event()),
+        Probe("cancel-deny", "https://api.example.com/v1/data/item", "denied", resolver=InjectedResolver(error="DNS cancelled"), routes={}, cancel=DurableCancellation()),
         Probe("request-timeout-deny", "https://api.example.com/v1/data/item", "denied", routes={("api.example.com", 443, "/v1/data/item"): FakeResponse(error=TimeoutError("socket timeout"))}, timeout=0.1),
     ]
     results = [run_probe(probe, index + 1) for index, probe in enumerate(probes)]

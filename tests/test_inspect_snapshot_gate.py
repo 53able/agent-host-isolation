@@ -4,15 +4,16 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from inspect_fetch_store import FetchAuditStore
+from inspect_fetch_store import FetchAuditStore, FetchStoreError
 from inspect_snapshot_gate import InspectSnapshotGate, SnapshotGateDenied
 from just_bash_manifest import canonical_manifest_hash, validate_just_bash_v2
-from test_inspect_fetch_broker import manifest as source_manifest
+from test_inspect_fetch_broker import Connection, Response, manifest as source_manifest
 
 
 class SnapshotGateTests(unittest.TestCase):
@@ -37,11 +38,12 @@ class SnapshotGateTests(unittest.TestCase):
         store = FetchAuditStore(str(Path(self.directory.name) / "audit.sqlite3"))
         source_hash = canonical_manifest_hash(source)
         store.register_manifest(source, source_hash)
-        event = store.record(task_id="inspect-task", attempt_id="attempt-1", manifest_hash=source_hash,
-                             decision="allowed", audit_record="audit/network.json", bytes_count=len(body),
-                             payload={"purpose": "bounded inspection input", "url": "https://api.example.com/v1/data/item",
-                                      "method": "GET", "redirect_hops": 0, "size_bytes": len(body), "sha256": digest,
-                                      "result_gate": "pending", "verification": "unverified"})
+        grant = source["gateway"]["grants"][0]
+        event = store.record_allowed(
+            grant, source_hash, bytes_count=len(body),
+            payload={"purpose": "bounded inspection input", "url": "https://api.example.com/v1/data/item",
+                     "method": "GET", "redirect_hops": 0, "size_bytes": len(body), "sha256": digest,
+                     "result_gate": "pending", "verification": "unverified"})
         return source, body, store, {**event, "size_bytes": len(body), "sha256": digest,
                                     "result_gate": "pending", "verification": "unverified"}
 
@@ -66,6 +68,52 @@ class SnapshotGateTests(unittest.TestCase):
             InspectSnapshotGate(store).import_snapshot(source, record, body, self.target())
         self.assertFalse(any(event.get("result_gate") == "approved"
                              for event in store.events(task_id="inspect-task", attempt_id="attempt-2")))
+
+    def test_expired_source_grant_cannot_pass_result_gate(self):
+        source, body, store, record = self.setup_result()
+        store._db.execute(
+            "UPDATE grants SET expiry = ? WHERE task_id = ? AND attempt_id = ? AND audit_record = ?",
+            ("2000-01-01T00:00:00Z", "inspect-task", "attempt-1", "audit/network.json"),
+        )
+        with self.assertRaisesRegex(SnapshotGateDenied, "expired"):
+            InspectSnapshotGate(store).import_snapshot(source, record, body, self.target())
+
+    def test_cancelled_broker_result_cannot_pass_result_gate(self):
+        source, body, store, record = self.setup_result()
+        from inspect_fetch_broker import InspectFetchBroker
+
+        broker = InspectFetchBroker(source, audit_store=store)
+        broker.cancel()
+        with self.assertRaisesRegex(SnapshotGateDenied, "revoked"):
+            InspectSnapshotGate(store).import_snapshot(source, record, body, self.target())
+
+    def test_external_cancel_token_revokes_after_fetch_result(self):
+        source = source_manifest()
+        store = FetchAuditStore(str(Path(self.directory.name) / "cancel.sqlite3"))
+        from inspect_fetch_broker import DurableCancellation, InspectFetchBroker
+
+        class PublicResolver:
+            def resolve(self, *_args, **_kwargs):
+                return {"8.8.8.8"}
+
+        token = DurableCancellation()
+        Connection.responses = [Response(body=b"data")]
+        with patch("inspect_fetch_broker._PinnedHTTPSConnection", Connection):
+            broker = InspectFetchBroker(source, audit_store=store, cancel=token, resolver=PublicResolver())
+            body, record = broker.fetch("https://api.example.com/v1/data/item", method="GET",
+                                        scope="public metadata", purpose="bounded inspection input")
+        token.set()
+        with self.assertRaisesRegex(SnapshotGateDenied, "revoked"):
+            InspectSnapshotGate(store).import_snapshot(source, record, body, self.target())
+
+    def test_generic_record_cannot_create_allowed_event(self):
+        source = source_manifest()
+        source_hash = canonical_manifest_hash(source)
+        store = FetchAuditStore(str(Path(self.directory.name) / "generic.sqlite3"))
+        store.register_manifest(source, source_hash)
+        with self.assertRaises(FetchStoreError):
+            store.record(task_id="inspect-task", attempt_id="attempt-1", manifest_hash=source_hash,
+                         decision="allowed", audit_record="audit/network.json")
 
     def test_replay_and_mutations_are_denied(self):
         source, body, store, record = self.setup_result()

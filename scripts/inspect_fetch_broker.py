@@ -17,7 +17,7 @@ import time
 from copy import deepcopy
 from datetime import datetime, timezone
 from threading import Event, Lock
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urljoin, urlsplit
 
 from inspect_fetch_store import FetchAuditStore, FetchStoreError
@@ -30,6 +30,33 @@ _REDIRECTS = {301, 302, 303, 307, 308}
 
 class FetchDenied(ValueError):
     pass
+
+
+class DurableCancellation(Event):
+    """A cancellation signal whose set() first revokes its bound attempt."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._binding_lock = Lock()
+        self._revoke: Callable[[], None] | None = None
+
+    def bind(self, revoke: Callable[[], None]) -> None:
+        with self._binding_lock:
+            if self._revoke is not None:
+                raise FetchDenied("cancellation token already bound to an attempt")
+            self._revoke = revoke
+            if self.is_set():
+                revoke()
+
+    def set(self) -> None:
+        with self._binding_lock:
+            if self.is_set():
+                return
+            try:
+                if self._revoke is not None:
+                    self._revoke()
+            finally:
+                super().set()
 
 
 class _PinnedHTTPSConnection(http.client.HTTPSConnection):
@@ -49,7 +76,7 @@ class _PinnedHTTPSConnection(http.client.HTTPSConnection):
 class InspectFetchBroker:
     """One attempt's grant state. All request hops are checked before connecting."""
 
-    def __init__(self, manifest: dict[str, Any], *, timeout: float = 5.0, cancel: Event | None = None,
+    def __init__(self, manifest: dict[str, Any], *, timeout: float = 5.0, cancel: DurableCancellation | None = None,
                  audit_store: FetchAuditStore | str | None = None, audit_store_path: str | None = None,
                  dns_timeout: float = 2.0, resolver: HostDNSResolver | None = None):
         errors = [error for error in validate_just_bash_v2(manifest) if error != _UNAVAILABLE]
@@ -60,15 +87,20 @@ class InspectFetchBroker:
         self._manifest = deepcopy(manifest)
         self._manifest_hash = canonical_manifest_hash(self._manifest)
         self._timeout = timeout
-        self._cancel = cancel or Event()
+        if cancel is not None and not isinstance(cancel, DurableCancellation):
+            raise FetchDenied("cancel must be a DurableCancellation token")
+        self._cancel = cancel if cancel is not None else DurableCancellation()
         self._resolver = resolver or HostDNSResolver(timeout=dns_timeout)
         self._lock = Lock()
         self._revoked = False
         if audit_store is not None and audit_store_path is not None:
             raise ValueError("provide only one audit store")
+        if audit_store is None and audit_store_path is None:
+            raise FetchDenied("a durable audit store is required")
         try:
-            self._store = audit_store if isinstance(audit_store, FetchAuditStore) else FetchAuditStore(audit_store_path or audit_store)
+            self._store = audit_store if isinstance(audit_store, FetchAuditStore) else FetchAuditStore(audit_store_path if audit_store_path is not None else audit_store)
             self._store.register_manifest(self._manifest, self._manifest_hash)
+            self._cancel.bind(lambda: self.revoke("cancelled"))
         except FetchStoreError as exc:
             raise FetchDenied(f"audit persistence unavailable: {exc}") from exc
 
@@ -86,6 +118,10 @@ class InspectFetchBroker:
                                    audit_record=grant["audit_record"] if grant else None, payload=context)
             except FetchStoreError as exc:
                 raise FetchDenied(f"audit persistence unavailable: {exc}") from exc
+
+    def cancel(self) -> None:
+        """Durably end this attempt, including after a successful fetch."""
+        self._cancel.set()
 
     def _check_active(self, grant: dict[str, Any], deadline: float) -> None:
         if self._cancel.is_set():
@@ -210,6 +246,11 @@ class InspectFetchBroker:
                 connection = _PinnedHTTPSConnection(hostname, sorted(addresses)[0], port, max(0.1, deadline - time.monotonic()))
                 try:
                     self._check_active(grant, deadline)
+                    try:
+                        self._store.begin_request(grant, self._manifest_hash,
+                                                  {**request_context, "hop": hop, "url": current})
+                    except FetchStoreError as exc:
+                        raise FetchDenied(str(exc)) from exc
                     connection.request(method, path, headers={"Accept": "*/*"})
                     self._set_remaining_socket_timeout(connection, grant, deadline)
                     response = connection.getresponse()
@@ -264,11 +305,18 @@ class InspectFetchBroker:
                     connection.close()
             raise FetchDenied("redirect hop limit exceeded")
         except BaseException as exc:
-            reason = str(exc) if isinstance(exc, FetchDenied) else type(exc).__name__
-            self._record("denied", reason=reason, grant=grant,
-                         payload={**self._request_context(current, method, scope, purpose),
-                                  "url": current, "cleanup_outcome": "revoke_required"})
+            reason = (str(exc) if isinstance(exc, FetchDenied) else
+                      "timeout" if isinstance(exc, TimeoutError) else type(exc).__name__)
+            audit_error = None
+            try:
+                self._record("denied", reason=reason, grant=grant,
+                             payload={**self._request_context(current, method, scope, purpose),
+                                      "url": current, "cleanup_outcome": "revoke_required"})
+            except FetchDenied as record_error:
+                audit_error = record_error
             self.revoke(reason, grant=grant, context=self._request_context(current, method, scope, purpose))
+            if audit_error is not None:
+                raise audit_error from exc
             if isinstance(exc, FetchDenied):
                 raise
             raise FetchDenied(reason) from exc

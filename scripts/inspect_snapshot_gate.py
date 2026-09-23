@@ -30,12 +30,11 @@ class InspectSnapshotGate:
         task = source_manifest.get("task", {}) if isinstance(source_manifest, dict) else {}
         if isinstance(task.get("id"), str) and isinstance(task.get("attempt_id"), str):
             try:
-                self._store.record(task_id=task["id"], attempt_id=task["attempt_id"],
-                                   manifest_hash=canonical_manifest_hash(source_manifest),
-                                   decision="result_gate", reason=reason,
-                                   payload={"result_gate": "denied", "cleanup_outcome": "rejected"})
-            except FetchStoreError:
-                pass
+                self._store.record_result_denied(task_id=task["id"], attempt_id=task["attempt_id"],
+                                                 manifest_hash=canonical_manifest_hash(source_manifest),
+                                                 reason=reason)
+            except FetchStoreError as exc:
+                raise SnapshotGateDenied(f"{reason}; audit persistence unavailable: {exc}") from exc
         raise SnapshotGateDenied(reason)
 
     def import_snapshot(self, source_manifest: dict[str, Any], source_record: dict[str, Any],

@@ -12,8 +12,8 @@ import json
 import os
 import sqlite3
 import stat
-import tempfile
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -22,11 +22,7 @@ class FetchStoreError(RuntimeError):
     """The broker must fail closed when durable state cannot be written."""
 
 
-def _private_db_path(path: str | os.PathLike[str] | None) -> tuple[Path, bool]:
-    if path is None:
-        parent = Path(tempfile.mkdtemp(prefix="agent-host-isolation-fetch-"))
-        os.chmod(parent, 0o700)
-        return parent / "audit.sqlite3", True
+def _private_db_path(path: str | os.PathLike[str]) -> Path:
     db = Path(path).expanduser()
     if db.name in {"", ".", ".."} or db.is_absolute() is False:
         raise FetchStoreError("audit database path must be absolute")
@@ -45,14 +41,14 @@ def _private_db_path(path: str | os.PathLike[str] | None) -> tuple[Path, bool]:
         if db_stat.st_uid != os.getuid():
             raise FetchStoreError("audit database must be owned by the current user")
         os.chmod(db, 0o600)
-    return db, False
+    return db
 
 
 class FetchAuditStore:
     """SQLite-backed grant ledger and append-only audit sink."""
 
-    def __init__(self, path: str | os.PathLike[str] | None = None):
-        self.path, self._temporary_parent = _private_db_path(path)
+    def __init__(self, path: str | os.PathLike[str]):
+        self.path = _private_db_path(path)
         try:
             self._db = sqlite3.connect(self.path, timeout=5.0, isolation_level=None)
             self._db.execute("PRAGMA busy_timeout=5000")
@@ -66,6 +62,7 @@ class FetchAuditStore:
                     attempt_id TEXT NOT NULL,
                     audit_record TEXT NOT NULL UNIQUE,
                     manifest_hash TEXT NOT NULL,
+                    expiry TEXT NOT NULL,
                     max_bytes INTEGER NOT NULL CHECK(max_bytes > 0),
                     used_bytes INTEGER NOT NULL DEFAULT 0 CHECK(used_bytes >= 0),
                     revoked INTEGER NOT NULL DEFAULT 0 CHECK(revoked IN (0, 1)),
@@ -83,7 +80,7 @@ class FetchAuditStore:
                     bytes INTEGER NOT NULL DEFAULT 0 CHECK(bytes >= 0),
                     payload TEXT NOT NULL CHECK(json_valid(payload) = 1),
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    CHECK(decision IN ('allowed', 'redirect', 'denied', 'budget', 'usage', 'revoked', 'result_gate'))
+                    CHECK(decision IN ('request', 'allowed', 'redirect', 'denied', 'budget', 'usage', 'revoked', 'result_gate'))
                 );
                 CREATE TABLE IF NOT EXISTS result_imports (
                     source_event_id TEXT PRIMARY KEY,
@@ -112,14 +109,14 @@ class FetchAuditStore:
             self._db.execute("BEGIN IMMEDIATE")
             for grant in grants:
                 row = self._db.execute(
-                    "SELECT task_id, attempt_id, manifest_hash, max_bytes FROM grants WHERE audit_record = ?",
+                    "SELECT task_id, attempt_id, manifest_hash, expiry, max_bytes FROM grants WHERE audit_record = ?",
                     (grant["audit_record"],),
                 ).fetchone()
-                if row is not None and tuple(row) != (grant["task_id"], grant["attempt_id"], manifest_hash, grant["max_bytes"]):
+                if row is not None and tuple(row) != (grant["task_id"], grant["attempt_id"], manifest_hash, grant["expiry"], grant["max_bytes"]):
                     raise FetchStoreError("audit_record is already bound to another grant")
                 self._db.execute(
-                    "INSERT OR IGNORE INTO grants(task_id, attempt_id, audit_record, manifest_hash, max_bytes) VALUES (?, ?, ?, ?, ?)",
-                    (grant["task_id"], grant["attempt_id"], grant["audit_record"], manifest_hash, grant["max_bytes"]),
+                    "INSERT OR IGNORE INTO grants(task_id, attempt_id, audit_record, manifest_hash, expiry, max_bytes) VALUES (?, ?, ?, ?, ?, ?)",
+                    (grant["task_id"], grant["attempt_id"], grant["audit_record"], manifest_hash, grant["expiry"], grant["max_bytes"]),
                 )
             self._db.commit()
         except FetchStoreError:
@@ -152,6 +149,8 @@ class FetchAuditStore:
     def record(self, *, task_id: str, attempt_id: str, manifest_hash: str, decision: str,
                audit_record: str | None = None, reason: str | None = None,
                bytes_count: int = 0, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        if decision not in {"redirect", "denied", "budget", "usage"}:
+            raise FetchStoreError("authorization decisions require a transactional store method")
         try:
             self._db.execute("BEGIN IMMEDIATE")
             event = self._event(task_id=task_id, attempt_id=attempt_id, manifest_hash=manifest_hash,
@@ -163,19 +162,67 @@ class FetchAuditStore:
             self._db.rollback()
             raise FetchStoreError(f"cannot append audit event: {exc}") from exc
 
+    @staticmethod
+    def _check_grant_row(row: tuple[Any, ...] | None) -> None:
+        if row is None:
+            raise FetchStoreError("grant is not registered for this manifest")
+        expiry, revoked = row
+        if revoked:
+            raise FetchStoreError("grant revoked")
+        try:
+            expires_at = datetime.fromisoformat(expiry.replace("Z", "+00:00"))
+        except (AttributeError, ValueError) as exc:
+            raise FetchStoreError("grant expiry is invalid") from exc
+        if expires_at.tzinfo is None or datetime.now(timezone.utc) >= expires_at:
+            raise FetchStoreError("grant expired")
+
+    def begin_request(self, grant: dict[str, Any], manifest_hash: str,
+                      payload: dict[str, Any]) -> dict[str, Any]:
+        """Order a request after DNS against concurrent durable revocation."""
+        try:
+            self._db.execute("BEGIN IMMEDIATE")
+            row = self._db.execute(
+                "SELECT expiry, revoked FROM grants WHERE task_id=? AND attempt_id=? AND audit_record=? AND manifest_hash=?",
+                (grant["task_id"], grant["attempt_id"], grant["audit_record"], manifest_hash),
+            ).fetchone()
+            self._check_grant_row(row)
+            event = self._event(task_id=grant["task_id"], attempt_id=grant["attempt_id"],
+                                manifest_hash=manifest_hash, decision="request",
+                                audit_record=grant["audit_record"], payload=payload)
+            self._db.commit()
+            return event
+        except FetchStoreError:
+            self._db.rollback()
+            raise
+        except sqlite3.Error as exc:
+            self._db.rollback()
+            raise FetchStoreError(f"cannot begin request: {exc}") from exc
+
+    def record_result_denied(self, *, task_id: str, attempt_id: str,
+                             manifest_hash: str, reason: str) -> dict[str, Any]:
+        try:
+            self._db.execute("BEGIN IMMEDIATE")
+            event = self._event(task_id=task_id, attempt_id=attempt_id,
+                                manifest_hash=manifest_hash, decision="result_gate", reason=reason,
+                                payload={"result_gate": "denied", "cleanup_outcome": "rejected"})
+            self._db.commit()
+            return event
+        except sqlite3.Error as exc:
+            self._db.rollback()
+            raise FetchStoreError(f"cannot record result gate denial: {exc}") from exc
+
     def consume(self, grant: dict[str, Any], manifest_hash: str, amount: int,
                 payload: dict[str, Any] | None = None) -> int:
         try:
             self._db.execute("BEGIN IMMEDIATE")
             row = self._db.execute(
-                "SELECT used_bytes, max_bytes, revoked FROM grants WHERE task_id=? AND attempt_id=? AND audit_record=? AND manifest_hash=?",
+                "SELECT used_bytes, max_bytes, expiry, revoked FROM grants WHERE task_id=? AND attempt_id=? AND audit_record=? AND manifest_hash=?",
                 (grant["task_id"], grant["attempt_id"], grant["audit_record"], manifest_hash),
             ).fetchone()
             if row is None:
                 raise FetchStoreError("grant is not registered for this manifest")
-            used, maximum, revoked = row
-            if revoked:
-                raise FetchStoreError("grant revoked")
+            used, maximum, expiry, revoked = row
+            self._check_grant_row((expiry, revoked))
             if amount > maximum - used:
                 self._event(task_id=grant["task_id"], attempt_id=grant["attempt_id"], manifest_hash=manifest_hash,
                             decision="budget", audit_record=grant["audit_record"],
@@ -201,13 +248,10 @@ class FetchAuditStore:
     def ensure_active(self, grant: dict[str, Any], manifest_hash: str) -> None:
         try:
             row = self._db.execute(
-                "SELECT revoked FROM grants WHERE task_id=? AND attempt_id=? AND audit_record=? AND manifest_hash=?",
+                "SELECT expiry, revoked FROM grants WHERE task_id=? AND attempt_id=? AND audit_record=? AND manifest_hash=?",
                 (grant["task_id"], grant["attempt_id"], grant["audit_record"], manifest_hash),
             ).fetchone()
-            if row is None:
-                raise FetchStoreError("grant is not registered for this manifest")
-            if row[0]:
-                raise FetchStoreError("grant revoked")
+            self._check_grant_row(row)
         except sqlite3.Error as exc:
             raise FetchStoreError(f"cannot read grant state: {exc}") from exc
 
@@ -222,13 +266,10 @@ class FetchAuditStore:
         try:
             self._db.execute("BEGIN IMMEDIATE")
             row = self._db.execute(
-                "SELECT revoked FROM grants WHERE task_id=? AND attempt_id=? AND audit_record=? AND manifest_hash=?",
+                "SELECT expiry, revoked FROM grants WHERE task_id=? AND attempt_id=? AND audit_record=? AND manifest_hash=?",
                 (grant["task_id"], grant["attempt_id"], grant["audit_record"], manifest_hash),
             ).fetchone()
-            if row is None:
-                raise FetchStoreError("grant is not registered for this manifest")
-            if row[0]:
-                raise FetchStoreError("grant revoked")
+            self._check_grant_row(row)
             event = self._event(task_id=grant["task_id"], attempt_id=grant["attempt_id"],
                                 manifest_hash=manifest_hash, decision="allowed",
                                 audit_record=grant["audit_record"], bytes_count=bytes_count,
@@ -289,13 +330,10 @@ class FetchAuditStore:
             if source.get("result_gate") != "pending":
                 raise FetchStoreError("source event is not pending")
             grant_row = self._db.execute(
-                "SELECT revoked FROM grants WHERE task_id=? AND attempt_id=? AND audit_record=? AND manifest_hash=?",
+                "SELECT expiry, revoked FROM grants WHERE task_id=? AND attempt_id=? AND audit_record=? AND manifest_hash=?",
                 (task_id, source_attempt_id, source.get("audit_record"), source_manifest_hash),
             ).fetchone()
-            if grant_row is None:
-                raise FetchStoreError("source event grant is not registered")
-            if grant_row[0]:
-                raise FetchStoreError("source event grant revoked")
+            self._check_grant_row(grant_row)
             for key, expected in (("task_id", task_id), ("attempt_id", source_attempt_id),
                                   ("manifest_hash", source_manifest_hash), ("size_bytes", size_bytes),
                                   ("sha256", body_hash)):
