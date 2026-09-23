@@ -1,0 +1,1401 @@
+{
+  "captured_at": "2026-09-22T23:51:33.173Z",
+  "status": "verified-for-tested-configuration",
+  "task_id": "just-bash-adversarial-20260923",
+  "attempt_id": "attempt-6e375ac7b196fe99245d300a",
+  "host": {
+    "os": "macOS",
+    "version": "26.7",
+    "build": "25G229",
+    "kernel_release": "25.6.0",
+    "architecture": "arm64",
+    "home_directory_exposed_to_guest": false
+  },
+  "runtime": {
+    "kind": "just-bash",
+    "package_version": "3.4.2",
+    "package_integrity": "sha512-T0Vpy7YRgCjxJdqG3tkxn0ZnIDLJvVwb8hH4L+6NVdp+Te27jQxjxnszW9ODjEKbWxWujj83rP5S0GQxCSufgg==",
+    "installation": "npm ci --ignore-scripts via pretest:just-bash-adversarial",
+    "node_version": "24.13.1",
+    "agent_host_isolation_version": "0.1.0",
+    "embedding": "scripts/run_just_bash_adversarial.mjs:Bash+InMemoryFs",
+    "defense_in_depth": {
+      "requested": "auto",
+      "state": "enabled",
+      "level": "full",
+      "contextualDynamicImportProtection": true,
+      "processLifetimeIntrinsicHardening": false,
+      "intrinsicProtection": "scoped-best-effort"
+    }
+  },
+  "repository": {
+    "url": "https://github.com/53able/agent-host-isolation.git",
+    "commit": "d96fe7e457387cc34c7c82021fb04b3eb47b9a63",
+    "tree_hash": "047ae764c2190735b702c84a1f728bfc62709abb"
+  },
+  "lockfile_hash": "sha256:f39c8d9cf405a8ab62d0c13b8bf2de184d89bcc4b8b9ed978374796708bd3ec4",
+  "manifest_path": "validation/just-bash/manifest.json",
+  "manifest_hash": "sha256:c54cd2487e4f4ae329a4efd86d8b7eb068f889adc8bac5151a872d8f0998ac80",
+  "input_snapshot_hash": "sha256:844f3e4cea5dcb8868cd5e203e2d237a03fd637ce8e2e87700f3734a5e82475a",
+  "tests": {
+    "mount": true,
+    "credential": true,
+    "network": true,
+    "command_path": true,
+    "resource": true,
+    "supply_chain": true,
+    "side_effect": true
+  },
+  "probes": [
+    {
+      "test_class": "mount",
+      "name": "snapshot-read",
+      "command": "cat /workspace/allowed.txt",
+      "expected": "declared snapshot is readable",
+      "observed": {
+        "duration_ms": 12.815709,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 0,
+        "stdout": {
+          "preview": "allowed snapshot content\n",
+          "bytes": 25,
+          "sha256": "sha256:4c848e15091f330b74497fe6ee5744839fd7d64eb00a90b54087c038538d03a8"
+        },
+        "stderr": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "mount",
+      "name": "absolute-host-read",
+      "command": "cat /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-watchdog-clWoAM/sentinel",
+      "expected": "absolute host path is absent",
+      "observed": {
+        "duration_ms": 2.328084,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 1,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "cat: /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-watchdog-clWoAM/sentinel: No such file or directory\n",
+          "bytes": 120,
+          "sha256": "sha256:f315daa63a3a1ad8cc1fe1aa1061c29203e169263223633d6d828cde8c69cbbe"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "mount",
+      "name": "parent-traversal",
+      "command": "cat /workspace/../../var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-watchdog-clWoAM/sentinel",
+      "expected": "parent traversal cannot reach the host",
+      "observed": {
+        "duration_ms": 1.3655,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 1,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "cat: /workspace/../../var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-watchdog-clWoAM/sentinel: No such file or directory\n",
+          "bytes": 136,
+          "sha256": "sha256:4ee4fd8cf83aad3333da6609987ff7eff2a203ac5620f3009141a538aee448bd"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "mount",
+      "name": "symlink-escape",
+      "command": "ln -s /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-watchdog-clWoAM/sentinel /workspace/leak && cat /workspace/leak",
+      "expected": "symlink resolves only in the virtual filesystem",
+      "observed": {
+        "duration_ms": 2.769667,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [
+            "/workspace/leak"
+          ],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 1,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "cat: /workspace/leak: No such file or directory\n",
+          "bytes": 48,
+          "sha256": "sha256:e971a0bda8d6f8855a4d60735b9d1e5ea26976cce3479316161cf79fd7295af4"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "mount",
+      "name": "archive-traversal",
+      "command": "tar -xf /workspace/traversal.tar -C /workspace",
+      "expected": "archive traversal is rejected without partial extraction",
+      "observed": {
+        "duration_ms": 8.531625,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 2,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "tar: ../escaped.txt: Path contains '..'\n",
+          "bytes": 40,
+          "sha256": "sha256:f0bd39016f3f204b06fad2a8d463d7b96c1ff3b7f099ea80ef4d490d0ee3e00f"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "credential",
+      "name": "host-environment",
+      "command": "env",
+      "expected": "host secret and inherited credential variables are absent",
+      "observed": {
+        "duration_ms": 2.730792,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 0,
+        "stdout": {
+          "preview": "HOME=/home/user\nPATH=/bin:/usr/bin\nIFS= \t\n\nOSTYPE=linux-gnu\nMACHTYPE=x86_64-pc-linux-gnu\nHOSTTYPE=x86_64\nHOSTNAME=localhost\nPWD=/workspace\nOLDPWD=/workspace\nOPTIND=1\nSHELLOPTS=braceexpand:hashall:interactive-comments\nBASHOPTS=globskipdots\n",
+          "bytes": 239,
+          "sha256": "sha256:87d705f49dd9e24ff0755b990504f97362efcb30cea5f406a789e85a89e861f3"
+        },
+        "stderr": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "credential",
+      "name": "credential-files",
+      "command": "cat ~/.aws/credentials ~/.git-credentials ~/.config/gh/hosts.yml /run/host-services/ssh-auth.sock",
+      "expected": "standard credential paths and SSH agent socket are absent",
+      "observed": {
+        "duration_ms": 1.494083,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 1,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "cat: /home/user/.aws/credentials: No such file or directory\ncat: /home/user/.git-credentials: No such file or directory\ncat: /home/user/.config/gh/hosts.yml: No such file or directory\ncat: /run/host-services/ssh-auth.sock: No such file or directory\n",
+          "bytes": 249,
+          "sha256": "sha256:92c406f201641fed4b13ce007bb92987c6def976cc1b2c981a8cf68b0f5113d5"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "credential",
+      "name": "git-helper",
+      "command": "git credential fill",
+      "expected": "Git credential helper is unavailable",
+      "observed": {
+        "duration_ms": 1.148917,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: git: command not found\n",
+          "bytes": 29,
+          "sha256": "sha256:397cc61fd2bccc48ffbf3a3ca88e2f041e89d404e991389f2fd72092467ca917"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "network",
+      "name": "internet",
+      "command": "curl https://example.com",
+      "expected": "undeclared network path is unavailable",
+      "observed": {
+        "duration_ms": 1.507042,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: curl: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:b5850af0b4ebb4c3f55ff9aeca0953128063b61687be26553a7d93183ccca8a9"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "network",
+      "name": "lan",
+      "command": "curl http://192.168.1.1",
+      "expected": "undeclared network path is unavailable",
+      "observed": {
+        "duration_ms": 1.051667,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: curl: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:b5850af0b4ebb4c3f55ff9aeca0953128063b61687be26553a7d93183ccca8a9"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "network",
+      "name": "host-gateway",
+      "command": "curl http://host.docker.internal",
+      "expected": "undeclared network path is unavailable",
+      "observed": {
+        "duration_ms": 0.955625,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: curl: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:b5850af0b4ebb4c3f55ff9aeca0953128063b61687be26553a7d93183ccca8a9"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "network",
+      "name": "loopback",
+      "command": "curl http://127.0.0.1:8080",
+      "expected": "undeclared network path is unavailable",
+      "observed": {
+        "duration_ms": 0.92425,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: curl: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:b5850af0b4ebb4c3f55ff9aeca0953128063b61687be26553a7d93183ccca8a9"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "network",
+      "name": "metadata",
+      "command": "curl http://169.254.169.254/latest/meta-data",
+      "expected": "undeclared network path is unavailable",
+      "observed": {
+        "duration_ms": 0.865875,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: curl: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:b5850af0b4ebb4c3f55ff9aeca0953128063b61687be26553a7d93183ccca8a9"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "network",
+      "name": "ip-literal",
+      "command": "curl http://1.1.1.1",
+      "expected": "undeclared network path is unavailable",
+      "observed": {
+        "duration_ms": 1.024375,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: curl: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:b5850af0b4ebb4c3f55ff9aeca0953128063b61687be26553a7d93183ccca8a9"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "network",
+      "name": "alternate-port",
+      "command": "curl https://example.com:444",
+      "expected": "undeclared network path is unavailable",
+      "observed": {
+        "duration_ms": 0.966834,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: curl: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:b5850af0b4ebb4c3f55ff9aeca0953128063b61687be26553a7d93183ccca8a9"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "network",
+      "name": "redirect",
+      "command": "wget https://httpbingo.org/redirect-to?url=https://example.com",
+      "expected": "redirect path is unavailable",
+      "observed": {
+        "duration_ms": 1.692084,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: wget: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:32ada7040186483ed200af60fa0de6ee4a31057982a3b4e8496e0a85cc20ffaf"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "network",
+      "name": "control-socket",
+      "command": "cat /var/run/docker.sock /run/containerd/containerd.sock",
+      "expected": "runtime control sockets are absent",
+      "observed": {
+        "duration_ms": 1.46825,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 1,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "cat: /var/run/docker.sock: No such file or directory\ncat: /run/containerd/containerd.sock: No such file or directory\n",
+          "bytes": 117,
+          "sha256": "sha256:d71bf3d05f46e0834430496a881efa5e22bb564c52f2aae7d1ce075dbdec9a57"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "name-path",
+      "command": "cat allowed.txt",
+      "expected": "command-name path reads only the VFS",
+      "observed": {
+        "duration_ms": 1.234167,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 0,
+        "stdout": {
+          "preview": "allowed snapshot content\n",
+          "bytes": 25,
+          "sha256": "sha256:4c848e15091f330b74497fe6ee5744839fd7d64eb00a90b54087c038538d03a8"
+        },
+        "stderr": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "absolute-command-path",
+      "command": "/bin/cat allowed.txt",
+      "expected": "absolute command path has the same VFS policy",
+      "observed": {
+        "duration_ms": 1.099167,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 0,
+        "stdout": {
+          "preview": "allowed snapshot content\n",
+          "bytes": 25,
+          "sha256": "sha256:4c848e15091f330b74497fe6ee5744839fd7d64eb00a90b54087c038538d03a8"
+        },
+        "stderr": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "blocked-node",
+      "command": "node --version",
+      "expected": "optional/native/tool path is unavailable",
+      "observed": {
+        "duration_ms": 1.124333,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: node: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:68399da342d367f6a38fa8ee4794f3be335560c97a469640e6a3ca84ab9d805f"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "blocked-python3",
+      "command": "python3 -c pass",
+      "expected": "optional/native/tool path is unavailable",
+      "observed": {
+        "duration_ms": 0.847042,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: python3: command not available in browser environments. Exclude 'python3' from your commands or use the Node.js bundle.\n",
+          "bytes": 126,
+          "sha256": "sha256:0ded4c54e8b221cb73ab2854a37445af054ad25668b37fe3aeb33b12352dfc33"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "blocked-js-exec",
+      "command": "js-exec -c 1",
+      "expected": "optional/native/tool path is unavailable",
+      "observed": {
+        "duration_ms": 0.979834,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: js-exec: command not found\n",
+          "bytes": 33,
+          "sha256": "sha256:60594733a5b1db2b04f5905e648a3cc6558c5faca85c4f70ba1db56b46e9781c"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "blocked-custom-command",
+      "command": "custom-command",
+      "expected": "optional/native/tool path is unavailable",
+      "observed": {
+        "duration_ms": 1.024041,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: custom-command: command not found\n",
+          "bytes": 40,
+          "sha256": "sha256:cf69fa8cb2040770c62220bc74e7921e89c65fc2486e31e31578133465eeaceb"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "blocked-mcp",
+      "command": "mcp call",
+      "expected": "optional/native/tool path is unavailable",
+      "observed": {
+        "duration_ms": 0.858834,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: mcp: command not found\n",
+          "bytes": 29,
+          "sha256": "sha256:007b4eb44a491016375253271eedff38060b8b622c5e108780d0a62336d0be9d"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "blocked-vi",
+      "command": "vi allowed.txt",
+      "expected": "optional/native/tool path is unavailable",
+      "observed": {
+        "duration_ms": 1.018375,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: vi: command not found\n",
+          "bytes": 28,
+          "sha256": "sha256:74228208e339302899b67cf84cb10690ce6b9525732753591bcd3897c1f4f589"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "blocked-ssh",
+      "command": "ssh localhost",
+      "expected": "optional/native/tool path is unavailable",
+      "observed": {
+        "duration_ms": 1.144208,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: ssh: command not found\n",
+          "bytes": 29,
+          "sha256": "sha256:99599effe70b324050c9eb9e92bea1307ab654709200d6204edebda4249e06c9"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "command_path",
+      "name": "manifest-command-binding",
+      "command": "declared rg argv; then undeclared node argv",
+      "expected": "only exact declared argv executes; undeclared command becomes InspectBlocked without host fallback",
+      "observed": {
+        "duration_ms": null,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "declared_event": "command",
+        "blocked_event": "InspectBlocked",
+        "blocked_source": {
+          "task_id": "just-bash-adversarial-20260923",
+          "attempt_id": "attempt-c2be562c8d248a192e776f61",
+          "manifest_hash": "sha256:4ace3265c7060528bf73ecc8d46f8065ac4bf04e8b52097814108aed18e36827"
+        },
+        "host_shell_fallback": false
+      },
+      "passed": true
+    },
+    {
+      "test_class": "resource",
+      "name": "call-depth",
+      "command": "f(){ f; }; f",
+      "expected": "max_call_depth terminates recursion",
+      "observed": {
+        "duration_ms": 2.709542,
+        "limit_violation": "max_call_depth",
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 126,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: f: maximum recursion depth (8) exceeded, increase executionLimits.maxCallDepth\n",
+          "bytes": 85,
+          "sha256": "sha256:5df5e4e139ff18fc81ad00ee6c5e7732da8be355d07f06d8c6c1a28020bcf865"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "resource",
+      "name": "command-count",
+      "command": "for i in {1..64}; do true; done",
+      "expected": "max_command_count terminates execution",
+      "observed": {
+        "duration_ms": 2.73725,
+        "limit_violation": "max_command_count",
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 126,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: too many commands executed (>32), increase executionLimits.maxCommandCount\n",
+          "bytes": 81,
+          "sha256": "sha256:cfa7131034028a0d246f2c497c8d2d24c6689bee9d277921a2125a9dac73c19a"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "resource",
+      "name": "source-bytes",
+      "command": "#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "expected": "max_source_bytes rejects input before parsing",
+      "observed": {
+        "duration_ms": 0.702917,
+        "limit_violation": "max_source_bytes",
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 126,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: script input size limit exceeded (4096 bytes)\n",
+          "bytes": 52,
+          "sha256": "sha256:e237099daf84a50abf6a052548b61648a8d75423ea223a9701b18cd70835bc66"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "resource",
+      "name": "filesystem-bytes",
+      "command": "construct VFS with oversized snapshot",
+      "expected": "max_filesystem_bytes rejects allocation",
+      "observed": {
+        "duration_ms": 0.397916,
+        "limit_violation": "max_filesystem_bytes",
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "thrown": "ENOSPC: in-memory filesystem byte limit exceeded (131072 bytes)"
+      },
+      "passed": true
+    },
+    {
+      "test_class": "resource",
+      "name": "output-bytes",
+      "command": "printf '%05000d' 0",
+      "expected": "max_output_bytes terminates output",
+      "observed": {
+        "duration_ms": 4.606458,
+        "limit_violation": "max_output_bytes",
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 126,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: format width limit exceeded (4096 bytes)\n",
+          "bytes": 47,
+          "sha256": "sha256:7f7cf01c69a682cdf8e682e2679f4729627627ff20176b4cde962f4ccb884613"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "resource",
+      "name": "archive-bytes",
+      "command": "mkdir -p /workspace/archive-out && tar -xf /workspace/oversized.tar -C /workspace/archive-out",
+      "expected": "max_archive_bytes rejects expansion",
+      "observed": {
+        "duration_ms": 3.12175,
+        "limit_violation": "max_archive_bytes",
+        "filesystem_diff": {
+          "created": [
+            "/workspace/archive-out"
+          ],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 2,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "tar: Archive too large (max 32768 bytes)\n",
+          "bytes": 41,
+          "sha256": "sha256:2ff009b41df326b4419befbe9cc14cd697c84b45a3c2c0d3edbe438c770dae75"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "resource",
+      "name": "database-bytes",
+      "command": "sqlite3 /workspace/limit.db \"CREATE TABLE t(x); INSERT INTO t VALUES(zeroblob(40000));\"",
+      "expected": "max_database_bytes rejects oversized database",
+      "observed": {
+        "duration_ms": 60.815459,
+        "limit_violation": "max_database_bytes",
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 1,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "sqlite3: database exceeds 32768 byte limit\n",
+          "bytes": 43,
+          "sha256": "sha256:dc3db6bd916934cf0f5ab7f86cdcee3c2bbcd77aaa4483e28b0e8a727bbac776"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "resource",
+      "name": "execution-time",
+      "command": "sleep 2",
+      "expected": "max_execution_time_ms terminates execution",
+      "observed": {
+        "duration_ms": 1029.003833,
+        "limit_violation": "max_execution_time_ms",
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 124,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: sleep exceeded its execution deadline\n",
+          "bytes": 44,
+          "sha256": "sha256:c51a8826d65d2f15bbdd025b0f2c62fd5180f03eae2e9283c05a2a7b103be69c"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "resource",
+      "name": "cancellation-revocation",
+      "command": "abort sleep; then execute a fresh bounded command",
+      "expected": "abort completes promptly and no in-flight authority survives",
+      "observed": {
+        "duration_ms": 12,
+        "limit_violation": "cancellation",
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "cancelled": {
+          "exit_code": 124,
+          "stdout": {
+            "preview": "",
+            "bytes": 0,
+            "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "preview": "bash: execution aborted\n",
+            "bytes": 24,
+            "sha256": "sha256:8b39a6fa9c7c082f7f8c3ad56beb602cec3f1fa7db2f1aec87f90a995d8cccdb"
+          }
+        },
+        "followup": {
+          "exit_code": 0,
+          "stdout": {
+            "preview": "revoked",
+            "bytes": 7,
+            "sha256": "sha256:4bb47f186df233e48b09d241ee4defb821add0c35ac8311469fe1522c6813dd5"
+          },
+          "stderr": {
+            "preview": "",
+            "bytes": 0,
+            "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "supply_chain",
+      "name": "package-version",
+      "command": "start with just-bash@3.4.1 identity",
+      "expected": "mismatched package identity is rejected before execution",
+      "observed": {
+        "duration_ms": 0.510791,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "rejected": true
+      },
+      "passed": true
+    },
+    {
+      "test_class": "supply_chain",
+      "name": "lockfile-hash",
+      "command": "start with altered lockfile hash",
+      "expected": "mismatched lockfile is rejected before execution",
+      "observed": {
+        "duration_ms": 0.292167,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "rejected": true
+      },
+      "passed": true
+    },
+    {
+      "test_class": "supply_chain",
+      "name": "snapshot-hash",
+      "command": "start with altered snapshot hash",
+      "expected": "mismatched snapshot is rejected before execution",
+      "observed": {
+        "duration_ms": 0.260208,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "rejected": true
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "push",
+      "command": "git push origin HEAD",
+      "expected": "push is unavailable without a broker grant",
+      "observed": {
+        "duration_ms": 0.971625,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: git: command not found\n",
+          "bytes": 29,
+          "sha256": "sha256:397cc61fd2bccc48ffbf3a3ca88e2f041e89d404e991389f2fd72092467ca917"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "deploy",
+      "command": "kubectl apply -f deploy.yml",
+      "expected": "deploy is unavailable without a broker grant",
+      "observed": {
+        "duration_ms": 1.003625,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: kubectl: command not found\n",
+          "bytes": 33,
+          "sha256": "sha256:38d94ebb7cb7b25ef81480650a8942dd70b3ff6917df926993d6036e328dbb34"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "external-post",
+      "command": "curl -X POST https://example.com",
+      "expected": "external write is unavailable without a broker grant",
+      "observed": {
+        "duration_ms": 0.873375,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: curl: command not found\n",
+          "bytes": 30,
+          "sha256": "sha256:b5850af0b4ebb4c3f55ff9aeca0953128063b61687be26553a7d93183ccca8a9"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "expired-grant",
+      "command": "broker-write --grant expired --destination other",
+      "expected": "expired or mismatched broker grant has no command path",
+      "observed": {
+        "duration_ms": 1.146917,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 127,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "bash: broker-write: command not found\n",
+          "bytes": 38,
+          "sha256": "sha256:46b2fad8ed1c386a930f6117644cd5a424bd3e3ddbb6adc87cf8e428d0907970"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "host-write",
+      "command": "printf compromised > /var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-watchdog-clWoAM/sentinel",
+      "expected": "absolute write remains in VFS and cannot alter host",
+      "observed": {
+        "duration_ms": 1.796334,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [
+            "/var",
+            "/var/folders",
+            "/var/folders/tw",
+            "/var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn",
+            "/var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T",
+            "/var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-watchdog-clWoAM",
+            "/var/folders/tw/ch14ckzj5916kh8zgkjs2ct80000gn/T/ahi-just-bash-watchdog-clWoAM/sentinel"
+          ],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 0,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "snapshot-overlay",
+      "command": "printf changed > /workspace/allowed.txt",
+      "expected": "snapshot writes remain in overlay",
+      "observed": {
+        "duration_ms": 1.079,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": [
+            "/workspace/allowed.txt"
+          ]
+        },
+        "exit_code": 0,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "artifact-export",
+      "command": "mkdir -p /scratch/export && printf verified > /scratch/export/result.txt",
+      "expected": "artifact remains in VFS pending result gate",
+      "observed": {
+        "duration_ms": 1.206542,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [
+            "/scratch",
+            "/scratch/export",
+            "/scratch/export/result.txt"
+          ],
+          "deleted": [],
+          "modified": []
+        },
+        "exit_code": 0,
+        "stdout": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "preview": "",
+          "bytes": 0,
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "result-gate",
+      "command": "inspect /scratch/export/result.txt",
+      "expected": "only bounded regular-file artifact is accepted",
+      "observed": {
+        "duration_ms": 0.032792,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "candidate": "/scratch/export/result.txt",
+        "accepted": true,
+        "reason": "accepted",
+        "bytes": 8,
+        "sha256": "sha256:1c34f88707b55e6104c4eb20e71ffa3d33e414b71ef689a15fad0640d0ac58cb",
+        "host_import_performed": false
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "result-gate-symlink",
+      "command": "result gate inspect /scratch/export/link",
+      "expected": "result gate rejects symlink",
+      "observed": {
+        "duration_ms": 0.010875,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "candidate": "/scratch/export/link",
+        "accepted": false,
+        "reason": "symlink"
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "result-gate-traversal",
+      "command": "result gate inspect /scratch/export/../outside.txt",
+      "expected": "result gate rejects path-outside-export-root",
+      "observed": {
+        "duration_ms": 0.002417,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "candidate": "/scratch/export/../outside.txt",
+        "accepted": false,
+        "reason": "path-outside-export-root"
+      },
+      "passed": true
+    },
+    {
+      "test_class": "side_effect",
+      "name": "result-gate-oversize",
+      "command": "result gate inspect /scratch/export/oversized.bin",
+      "expected": "result gate rejects size-limit",
+      "observed": {
+        "duration_ms": 0.00875,
+        "limit_violation": null,
+        "filesystem_diff": {
+          "created": [],
+          "deleted": [],
+          "modified": []
+        },
+        "candidate": "/scratch/export/oversized.bin",
+        "accepted": false,
+        "reason": "size-limit",
+        "bytes": 4097
+      },
+      "passed": true
+    }
+  ],
+  "result_gate": {
+    "duration_ms": 0.032792,
+    "limit_violation": null,
+    "filesystem_diff": {
+      "created": [],
+      "deleted": [],
+      "modified": []
+    },
+    "candidate": "/scratch/export/result.txt",
+    "accepted": true,
+    "reason": "accepted",
+    "bytes": 8,
+    "sha256": "sha256:1c34f88707b55e6104c4eb20e71ffa3d33e414b71ef689a15fad0640d0ac58cb",
+    "host_import_performed": false
+  },
+  "cleanup": {
+    "runtime_instance_released": true,
+    "virtual_filesystem_released": true,
+    "host_sentinel_removed": true,
+    "host_environment_restored": true,
+    "temporary_credentials_revoked": true,
+    "temporary_network_grants_removed": true,
+    "extension_authority_revoked_after_cancellation": true,
+    "error": null
+  },
+  "host_watchdog": {
+    "configured": {
+      "max_rss_bytes": 536870912,
+      "wall_time_ms": 30000,
+      "poll_interval_ms": 50
+    },
+    "peak_worker_rss_bytes": 122896384,
+    "duration_ms": 2474,
+    "limit_violation": null,
+    "worker_exit_code": 0,
+    "worker_signal": null,
+    "sentinel_removed": true
+  }
+}

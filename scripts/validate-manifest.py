@@ -12,9 +12,9 @@ def main() -> int:
     if len(sys.argv) != 2:
         print("Usage: python3 scripts/validate-manifest.py path/to/isolation-manifest.json", file=sys.stderr)
         return 2
-    path = Path(sys.argv[1])
+    path = Path(sys.argv[1]) if sys.argv[1] != "-" else None
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8") if path else sys.stdin.read())
     except FileNotFoundError:
         print(f"ERROR: Manifest not found: {path}. Copy assets/isolation-manifest.template.json and fill it in.", file=sys.stderr)
         return 2
@@ -31,7 +31,7 @@ def main() -> int:
         for item in errors:
             print(f"- {item}", file=sys.stderr)
         return 1
-    print(f"Manifest validation PASSED: {path}")
+    print(f"Manifest validation PASSED: {path or 'stdin'}")
     return 0
 
 

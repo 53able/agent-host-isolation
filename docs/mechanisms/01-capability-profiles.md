@@ -20,6 +20,8 @@ The workflow first separates task requirements into inputs, commands, outputs, n
 
 Use `inspect` only when the task does not require arbitrary native execution. Use `guest-build` as soon as a package manager, compiler, test runner, generated program, or unknown binary must run. Use `elevated-release` only for a named release operation, never for exploration.
 
+JustBash is a supported `inspect` runtime under Manifest v2. It executes in the host Node.js process and is not a VM boundary. Follow the [JustBash runtime contract](07-just-bash-inspect-runtime.md); do not pair it with `guest-build` or `elevated-release`.
+
 ## Failure behavior
 
-If the selected profile cannot perform the task, do not replace the boundary with a broader host shell. Record the missing capability, add the narrowest enforceable grant, validate the manifest again, and rerun the task.
+If JustBash cannot perform the task, record `InspectBlocked`. Native execution requires a new `guest-build` manifest and Task attempt; never replace the boundary with a broader host shell. For a non-native missing capability, create a separately reviewed derived profile rather than widening the running attempt.

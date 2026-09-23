@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILL_FILE = ROOT / "SKILL.md"
 VALIDATOR = ROOT / "scripts" / "validate-manifest.py"
 TEMPLATE = ROOT / "assets" / "isolation-manifest.template.json"
+JUST_BASH_TEMPLATE = ROOT / "assets" / "just-bash-inspect-manifest.template.json"
 sys.path.insert(0, str(ROOT / "scripts"))
 
 
@@ -26,6 +27,8 @@ def load_script(name):
 compiler = load_script("apple_container_compiler")
 gateway_policy = load_script("gateway_policy")
 lifecycle = load_script("task_lifecycle")
+just_bash_contract = load_script("just_bash_contract")
+just_bash_manifest = load_script("just_bash_manifest")
 artifact_importer = load_script("import_artifacts")
 
 
@@ -51,6 +54,52 @@ def valid_manifest():
     manifest["runtime"]["output"]["volume"] = "test-task-output"
     manifest["resultGate"]["audit_record"] = "audit/test-task.json"
     return manifest
+
+
+def valid_just_bash_manifest():
+    manifest = json.loads(JUST_BASH_TEMPLATE.read_text(encoding="utf-8"))
+    digest = "sha256:" + "a" * 64
+    manifest["task"].update(
+        id="inspect-task", attempt_id="attempt-1", goal="inspect source metadata",
+        command=["rg", "TODO", "/workspace"],
+    )
+    manifest["workspace"]["repository"].update(
+        url="https://github.com/53able/agent-host-isolation.git", commit="b" * 40, tree_hash="c" * 40,
+    )
+    manifest["workspace"]["snapshot"].update(id="snapshot-inspect-task", hash=digest)
+    manifest["workspace"]["snapshot"]["paths"][0]["hash"] = digest
+    versions = {"node": "22.18.0", "just-bash": "1.2.3", "agent-host-isolation": "0.2.0"}
+    manifest["workspace"]["toolchain"] = versions
+    manifest["workspace"]["lockfile"]["sha256"] = "d" * 64
+    manifest["workspace"]["skills"] = [{"id": "agent-host-isolation", "version": "0.2.0"}]
+    manifest["runtime"].update(
+        package_version=versions["just-bash"], node_version=versions["node"],
+        agent_host_isolation_version=versions["agent-host-isolation"],
+    )
+    manifest["resultGate"]["audit_record"] = "audit/inspect-task.json"
+    return manifest
+
+
+def valid_inspect_escalation_target():
+    manifest = valid_manifest()
+    manifest["task"].update(id="inspect-task", attempt_id="attempt-2")
+    manifest["runtime"]["scratch"]["volume"] = "inspect-task-scratch"
+    manifest["runtime"]["output"]["volume"] = "inspect-task-output"
+    return manifest
+
+
+def inspect_blocked_event(manifest, capability="native-binary"):
+    return {
+        "event": "InspectBlocked", "outcome": "blocked", "exit_code": 127,
+        "source": {
+            "task_id": manifest["task"]["id"],
+            "attempt_id": manifest["task"]["attempt_id"],
+            "manifest_hash": just_bash_manifest.canonical_manifest_hash(manifest),
+        },
+        "missing_capability": capability,
+        "host_shell_fallback": False,
+        "escalation": {"automatic": False, "requested": False},
+    }
 
 
 class SkillStructureTests(unittest.TestCase):
@@ -371,6 +420,318 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(lifecycle.verification_status(results), "verified for tested configuration")
         results["network"] = "blocked"
         self.assertEqual(lifecycle.verification_status(results), "blocked")
+
+
+class JustBashManifestTests(unittest.TestCase):
+    def run_validator(self, manifest):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            return subprocess.run(
+                ["python3", str(VALIDATOR), str(path)], capture_output=True, text=True, check=False,
+            )
+
+    def assert_rejected(self, mutate, message):
+        manifest = valid_just_bash_manifest()
+        mutate(manifest)
+        result = self.run_validator(manifest)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(message, result.stderr)
+
+    def test_accepts_shared_v2_just_bash_manifest(self):
+        result = self.run_validator(valid_just_bash_manifest())
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_accepts_shared_v2_just_bash_manifest_from_stdin(self):
+        result = subprocess.run(
+            ["python3", str(VALIDATOR), "-"], input=json.dumps(valid_just_bash_manifest()),
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_template_defaults_are_below_validator_ceilings(self):
+        manifest = valid_just_bash_manifest()
+        limits = manifest["runtime"]["limits"]
+        for name, ceiling in just_bash_manifest.LIMIT_MAXIMA.items():
+            with self.subTest(name=name):
+                self.assertLess(limits[name], ceiling)
+                self.assertEqual(manifest["resources"][name]["limit"], limits[name])
+        watchdog = manifest["runtime"]["host_watchdog"]
+        for name, ceiling in just_bash_manifest.HOST_WATCHDOG_MAXIMA.items():
+            with self.subTest(name=name):
+                self.assertLess(watchdog[name], ceiling)
+        self.assertEqual(manifest["resources"]["sampled_worker_rss_bytes"]["limit"], watchdog["max_rss_bytes"])
+        self.assertEqual(manifest["resources"]["host_wall_time_ms"]["limit"], watchdog["wall_time_ms"])
+
+    def test_rejects_incompatible_profile_and_native_command_class(self):
+        for profile in ("guest-build", "elevated-release"):
+            with self.subTest(profile=profile):
+                self.assert_rejected(lambda m, profile=profile: m["task"].update(profile=profile), "requires task.profile 'inspect'")
+        self.assert_rejected(
+            lambda m: m["task"].update(command_classes=["package-manager"]),
+            "standard inspect command classes",
+        )
+        for command in ("curl", "node", "/bin/sh", "find", "awk", "sed"):
+            with self.subTest(command=command):
+                self.assert_rejected(
+                    lambda m, command=command: m["task"].update(command=[command, "--version"], command_classes=["read"]),
+                    "versioned standard inspect command",
+                )
+        self.assert_rejected(
+            lambda m: m["task"].update(command_classes=["read"]),
+            "its class declared",
+        )
+        self.assert_rejected(
+            lambda m: m["task"].update(command=["rg", "--pre", "python3", "/workspace"]),
+            "versioned standard inspect command",
+        )
+        self.assert_rejected(
+            lambda m: m["task"].update(
+                command=["find", "/workspace", "-exec", "rm", "-f", "{}", ";"],
+                command_classes=["search"],
+            ),
+            "versioned standard inspect command",
+        )
+
+    def test_rejects_unpinned_or_unsupported_versions(self):
+        for key, value in (("package_version", "latest"), ("node_version", "20.18.0"), ("agent_host_isolation_version", "")):
+            with self.subTest(key=key):
+                self.assert_rejected(lambda m, key=key, value=value: m["runtime"].update({key: value}), f"runtime.{key}")
+
+    def test_rejects_optional_capabilities_and_network(self):
+        for key in ("javascript", "python", "tool_invocation", "inherit_host_environment"):
+            with self.subTest(key=key):
+                self.assert_rejected(lambda m, key=key: m["runtime"].update({key: True}), f"runtime.{key} must be false")
+        self.assert_rejected(lambda m: m["runtime"].update(custom_commands=["host"]), "custom_commands must be empty")
+        self.assert_rejected(lambda m: m["gateway"].update(task_network="network"), "must not configure network")
+        self.assert_rejected(lambda m: m["gateway"].update(grants=[{}]), "must not configure network")
+
+    def test_rejects_network_derived_without_runtime_enforcement(self):
+        manifest = valid_just_bash_manifest()
+        manifest["runtime"]["profile_variant"] = "network-derived"
+        manifest["gateway"]["task_network"] = "inspect-task-network"
+        manifest["gateway"]["grants"] = [{
+            "task_id": "inspect-task", "origin": "https://api.example.com:443", "port": 443,
+            "path_prefix": "/v1/data/", "methods": ["GET", "HEAD"], "scope": "public metadata",
+            "purpose": "bounded inspection input", "expiry": "2099-01-01T00:00:00Z",
+            "max_bytes": 1048576, "audit_record": "audit/network.json",
+            "redirect_policy": "revalidate-exact-origin",
+        }]
+        result = self.run_validator(manifest)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("network-derived JustBash is unavailable", result.stderr)
+
+    def test_rejects_network_bypass_grants(self):
+        def derived_manifest():
+            manifest = valid_just_bash_manifest()
+            manifest["runtime"]["profile_variant"] = "network-derived"
+            manifest["gateway"]["task_network"] = "inspect-task-network"
+            manifest["gateway"]["grants"] = [{
+                "task_id": "inspect-task", "origin": "https://api.example.com:443", "port": 443,
+                "path_prefix": "/v1/", "methods": ["GET"], "scope": "public metadata",
+                "purpose": "bounded inspection input", "expiry": "2099-01-01T00:00:00Z",
+                "max_bytes": 1024, "audit_record": "audit/network.json",
+                "redirect_policy": "revalidate-exact-origin",
+            }]
+            return manifest
+
+        cases = (
+            (lambda g: g.update(origin="https://127.0.0.1:443"), "non-IP"),
+            (lambda g: g.update(origin="https://api.example.com:99999"), "non-IP"),
+            (lambda g: g.update(port=8443), "exactly match"),
+            (lambda g: g.update(redirect_policy="follow"), "revalidate the exact origin"),
+            (lambda g: g.update(path_prefix="/v1/../admin"), "without traversal"),
+            (lambda g: g.update(path_prefix="/v1/%2e%2e/admin"), "encoded separators"),
+            (lambda g: g.update(path_prefix="/v1"), "canonical absolute URL path prefix"),
+            (lambda g: g.update(methods=["POST"]), "only GET or HEAD"),
+        )
+        for mutate, message in cases:
+            with self.subTest(message=message):
+                manifest = derived_manifest()
+                mutate(manifest["gateway"]["grants"][0])
+                result = self.run_validator(manifest)
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertIn(message, result.stderr)
+
+    def test_rejects_ambiguous_network_paths_and_unbound_network_name(self):
+        manifest = valid_just_bash_manifest()
+        manifest["runtime"]["profile_variant"] = "network-derived"
+        manifest["gateway"]["task_network"] = "unrelated-network"
+        manifest["gateway"]["grants"] = [{
+            "task_id": "inspect-task", "origin": "https://api.example.com:443", "port": 443,
+            "path_prefix": "/v1?admin", "methods": ["GET"], "scope": "public metadata",
+            "purpose": "bounded inspection input", "expiry": "2099-01-01T00:00:00Z",
+            "max_bytes": 1024, "audit_record": "audit/network.json",
+            "redirect_policy": "revalidate-exact-origin",
+        }]
+        result = self.run_validator(manifest)
+        self.assertIn("task_network must be bound to task.id", result.stderr)
+        self.assertIn("path_prefix must be a canonical absolute URL path", result.stderr)
+
+    def test_rejects_unknown_runtime_field_and_unbounded_limits(self):
+        self.assert_rejected(lambda m: m["runtime"].update(extra_cli_args=[]), "runtime contains unknown keys")
+        for value in (-1, 0, 20_001, "Infinity", 1.5, True):
+            with self.subTest(value=value):
+                self.assert_rejected(
+                    lambda m, value=value: m["runtime"]["limits"].update(max_command_count=value),
+                    "runtime.limits.max_command_count",
+                )
+
+    def test_rejects_snapshot_escape_special_files_duplicates_and_oversize(self):
+        self.assert_rejected(
+            lambda m: m["workspace"]["snapshot"]["paths"][0].update(path="../secret"),
+            "must remain inside",
+        )
+        self.assert_rejected(
+            lambda m: m["workspace"]["snapshot"]["paths"][0].update(type="symlink"),
+            "forbids symlinks",
+        )
+        self.assert_rejected(
+            lambda m: m["workspace"]["snapshot"]["paths"][0].update(type="directory"),
+            "file-only snapshot",
+        )
+        self.assert_rejected(
+            lambda m: m["workspace"]["snapshot"]["paths"].append(dict(m["workspace"]["snapshot"]["paths"][0])),
+            "duplicates another",
+        )
+        self.assert_rejected(
+            lambda m: m["workspace"]["snapshot"]["paths"][0].update(size_bytes=268435457),
+            "total size cannot exceed",
+        )
+
+    def test_cross_checks_resources_and_result_gate(self):
+        self.assert_rejected(
+            lambda m: m["resources"]["max_filesystem_bytes"].update(limit=1),
+            "must equal runtime.limits.max_filesystem_bytes",
+        )
+        self.assert_rejected(
+            lambda m: m["resultGate"]["artifact_import"].update(max_bytes=33554433),
+            "cannot exceed runtime.limits.max_output_bytes",
+        )
+        self.assert_rejected(
+            lambda m: m["resultGate"]["artifact_import"].update(source="/workspace"),
+            "task-local /scratch/export",
+        )
+        self.assert_rejected(
+            lambda m: m["resultGate"].update(audit_record="../audit.json"),
+            "concrete relative path",
+        )
+        self.assert_rejected(
+            lambda m: m["resources"]["sampled_worker_rss_bytes"].update(limit=1),
+            "must equal runtime.host_watchdog.max_rss_bytes",
+        )
+        self.assert_rejected(
+            lambda m: m["resources"]["host_wall_time_ms"].update(enforced_by="just-bash"),
+            "terminated by host-watchdog",
+        )
+        self.assert_rejected(
+            lambda m: m["runtime"]["host_watchdog"].update(max_rss_bytes=0),
+            "runtime.host_watchdog.max_rss_bytes",
+        )
+
+    def test_rejects_host_shell_fallback_and_incomplete_escalation_policy(self):
+        self.assert_rejected(lambda m: m["runtime"].update(host_shell_fallback=True), "host_shell_fallback must be false")
+        self.assert_rejected(
+            lambda m: m["runtime"]["escalation"].update(require_new_attempt=False),
+            "require_new_attempt must be True",
+        )
+
+    def test_builds_distinct_auditable_escalation_request(self):
+        manifest = valid_just_bash_manifest()
+        target = valid_inspect_escalation_target()
+        request = just_bash_contract.build_escalation_request(
+            manifest, inspect_blocked_event(manifest), target, "audit/escalation.json",
+        )
+        self.assertEqual(request["event"], "InspectBlocked")
+        self.assertEqual(request["source_attempt_id"], "attempt-1")
+        self.assertEqual(request["target_attempt_id"], "attempt-2")
+        self.assertFalse(request["automatic"])
+        with self.assertRaisesRegex(ValueError, "new valid attempt"):
+            target["task"]["attempt_id"] = "attempt-1"
+            just_bash_contract.build_escalation_request(
+                manifest, inspect_blocked_event(manifest), target, "audit/escalation.json",
+            )
+
+    def test_escalation_rejects_different_task_id(self):
+        source = valid_just_bash_manifest()
+        target = valid_manifest()
+        target["task"]["attempt_id"] = "attempt-2"
+        with self.assertRaisesRegex(ValueError, "same task.id"):
+            just_bash_contract.build_escalation_request(
+                source, inspect_blocked_event(source), target, "audit/escalation.json",
+            )
+
+    def test_escalation_requires_matching_inspect_blocked_event(self):
+        source = valid_just_bash_manifest()
+        target = valid_inspect_escalation_target()
+        for field, replacement in (("event", "command"), ("outcome", "completed"), ("exit_code", 0)):
+            with self.subTest(field=field):
+                event = inspect_blocked_event(source)
+                event[field] = replacement
+                with self.assertRaisesRegex(ValueError, "InspectBlocked event"):
+                    just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        event = inspect_blocked_event(source)
+        event["source"]["manifest_hash"] = "sha256:" + "0" * 64
+        with self.assertRaisesRegex(ValueError, "source identity"):
+            just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        event = inspect_blocked_event(source)
+        event["missing_capability"] = ""
+        with self.assertRaisesRegex(ValueError, "missing_capability"):
+            just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+
+    def test_escalation_rejects_invalid_target_manifest_and_audit_path(self):
+        source = valid_just_bash_manifest()
+        target = valid_inspect_escalation_target()
+        target["workspace"]["image"]["digest"] = "latest"
+        with self.assertRaisesRegex(ValueError, "target manifest is invalid"):
+            just_bash_contract.build_escalation_request(source, inspect_blocked_event(source), target, "audit/escalation.json")
+        target = valid_inspect_escalation_target()
+        with self.assertRaisesRegex(ValueError, "safe relative path"):
+            just_bash_contract.build_escalation_request(source, inspect_blocked_event(source), target, "../audit.json")
+
+    def test_malformed_nested_types_fail_closed_without_traceback(self):
+        cases = (
+            (lambda m: m.update(workspace=None), "workspace must be an object"),
+            (lambda m: m.update(task=None), "task must be an object"),
+            (lambda m: m["task"].update(command_classes=[[]]), "task.command_classes"),
+            (lambda m: m["task"].update(expected_artifacts=None), "task.expected_artifacts"),
+            (lambda m: m["task"].update(expected_artifacts=1), "task.expected_artifacts"),
+            (lambda m: m["task"].update(expected_artifacts="/scratch/export"), "task.expected_artifacts"),
+        )
+        for mutate, message in cases:
+            with self.subTest(message=message):
+                manifest = valid_just_bash_manifest()
+                mutate(manifest)
+                result = self.run_validator(manifest)
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertIn(message, result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
+    def test_rejects_unstructured_verification_evidence(self):
+        self.assert_rejected(
+            lambda m: m["verification"].update(
+                status="verified-for-tested-configuration", adversarial_evidence=["placeholder"],
+            ),
+            "structured evidence record",
+        )
+
+    def test_accepts_complete_verification_evidence_bound_to_manifest(self):
+        manifest = valid_just_bash_manifest()
+        manifest["verification"] = {
+            "status": "verified-for-tested-configuration",
+            "adversarial_evidence": [{
+                "host_os": "macOS", "host_version": "26.0", "embedding": "node-process-test-harness",
+                "package_version": manifest["runtime"]["package_version"],
+                "node_version": manifest["runtime"]["node_version"],
+                "agent_host_isolation_version": manifest["runtime"]["agent_host_isolation_version"],
+                "manifest_hash": just_bash_manifest.canonical_manifest_hash(manifest),
+                "input_snapshot_hash": manifest["workspace"]["snapshot"]["hash"],
+                "tests": {name: True for name in ("mount", "credential", "network", "command_path", "resource", "supply_chain", "side_effect")},
+                "cleanup_passed": True,
+            }],
+        }
+        result = self.run_validator(manifest)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 class GatewayPolicyTests(unittest.TestCase):
