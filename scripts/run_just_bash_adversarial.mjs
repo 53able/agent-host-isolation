@@ -149,6 +149,7 @@ function buildManifest() {
       attempt_id: `attempt-${randomBytes(12).toString("hex")}`,
       goal: "verify the standard JustBash inspect embedding with denial-oriented adversarial probes",
       profile: "inspect",
+      strict_memory: false,
       command: ["rg", "allowed", "/workspace"],
       command_classes: ["read", "search", "text-processing", "structured-data", "hash"],
       expected_artifacts: ["/scratch/export/result.txt"],

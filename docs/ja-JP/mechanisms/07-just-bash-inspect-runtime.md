@@ -18,6 +18,8 @@ ManifestはJustBash package、Node.js、agent-host-isolation、input snapshotの
 
 PollingやRSS計測によりwall-timeの停止も遅れる場合があります。厳密なdeadlineにはOS強制のworker/container limitが必要です。
 
+`task.strict_memory`は必須で、標準`inspect`では`false`に固定します。OS強制のメモリ上限が必要なTaskは、要求値がRSS監視の閾値以下でもJustBashに通しません。実行中に要件が判明したら`missing_capability: "strict-memory"`を持つ`InspectBlocked`を記録し、attemptを停止します。
+
 ## Snapshotとresult flow
 
 HostはJustBash起動前にsnapshotを作ります。各entryには相対regular-file path、size、hashを記録します。absolute path、parent traversal、home-relative path、symlink、directory entry、device、socket、FIFOを拒否します。Archive展開はvirtual filesystem内と展開上限内に限定します。
@@ -31,6 +33,8 @@ Filesystem差分とexport artifactは非信頼outputです。Hostへ取り込む
 Host側の`scripts/just_bash_runtime.mjs` adapterが受け取るのは、`createInspectRuntime`が検証済みManifest v2と内容照合済みsnapshotから生成したopaque handleだけです。外部で作ったJustBash instanceは渡せません。Factoryはnetworkなしの組み込みcommand、in-memory filesystem、追加の言語・tool・custom commandなし、hardened limitに固定します。Adapterは宣言argvを高々1回実行し、各argumentをshell-safeにquoteします。未宣言argvは実行前に`InspectBlocked`にし、宣言済み単一commandがcommand-not-found（exit 127）の場合も`InspectBlocked`です。任意のshell stringや複合commandは実行できません。Host shellへfallbackせず、現在のattemptの権限も広げません。Native executionが必要なら、**同じTask ID**で新しい`guest-build` manifest、manifest hash、Task attemptを作り、Apple Container runtimeとして再検査してから実行します。昇格はrequestであり、自動許可ではありません。
 
 Target manifestの検査後、記録した`InspectBlocked` JSON eventをsource/target manifestと一緒に`scripts/just_bash_contract.py`へ渡します。Generatorはeventのsource Task/attempt/manifest hashとmissing capabilityを検証し、attempt IDの再利用や異なるTask IDを拒否します。Blocked event hashと両manifestのidentityを記録しますが、runtimeは実行しません。
+
+`strict-memory`の場合、新しいApple Containerの`guest-build` manifestに`task.strict_memory: true`を指定します。生成するrequestは`automatic: false`のままです。対象host/runtimeでメモリ超過、cleanup、watchdog、artifact/result gate、full agent pathを検証するまで自動振り分けは無効です。一つの上限の実機probeだけでは有効化しません。
 
 標準inspectの1 attemptがprivateなJustBash instanceを1つ所有し、宣言commandを1回実行します。Filesystemと明示的Task stateは新しい検証済みattemptへexportできますが、shell environment、function、working directory、process memory、実行途中commandをcheckpointとは扱いません。Resume時はmanifest、runtime version、input snapshotのhash一致を要求します。
 

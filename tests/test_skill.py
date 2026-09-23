@@ -145,6 +145,13 @@ class ManifestValidatorTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("PASSED", result.stdout)
 
+    def test_requires_explicit_strict_memory_classification(self):
+        manifest = valid_manifest()
+        manifest["task"]["strict_memory"] = True
+        self.assertEqual(self.run_validator(manifest).returncode, 0)
+        self.assert_rejected(lambda m: m["task"].pop("strict_memory"), "task.strict_memory must be a boolean")
+        self.assert_rejected(lambda m: m["task"].update(strict_memory="false"), "task.strict_memory must be a boolean")
+
     def test_rejects_legacy_manifest(self):
         result = self.run_validator({"task_id": "legacy"})
         self.assertNotEqual(result.returncode, 0)
@@ -442,6 +449,16 @@ class JustBashManifestTests(unittest.TestCase):
         result = self.run_validator(valid_just_bash_manifest())
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_strict_memory_never_enters_just_bash(self):
+        self.assert_rejected(
+            lambda m: m["task"].update(strict_memory=True),
+            "sampled RSS is not an OS hard limit",
+        )
+        self.assert_rejected(
+            lambda m: m["task"].pop("strict_memory"),
+            "task.strict_memory must be false",
+        )
+
     def test_accepts_shared_v2_just_bash_manifest_from_stdin(self):
         result = subprocess.run(
             ["python3", str(VALIDATOR), "-"], input=json.dumps(valid_just_bash_manifest()),
@@ -651,6 +668,19 @@ class JustBashManifestTests(unittest.TestCase):
             just_bash_contract.build_escalation_request(
                 manifest, inspect_blocked_event(manifest), target, "audit/escalation.json",
             )
+
+    def test_strict_memory_escalation_requires_new_manifest_and_attempt(self):
+        source = valid_just_bash_manifest()
+        target = valid_inspect_escalation_target()
+        event = inspect_blocked_event(source, "strict-memory")
+        with self.assertRaisesRegex(ValueError, "task.strict_memory true"):
+            just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        target["task"]["strict_memory"] = True
+        request = just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        self.assertTrue(request["strict_memory"])
+        self.assertFalse(request["automatic"])
+        self.assertNotEqual(request["source_manifest_hash"], request["target_manifest_hash"])
+        self.assertNotEqual(request["source_attempt_id"], request["target_attempt_id"])
 
     def test_escalation_rejects_different_task_id(self):
         source = valid_just_bash_manifest()

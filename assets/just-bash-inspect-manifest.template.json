@@ -5,6 +5,7 @@
     "attempt_id": "attempt-1",
     "goal": "replace-with-bounded-inspection-goal",
     "profile": "inspect",
+    "strict_memory": false,
     "command": ["rg", "replace-with-pattern", "/workspace"],
     "command_classes": ["read", "search", "text-processing", "structured-data", "hash", "deterministic-transform"],
     "expected_artifacts": ["/scratch/export"],

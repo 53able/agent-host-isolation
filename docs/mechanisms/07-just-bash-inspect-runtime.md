@@ -18,6 +18,8 @@ The manifest pins the JustBash package, Node.js, agent-host-isolation, and input
 
 Polling and RSS measurement can also delay wall-time enforcement; a strict deadline needs an OS-enforced worker/container limit.
 
+`task.strict_memory` is required and must be `false` for standard `inspect`. A Task requiring an OS-enforced memory ceiling must not enter the JustBash runtime, even if its requested bytes are below the sampled RSS threshold. If that requirement is discovered during inspection, record `InspectBlocked` with `missing_capability: "strict-memory"` and stop the attempt.
+
 ## Snapshot and result flow
 
 The host constructs the snapshot before starting JustBash. Every entry records a relative regular-file path, size, and hash. Absolute paths, parent traversal, home-relative paths, symlinks, directories, devices, sockets, and FIFOs are rejected as entries. Archive extraction must remain inside the virtual filesystem and within the archive expansion limit.
@@ -31,6 +33,8 @@ Filesystem changes and exported artifacts are untrusted output. The result gate 
 The host-side `scripts/just_bash_runtime.mjs` adapter accepts only an opaque handle created from a validated Manifest v2 and content-checked input snapshot by `createInspectRuntime`; caller-created JustBash instances cannot enter this path. The factory fixes networkless built-in commands, an in-memory filesystem, no optional language/tool/custom-command capability, and hardened limits. The adapter executes the declared argv at most once, shell-quoting each argument; undeclared argv becomes `InspectBlocked` before execution. A declared atomic JustBash command-not-found exit (127) also becomes `InspectBlocked`. Arbitrary shell strings and compound commands are not accepted. It never falls back to a host shell or widens the current attempt. If native execution is required, create a new `guest-build` manifest with the **same Task ID**, a new manifest hash, and a new Task attempt for the Apple Container runtime; validate both the new manifest and its result gate before execution. Escalation is a request, not automatic authorization.
 
 After the target manifest validates, pass the recorded `InspectBlocked` JSON event to `scripts/just_bash_contract.py` with the source and target manifests. The generator requires the event's source Task/attempt/manifest hash and missing capability, rejects a reused attempt ID or different Task ID, and records the blocked-event hash with both manifest identities. It does not execute either runtime.
+
+For `strict-memory`, the new Apple Container `guest-build` manifest must set `task.strict_memory: true`; the generated request remains `automatic: false`. Automatic dispatch is disabled until memory exhaustion, cleanup, watchdog, artifact/result gate, and the full agent path are verified on the target host/runtime. A manual probe result for one limit does not authorize automatic dispatch.
 
 One standard inspect attempt owns one private JustBash instance and executes one declared command. Filesystem and explicit Task state may be exported for a new validated attempt, but shell environment, functions, working directory, process memory, and an in-flight command are not checkpoints. Resume requires matching manifest, runtime-version, and input-snapshot hashes.
 

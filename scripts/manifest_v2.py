@@ -105,7 +105,7 @@ def validate_v2(data: Any) -> list[str]:
 
 def _validate_task(value: Any, errors: list[str]) -> None:
     task = _mapping(value, "task", errors)
-    required_keys = {"id", "goal", "profile", "command", "expected_artifacts", "lifecycle"}
+    required_keys = {"id", "goal", "profile", "strict_memory", "command", "expected_artifacts", "lifecycle"}
     allowed_keys = required_keys | {"attempt_id"}
     _required(task, required_keys, "task", errors)
     _no_unknown(task, allowed_keys, "task", errors)
@@ -119,6 +119,8 @@ def _validate_task(value: Any, errors: list[str]) -> None:
         errors.append("task.goal must be concrete and non-empty.")
     if task.get("profile") not in {"guest-build", "elevated-release"}:
         errors.append("task.profile must be 'guest-build' or 'elevated-release' for apple-container.")
+    if type(task.get("strict_memory")) is not bool:
+        errors.append("task.strict_memory must be a boolean.")
     command = task.get("command")
     if not isinstance(command, list) or not command or any(not isinstance(x, str) or not x for x in command):
         errors.append("task.command must be a non-empty argv array of non-empty strings.")

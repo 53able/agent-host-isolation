@@ -21,6 +21,7 @@ function fixture(argv = ["rg", "allowed", "/workspace"], snapshotFiles = { "allo
   manifest.task.id = `inspect-${randomUUID()}`;
   manifest.task.attempt_id = `attempt-${randomUUID()}`;
   manifest.task.command = argv;
+  manifest.task.strict_memory = false;
   manifest.task.command_classes = [...new Set([...manifest.task.command_classes, "deterministic-transform"])];
   manifest.verification = { status: "unverified", adversarial_evidence: [] };
   const paths = Object.entries(snapshotFiles).map(([path, value]) => ({
