@@ -8,24 +8,23 @@ import hashlib
 import json
 import os
 import subprocess
-import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
 from run_apple_container_smoke import build_manifest, run
-from strict_memory_dispatch import IMPORT_ROOT, dispatch
+from strict_memory_dispatch import IMPORT_ROOT
 
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT_CONTENT = b"allowed snapshot content\n"
 ISSUE_EVENT = """
-import { createInspectRuntime, blockInspectForStrictMemory } from './scripts/just_bash_runtime.mjs';
+import { createInspectRuntime, blockInspectForStrictMemory, strictMemoryDispatchResult } from './scripts/just_bash_runtime.mjs';
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
-const { manifest, snapshotFiles } = JSON.parse(input);
-const runtime = createInspectRuntime({ manifest, snapshotFiles });
+const { manifest, snapshotFiles, strictMemoryTargetManifest } = JSON.parse(input);
+const runtime = createInspectRuntime({ manifest, snapshotFiles, strictMemoryTargetManifest });
 const event = await blockInspectForStrictMemory({ runtime });
-process.stdout.write(JSON.stringify(event));
+process.stdout.write(JSON.stringify({ event, outcome: strictMemoryDispatchResult({ runtime }) }));
 """
 
 
@@ -40,10 +39,6 @@ def execute() -> dict:
     source["task"].update(id=task_id, attempt_id=f"attempt-{uuid.uuid4().hex[:8]}",
                           goal="verify controller-issued strict-memory automatic dispatch")
     source["workspace"]["repository"].update(commit=commit, tree_hash=tree)
-    issued = subprocess.run(["node", "--input-type=module", "-e", ISSUE_EVENT], cwd=ROOT,
-                            input=json.dumps({"manifest": source, "snapshotFiles": {"allowed.txt": SNAPSHOT_CONTENT.decode()}}),
-                            capture_output=True, text=True, timeout=15, check=True)
-    event = json.loads(issued.stdout)
     target = build_manifest(task_id)
     target["task"].update(attempt_id=f"attempt-{uuid.uuid4().hex[:8]}", goal=source["task"]["goal"],
                           strict_memory=True, command=["sh", "-c", "cat /workspace/allowed.txt > /output/result.txt"],
@@ -51,10 +46,12 @@ def execute() -> dict:
     target["workspace"]["repository"] = source["workspace"]["repository"]
     target["resources"]["disk_bytes"]["enforced_by"] = "apple-container-tmpfs"
     target["resources"]["wall_time_seconds"]["limit"] = 10
-    with tempfile.TemporaryDirectory(prefix="ahi-auto-source-") as temporary:
-        source_dir = Path(temporary)
-        (source_dir / "allowed.txt").write_bytes(SNAPSHOT_CONTENT)
-        outcome = dispatch(source, event, target, source_dir)
+    issued = subprocess.run(["node", "--input-type=module", "-e", ISSUE_EVENT], cwd=ROOT,
+                            input=json.dumps({"manifest": source,
+                                              "snapshotFiles": {"allowed.txt": SNAPSHOT_CONTENT.decode()},
+                                              "strictMemoryTargetManifest": target}),
+                            capture_output=True, text=True, timeout=240, check=True)
+    event, outcome = (json.loads(issued.stdout)[key] for key in ("event", "outcome"))
     destination = IMPORT_ROOT / task_id / target["task"]["attempt_id"]
     artifact = destination / "result.txt"
     imported = artifact.is_file() and artifact.read_bytes() == SNAPSHOT_CONTENT

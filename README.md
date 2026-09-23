@@ -95,7 +95,7 @@ cp assets/just-bash-inspect-manifest.template.json isolation-manifest.json
 
 The JustBash template uses the same top-level Manifest v2 resources and specializes `runtime.kind`, the minimum snapshot, interpreter limits, and `InspectBlocked` escalation policy.
 
-Set `task.strict_memory` explicitly. Standard JustBash `inspect` accepts only `false`: its sampled worker RSS watchdog is not an OS hard limit. A strict-memory `InspectBlocked` event can generate a new Apple Container `guest-build` request with a new manifest and attempt. [The bounded memory probe](evidence/strict-memory-probe-20260923.md) confirms one OS OOM limit and cleanup on the recorded host. [The automatic dispatch gate](docs/mechanisms/08-strict-memory-dispatch.md) remains blocked because declared process and disk limits failed live probes.
+Set `task.strict_memory` explicitly. Standard JustBash `inspect` accepts only `false`: its sampled worker RSS watchdog is not an OS hard limit. A strict-memory `InspectBlocked` event can generate a new Apple Container `guest-build` request with a new manifest and attempt. A preconfigured target can also trigger [gated automatic dispatch](docs/mechanisms/08-strict-memory-dispatch.md) from the host controller event. [The bounded memory probe](evidence/strict-memory-probe-20260923.md) confirms an OS OOM limit and cleanup on the recorded host; automatic dispatch checks the complete tested profile again for each target attempt.
 
 ### 3. Validate before execution
 

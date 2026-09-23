@@ -36,7 +36,7 @@ Host controllerはruntime handleをprivateに保ち、agent textや呼出し側�
 
 Target manifestの検査後、記録した`InspectBlocked` JSON eventをsource/target manifestと一緒に`scripts/just_bash_contract.py`へ渡します。Generatorはeventのsource Task/attempt/manifest hashとmissing capabilityを検証し、attempt IDの再利用や異なるTask IDを拒否します。Blocked event hashと両manifestのidentityを記録しますが、runtimeは実行しません。
 
-`strict-memory`の場合、新しいApple Containerの`guest-build` manifestに`task.strict_memory: true`を指定します。生成するrequestは`automatic: false`のままです。対象host/runtimeでメモリ超過、cleanup、watchdog、artifact/result gate、full agent pathを検証するまで自動振り分けは無効です。一つの上限の実機probeだけでは有効化しません。
+`strict-memory`の場合、新しいApple Containerの`guest-build` manifestに`task.strict_memory: true`を指定します。request生成だけなら`automatic: false`のままです。controllerが`createInspectRuntime`で検証済みtargetを事前設定すると、`blockInspectForStrictMemory`がinspect attempt停止後に別attemptを自動振り分けします。dispatcherは対象host/runtimeでメモリ超過、cleanup、watchdog、artifact/result gate、`task.command`の全経路、その他の必須項目を実行前に再検証します。一つの上限の実機probeだけでは有効化しません。
 
 標準inspectの1 attemptがprivateなJustBash instanceを1つ所有し、宣言commandを1回実行します。Filesystemと明示的Task stateは新しい検証済みattemptへexportできますが、shell environment、function、working directory、process memory、実行途中commandをcheckpointとは扱いません。Resume時はmanifest、runtime version、input snapshotのhash一致を要求します。
 
