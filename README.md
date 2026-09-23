@@ -103,7 +103,7 @@ Set `task.strict_memory` explicitly. Standard JustBash `inspect` accepts only `f
 python3 scripts/validate-manifest.py isolation-manifest.json
 ```
 
-The validator rejects legacy v1 manifests and validates both Apple Container and JustBash through the shared Manifest v2 contract. For standard JustBash it rejects incompatible profiles, unpinned versions, unsafe snapshots, optional capabilities, network grants, unknown runtime fields, unbounded limits, host-shell fallback, and incomplete escalation identities. `network-derived` grant fields are schema-checked but the profile is not executable until a request-time gateway adapter enforces exact origin, path, method, expiry, byte budget, and every redirect hop.
+The validator rejects legacy v1 manifests and validates both Apple Container and JustBash through the shared Manifest v2 contract. For standard JustBash it rejects incompatible profiles, unpinned versions, unsafe snapshots, optional capabilities, network grants, unknown runtime fields, unbounded limits, host-shell fallback, and incomplete escalation identities. `network-derived` grant fields are schema-checked but the profile is not executable. The host-side fetch broker is a one-shot input-snapshot bridge: it uses durable SQLite audit records and killable DNS resolution, then requires a result gate before a new standard, networkless JustBash attempt can read the bytes. The broker/import path has [verified evidence for one tested configuration](evidence/inspect-fetch-issue5-20260923.md); direct derived JustBash execution remains rejected because it has no in-runtime request-time adapter.
 
 ### 4. Compile Apple Container argv
 

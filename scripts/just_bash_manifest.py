@@ -118,7 +118,7 @@ def validate_just_bash_v2(data: Any) -> list[str]:
     snapshot_total = _validate_workspace(root.get("workspace"), errors)
     runtime_value = root.get("runtime") if isinstance(root.get("runtime"), dict) else {}
     task_value = root.get("task") if isinstance(root.get("task"), dict) else {}
-    _validate_gateway(root.get("gateway"), runtime_value.get("profile_variant"), task_value.get("id"), errors)
+    _validate_gateway(root.get("gateway"), runtime_value.get("profile_variant"), task_value.get("id"), task_value.get("attempt_id"), runtime_value.get("limits"), errors)
     _validate_model(root.get("model"), errors)
     limits = _validate_runtime(root.get("runtime"), errors)
     _validate_resources(root.get("resources"), limits, runtime_value.get("host_watchdog"), errors)
@@ -252,7 +252,7 @@ def _validate_workspace(value: Any, errors: list[str]) -> int:
     return total
 
 
-def _validate_gateway(value: Any, profile_variant: Any, task_id: Any, errors: list[str]) -> None:
+def _validate_gateway(value: Any, profile_variant: Any, task_id: Any, attempt_id: Any, limits: Any, errors: list[str]) -> None:
     gateway = _mapping(value, "gateway", errors)
     keys = {"default", "task_network", "ingress_ports", "grants", "credential_broker"}
     _required(gateway, keys, "gateway", errors)
@@ -270,22 +270,30 @@ def _validate_gateway(value: Any, profile_variant: Any, task_id: Any, errors: li
         if not isinstance(grants, list) or not grants:
             errors.append("network-derived JustBash requires at least one scoped gateway grant.")
         else:
+            audit_records: set[str] = set()
             for index, grant in enumerate(grants):
-                _validate_network_grant(grant, index, task_id, errors)
+                _validate_network_grant(grant, index, task_id, attempt_id, limits, errors)
+                audit_record = grant.get("audit_record") if isinstance(grant, dict) else None
+                if isinstance(audit_record, str):
+                    if audit_record in audit_records:
+                        errors.append(f"gateway.grants[{index}].audit_record must uniquely identify one grant budget.")
+                    audit_records.add(audit_record)
     if gateway.get("ingress_ports") != []:
         errors.append("gateway.ingress_ports must be empty.")
     if gateway.get("credential_broker") is not None:
         errors.append("gateway.credential_broker must be null.")
 
 
-def _validate_network_grant(value: Any, index: int, task_id: Any, errors: list[str]) -> None:
+def _validate_network_grant(value: Any, index: int, task_id: Any, attempt_id: Any, limits: Any, errors: list[str]) -> None:
     path = f"gateway.grants[{index}]"
     grant = _mapping(value, path, errors)
-    keys = {"task_id", "origin", "port", "path_prefix", "methods", "scope", "purpose", "expiry", "max_bytes", "audit_record", "redirect_policy"}
+    keys = {"task_id", "attempt_id", "origin", "port", "path_prefix", "methods", "scope", "purpose", "expiry", "max_bytes", "audit_record", "redirect_policy"}
     _required(grant, keys, path, errors)
     _no_unknown(grant, keys, path, errors)
     if grant.get("task_id") != task_id:
         errors.append(f"{path}.task_id must match task.id.")
+    if grant.get("attempt_id") != attempt_id:
+        errors.append(f"{path}.attempt_id must match task.attempt_id.")
     origin = grant.get("origin")
     parsed = None
     hostname = None
@@ -310,6 +318,7 @@ def _validate_network_grant(value: Any, index: int, task_id: Any, errors: list[s
         parsed is None
         or parsed.scheme not in {"http", "https"}
         or not hostname
+        or parsed_port is None
         or parsed.path
         or parsed.query
         or parsed.fragment
@@ -345,8 +354,9 @@ def _validate_network_grant(value: Any, index: int, task_id: Any, errors: list[s
             raise ValueError
     except ValueError:
         errors.append(f"{path}.expiry must be a future ISO-8601 timestamp with timezone.")
-    if type(grant.get("max_bytes")) is not int or grant.get("max_bytes", 0) <= 0:
-        errors.append(f"{path}.max_bytes must be a positive integer.")
+    filesystem_limit = limits.get("max_filesystem_bytes") if isinstance(limits, dict) else None
+    if type(grant.get("max_bytes")) is not int or type(filesystem_limit) is not int or not 0 < grant["max_bytes"] <= filesystem_limit:
+        errors.append(f"{path}.max_bytes must be a positive integer within the virtual filesystem limit.")
     if grant.get("redirect_policy") != "revalidate-exact-origin":
         errors.append(f"{path}.redirect_policy must revalidate the exact origin on every redirect.")
 

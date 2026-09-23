@@ -605,7 +605,7 @@ class JustBashManifestTests(unittest.TestCase):
         manifest["runtime"]["profile_variant"] = "network-derived"
         manifest["gateway"]["task_network"] = "inspect-task-network"
         manifest["gateway"]["grants"] = [{
-            "task_id": "inspect-task", "origin": "https://api.example.com:443", "port": 443,
+            "task_id": "inspect-task", "attempt_id": "attempt-1", "origin": "https://api.example.com:443", "port": 443,
             "path_prefix": "/v1/data/", "methods": ["GET", "HEAD"], "scope": "public metadata",
             "purpose": "bounded inspection input", "expiry": "2099-01-01T00:00:00Z",
             "max_bytes": 1048576, "audit_record": "audit/network.json",
@@ -621,7 +621,7 @@ class JustBashManifestTests(unittest.TestCase):
             manifest["runtime"]["profile_variant"] = "network-derived"
             manifest["gateway"]["task_network"] = "inspect-task-network"
             manifest["gateway"]["grants"] = [{
-                "task_id": "inspect-task", "origin": "https://api.example.com:443", "port": 443,
+                "task_id": "inspect-task", "attempt_id": "attempt-1", "origin": "https://api.example.com:443", "port": 443,
                 "path_prefix": "/v1/", "methods": ["GET"], "scope": "public metadata",
                 "purpose": "bounded inspection input", "expiry": "2099-01-01T00:00:00Z",
                 "max_bytes": 1024, "audit_record": "audit/network.json",
@@ -630,6 +630,7 @@ class JustBashManifestTests(unittest.TestCase):
             return manifest
 
         cases = (
+            (lambda g: g.update(attempt_id="other-attempt"), "must match task.attempt_id"),
             (lambda g: g.update(origin="https://127.0.0.1:443"), "non-IP"),
             (lambda g: g.update(origin="https://api.example.com:99999"), "non-IP"),
             (lambda g: g.update(port=8443), "exactly match"),
@@ -652,7 +653,7 @@ class JustBashManifestTests(unittest.TestCase):
         manifest["runtime"]["profile_variant"] = "network-derived"
         manifest["gateway"]["task_network"] = "unrelated-network"
         manifest["gateway"]["grants"] = [{
-            "task_id": "inspect-task", "origin": "https://api.example.com:443", "port": 443,
+            "task_id": "inspect-task", "attempt_id": "attempt-1", "origin": "https://api.example.com:443", "port": 443,
             "path_prefix": "/v1?admin", "methods": ["GET"], "scope": "public metadata",
             "purpose": "bounded inspection input", "expiry": "2099-01-01T00:00:00Z",
             "max_bytes": 1024, "audit_record": "audit/network.json",
