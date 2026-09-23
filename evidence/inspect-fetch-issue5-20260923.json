@@ -1,0 +1,1805 @@
+{
+  "all_probes_passed": true,
+  "captured_at": "2026-09-23T02:14:18.798021+00:00",
+  "host": {
+    "machine": "arm64",
+    "os": "Darwin",
+    "python": "3.9.6",
+    "release": "25.6.0"
+  },
+  "injected_transport_probes_passed": true,
+  "input_hashes": {
+    "harness": "sha256:61414f99dd5d86f188db505910dd4015303ff39741ec9fe00e158f4f71424bdb",
+    "lockfile": "sha256:f39c8d9cf405a8ab62d0c13b8bf2de184d89bcc4b8b9ed978374796708bd3ec4",
+    "source_manifest": "sha256:0fa7c61d64d34d9150dfdf32f9c6a46838a715d439c7288072d5bb5f69718037",
+    "source_snapshot": "sha256:e6eef84ad81f124d7935234b4a4a29c3971c7659c8b38774f1e45e0a519083d0",
+    "target_manifest": "sha256:1b49d050659b0e046567331ac20584b2abdd76486b618428ea80aee42792ed90",
+    "target_snapshot": "sha256:e6eef84ad81f124d7935234b4a4a29c3971c7659c8b38774f1e45e0a519083d0"
+  },
+  "live_probes_passed": true,
+  "probes": [
+    {
+      "class": "origin",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://evil.example.com/v1/data/item"
+      },
+      "name": "origin-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-01",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "c49751f5f0a84bcdaf83db120d29c2f5",
+            "manifest_hash": "sha256:f2ce8304bd1dd437c974f151f679b6057c9b09d694d13c9f9316015a66672c35",
+            "method": "GET",
+            "origin": "https://evil.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-01",
+            "url": "https://evil.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-01",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "009c0d61b46846d69b3c7fb607b2b4b7",
+            "manifest_hash": "sha256:f2ce8304bd1dd437c974f151f679b6057c9b09d694d13c9f9316015a66672c35",
+            "method": "GET",
+            "origin": "https://evil.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-01"
+          }
+        ],
+        "passed": true,
+        "reason": "no exact active grant matched"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "path",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://api.example.com/v2/data/item"
+      },
+      "name": "path-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-02",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "8d793b5522e24ff797133860d0dc1a12",
+            "manifest_hash": "sha256:87fd97af0fc7875466a0e82e094e8e5135a97d817a44db663f025bdd8836ac35",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v2/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-02",
+            "url": "https://api.example.com/v2/data/item"
+          },
+          {
+            "attempt_id": "attempt-02",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "05d9501192bb48a897eb0f33e6325d6f",
+            "manifest_hash": "sha256:87fd97af0fc7875466a0e82e094e8e5135a97d817a44db663f025bdd8836ac35",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v2/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-02"
+          }
+        ],
+        "passed": true,
+        "reason": "no exact active grant matched"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "method",
+      "expected": "denied",
+      "input": {
+        "method": "POST",
+        "url": "https://api.example.com/v1/data/item"
+      },
+      "name": "method-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-03",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "b1fca6c7f1c44abca329ccfcc4d6e7bb",
+            "manifest_hash": "sha256:48cfe50162d1d4300b60040896d4ef9feeea8b00b7e51ad204a447b57ca0193f",
+            "method": "POST",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "method denied",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-03",
+            "url": "https://api.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-03",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "60f539fc841c41b3a446b213b4e0c502",
+            "manifest_hash": "sha256:48cfe50162d1d4300b60040896d4ef9feeea8b00b7e51ad204a447b57ca0193f",
+            "method": "POST",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "method denied",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-03"
+          }
+        ],
+        "passed": true,
+        "reason": "method denied"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "dns",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://93.184.216.34/v1/data/item"
+      },
+      "name": "dns-ip-literal",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-04",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "9f3df74533c246248a1a61c83f31a5c2",
+            "manifest_hash": "sha256:6c7e19411d36b98cc8485b9a63496edeb53f47688f8e2086bc5bb1f43c79ef24",
+            "method": "GET",
+            "origin": "https://93.184.216.34:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "IP literal denied",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-04",
+            "url": "https://93.184.216.34/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-04",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "f39e2d2182a54001b9562ac573c4b280",
+            "manifest_hash": "sha256:6c7e19411d36b98cc8485b9a63496edeb53f47688f8e2086bc5bb1f43c79ef24",
+            "method": "GET",
+            "origin": "https://93.184.216.34:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "IP literal denied",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-04"
+          }
+        ],
+        "passed": true,
+        "reason": "IP literal denied"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "alternate",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://api.example.com:8443/v1/data/item"
+      },
+      "name": "alternate-port",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-05",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "082cc648ab7d466596e9f3ff96e3b93f",
+            "manifest_hash": "sha256:668849d7a1c6f59997f5202d8a06ba06fdda52cc1360e04105c64ee312bd5e59",
+            "method": "GET",
+            "origin": "https://api.example.com:8443",
+            "path": "/v1/data/item",
+            "port": 8443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-05",
+            "url": "https://api.example.com:8443/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-05",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "9ec5a16bfb294bdfa30337d1e05df5f1",
+            "manifest_hash": "sha256:668849d7a1c6f59997f5202d8a06ba06fdda52cc1360e04105c64ee312bd5e59",
+            "method": "GET",
+            "origin": "https://api.example.com:8443",
+            "path": "/v1/data/item",
+            "port": 8443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-05"
+          }
+        ],
+        "passed": true,
+        "reason": "no exact active grant matched"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "redirect",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://api.example.com/v1/data/item"
+      },
+      "name": "redirect-hop-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-06",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "in_progress",
+            "decision": "redirect",
+            "event_id": "f96d2f97119243d5b4b56e1069812f9a",
+            "hop": 0,
+            "manifest_hash": "sha256:a687f2d44f6c493e6fae51f6fb301a9c39daaef135212a0ec81a502fc0cfc030",
+            "method": "GET",
+            "origin": "https://evil.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": null,
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-06",
+            "url": "https://evil.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-06",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "f3b6b08ec92143d99d8014665117d168",
+            "manifest_hash": "sha256:a687f2d44f6c493e6fae51f6fb301a9c39daaef135212a0ec81a502fc0cfc030",
+            "method": "GET",
+            "origin": "https://evil.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-06",
+            "url": "https://evil.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-06",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "07243721134b4c928ba522dfcbf9395e",
+            "manifest_hash": "sha256:a687f2d44f6c493e6fae51f6fb301a9c39daaef135212a0ec81a502fc0cfc030",
+            "method": "GET",
+            "origin": "https://evil.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-06"
+          }
+        ],
+        "passed": true,
+        "reason": "no exact active grant matched"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "header",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://api.example.com/v1/data/item"
+      },
+      "name": "header-credential-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-07",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "06a132fa3f7640b0951841e421bb102c",
+            "manifest_hash": "sha256:7ea081aed6699bc7f3f8f0ec557435022aa241cb568a552d6d6e7ece876962e3",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "caller headers and credential overrides denied",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-07",
+            "url": "https://api.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-07",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "027178c1769441689b3fc27f97cebc79",
+            "manifest_hash": "sha256:7ea081aed6699bc7f3f8f0ec557435022aa241cb568a552d6d6e7ece876962e3",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "caller headers and credential overrides denied",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-07"
+          }
+        ],
+        "passed": true,
+        "reason": "caller headers and credential overrides denied"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "expiry",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://api.example.com/v1/data/item"
+      },
+      "name": "expiry-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-08",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "5d995c63c47b46a8954ce26678a9e20e",
+            "manifest_hash": "sha256:d25c16d3a6ebda76be3e6c70fcc811100da00ba859f957fce228c5cd9412ae6d",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "grant expired",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-08",
+            "url": "https://api.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-08",
+            "audit_record": null,
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "176a138de9724eb4b6509a490df9c6aa",
+            "manifest_hash": "sha256:d25c16d3a6ebda76be3e6c70fcc811100da00ba859f957fce228c5cd9412ae6d",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "grant expired",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-08"
+          }
+        ],
+        "passed": true,
+        "reason": "grant expired"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "byte",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://api.example.com/v1/data/item"
+      },
+      "name": "byte-budget-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-09",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 25,
+            "cleanup_outcome": "revoke_required",
+            "decision": "budget",
+            "event_id": "d99a3e25d30846ea936c8e13f5a3fde5",
+            "manifest_hash": "sha256:f221b92b1d97a0693b14f8cd4542de45dc244eae2514cf6a7cd816661230e597",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "grant byte budget exceeded",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-09"
+          },
+          {
+            "attempt_id": "attempt-09",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "bbe0ecdd43194ec7848f072087f724fc",
+            "manifest_hash": "sha256:f221b92b1d97a0693b14f8cd4542de45dc244eae2514cf6a7cd816661230e597",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "grant byte budget exceeded",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-09",
+            "url": "https://api.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-09",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "3de03c5d4766409784cf331681a1aca0",
+            "manifest_hash": "sha256:f221b92b1d97a0693b14f8cd4542de45dc244eae2514cf6a7cd816661230e597",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "grant byte budget exceeded",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-09"
+          }
+        ],
+        "passed": true,
+        "reason": "grant byte budget exceeded"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "dns",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://api.example.com/v1/data/item"
+      },
+      "name": "dns-timeout-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-10",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "49430e979e3048d5b2dc3e69a951026b",
+            "manifest_hash": "sha256:aacb675b4c66c3b38c6027bf71f269024971486045b62874b3a704ce1584a8f2",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "DNS timeout",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-10",
+            "url": "https://api.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-10",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "523d8e736a224525b48f3ec87c71550b",
+            "manifest_hash": "sha256:aacb675b4c66c3b38c6027bf71f269024971486045b62874b3a704ce1584a8f2",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "DNS timeout",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-10"
+          }
+        ],
+        "passed": true,
+        "reason": "DNS timeout"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "cancel",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://api.example.com/v1/data/item"
+      },
+      "name": "cancel-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-11",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "d5d01087da49422482e73849463745f9",
+            "manifest_hash": "sha256:fb9fa1f280ea869c951bf1a35fcfd4c53588e473bcd581395f9e0fd7c9865900",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "DNS cancelled",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-11",
+            "url": "https://api.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-11",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "906ce2ef1c7547d6a20967853c38f611",
+            "manifest_hash": "sha256:fb9fa1f280ea869c951bf1a35fcfd4c53588e473bcd581395f9e0fd7c9865900",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "DNS cancelled",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-11"
+          }
+        ],
+        "passed": true,
+        "reason": "DNS cancelled"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "request",
+      "expected": "denied",
+      "input": {
+        "method": "GET",
+        "url": "https://api.example.com/v1/data/item"
+      },
+      "name": "request-timeout-deny",
+      "observed": {
+        "cleanup": true,
+        "decision": "denied",
+        "durable_after_restart": true,
+        "events": [
+          {
+            "attempt_id": "attempt-12",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "555bed6f06f14a3fa995e82b86858d1f",
+            "manifest_hash": "sha256:347c9b8526d8dbac87959d4ab61607e83b84812d142089d31656bb9d5c579057",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "TimeoutError",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-12",
+            "url": "https://api.example.com/v1/data/item"
+          },
+          {
+            "attempt_id": "attempt-12",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "cf2466bd9656463cb2c8fcdf66b124a8",
+            "manifest_hash": "sha256:347c9b8526d8dbac87959d4ab61607e83b84812d142089d31656bb9d5c579057",
+            "method": "GET",
+            "origin": "https://api.example.com:443",
+            "path": "/v1/data/item",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "TimeoutError",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-issue5-12"
+          }
+        ],
+        "passed": true,
+        "reason": "TimeoutError"
+      },
+      "transport": "injected/mock; no live network"
+    },
+    {
+      "class": "result_gate",
+      "expected": "allowed",
+      "name": "gate-and-real-just-bash",
+      "observed": {
+        "decision": "allowed",
+        "runtime": {
+          "profile": "standard",
+          "stdout": "network-derived evidence\n"
+        },
+        "snapshot_paths": [
+          {
+            "hash": "sha256:59fc09ea457d8da02bfe7521103200c05a7e8c4efaaf75d345bcc21cc5e98853",
+            "path": "data.txt",
+            "size_bytes": 25,
+            "type": "regular"
+          }
+        ],
+        "source_manifest": {
+          "gateway": {
+            "credential_broker": null,
+            "default": "deny",
+            "grants": [
+              {
+                "attempt_id": "attempt-success",
+                "audit_record": "audit/inspect-fetch-issue5.json",
+                "expiry": "2026-09-23T02:24:14.388654Z",
+                "max_bytes": 4096,
+                "methods": [
+                  "GET"
+                ],
+                "origin": "https://api.example.com:443",
+                "path_prefix": "/v1/data/",
+                "port": 443,
+                "purpose": "bounded inspection input",
+                "redirect_policy": "revalidate-exact-origin",
+                "scope": "public metadata",
+                "task_id": "inspect-fetch-issue5-success"
+              }
+            ],
+            "ingress_ports": [],
+            "task_network": "inspect-fetch-issue5-success-network"
+          },
+          "manifest_version": 2,
+          "model": {
+            "credential_broker_ref": null,
+            "id": "none",
+            "provider": "none"
+          },
+          "resources": {
+            "host_wall_time_ms": {
+              "enforced_by": "host-watchdog",
+              "limit": 30000,
+              "on_exceed": "terminate"
+            },
+            "max_archive_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 32768,
+              "on_exceed": "block"
+            },
+            "max_call_depth": {
+              "enforced_by": "just-bash",
+              "limit": 8,
+              "on_exceed": "terminate"
+            },
+            "max_command_count": {
+              "enforced_by": "just-bash",
+              "limit": 32,
+              "on_exceed": "terminate"
+            },
+            "max_database_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 32768,
+              "on_exceed": "block"
+            },
+            "max_execution_time_ms": {
+              "enforced_by": "just-bash",
+              "limit": 1000,
+              "on_exceed": "terminate"
+            },
+            "max_extension_cleanup_time_ms": {
+              "enforced_by": "just-bash",
+              "limit": 25,
+              "on_exceed": "terminate"
+            },
+            "max_filesystem_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 131072,
+              "on_exceed": "block"
+            },
+            "max_output_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 4096,
+              "on_exceed": "terminate"
+            },
+            "max_source_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 4096,
+              "on_exceed": "block"
+            },
+            "sampled_worker_rss_bytes": {
+              "enforced_by": "host-watchdog",
+              "limit": 536870912,
+              "on_exceed": "terminate"
+            }
+          },
+          "resultGate": {
+            "allowed_side_effects": [],
+            "artifact_import": {
+              "max_bytes": 4096,
+              "reject_path_traversal": true,
+              "reject_symlinks": true,
+              "source": "/scratch/export"
+            },
+            "audit_record": "evidence/just-bash-adversarial-20260923.json",
+            "filesystem_diff": true,
+            "required": true
+          },
+          "runtime": {
+            "agent_host_isolation_version": "0.1.0",
+            "audit_events": [
+              "runtime_identity",
+              "command",
+              "stdout_stderr",
+              "filesystem_diff",
+              "artifact",
+              "failure",
+              "limit_violation",
+              "result_gate",
+              "cleanup"
+            ],
+            "custom_commands": [],
+            "escalation": {
+              "automatic": false,
+              "require_new_attempt": true,
+              "require_new_manifest": true,
+              "runtime_kind": "apple-container",
+              "target_profile": "guest-build"
+            },
+            "execution_limit_profile": "hardened",
+            "filesystem": {
+              "host_root": "input-snapshot-only",
+              "implementation": "in-memory",
+              "writes": "task-local-overlay"
+            },
+            "host_shell_fallback": false,
+            "host_watchdog": {
+              "max_rss_bytes": 536870912,
+              "poll_interval_ms": 50,
+              "wall_time_ms": 30000
+            },
+            "inherit_host_environment": false,
+            "javascript": false,
+            "kind": "just-bash",
+            "limits": {
+              "max_archive_bytes": 32768,
+              "max_call_depth": 8,
+              "max_command_count": 32,
+              "max_database_bytes": 32768,
+              "max_execution_time_ms": 1000,
+              "max_extension_cleanup_time_ms": 25,
+              "max_filesystem_bytes": 131072,
+              "max_output_bytes": 4096,
+              "max_source_bytes": 4096
+            },
+            "node_version": "24.13.1",
+            "package_version": "3.4.2",
+            "profile_variant": "network-derived",
+            "python": false,
+            "tool_invocation": false,
+            "unsupported_command": "InspectBlocked"
+          },
+          "task": {
+            "attempt_id": "attempt-success",
+            "command": [
+              "cat",
+              "data.txt"
+            ],
+            "command_classes": [
+              "read",
+              "search",
+              "text-processing",
+              "structured-data",
+              "hash"
+            ],
+            "expected_artifacts": [
+              "/scratch/export/result.txt"
+            ],
+            "goal": "adversarial inspect fetch evidence",
+            "id": "inspect-fetch-issue5-success",
+            "lifecycle": {
+              "checkpoint": "application-level",
+              "stop_timeout_seconds": 5
+            },
+            "profile": "inspect"
+          },
+          "verification": {
+            "adversarial_evidence": [],
+            "status": "unverified"
+          },
+          "workspace": {
+            "image": null,
+            "lockfile": {
+              "path": "package-lock.json",
+              "sha256": "sha256:f39c8d9cf405a8ab62d0c13b8bf2de184d89bcc4b8b9ed978374796708bd3ec4"
+            },
+            "mcps": [],
+            "repository": {
+              "commit": "4625fd1fcd75d035b44203be071cfaf6c053496a",
+              "tree_hash": "490067c472189c877af6196f2589e4783127bab0",
+              "url": "https://github.com/53able/agent-host-isolation.git"
+            },
+            "skills": [
+              {
+                "id": "agent-host-isolation",
+                "version": "0.1.0"
+              }
+            ],
+            "snapshot": {
+              "hash": "sha256:e6eef84ad81f124d7935234b4a4a29c3971c7659c8b38774f1e45e0a519083d0",
+              "id": "inspect-fetch-issue5-snapshot",
+              "paths": [
+                {
+                  "hash": "sha256:59fc09ea457d8da02bfe7521103200c05a7e8c4efaaf75d345bcc21cc5e98853",
+                  "path": "data.txt",
+                  "size_bytes": 25,
+                  "type": "regular"
+                }
+              ],
+              "read_only": true,
+              "target": "/workspace"
+            },
+            "toolchain": {
+              "agent-host-isolation": "0.1.0",
+              "just-bash": "3.4.2",
+              "node": "24.13.1"
+            }
+          }
+        },
+        "source_manifest_hash": "sha256:0fa7c61d64d34d9150dfdf32f9c6a46838a715d439c7288072d5bb5f69718037",
+        "tamper_rejected": true,
+        "target_manifest": {
+          "gateway": {
+            "credential_broker": null,
+            "default": "deny",
+            "grants": [],
+            "ingress_ports": [],
+            "task_network": null
+          },
+          "manifest_version": 2,
+          "model": {
+            "credential_broker_ref": null,
+            "id": "none",
+            "provider": "none"
+          },
+          "resources": {
+            "host_wall_time_ms": {
+              "enforced_by": "host-watchdog",
+              "limit": 30000,
+              "on_exceed": "terminate"
+            },
+            "max_archive_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 32768,
+              "on_exceed": "block"
+            },
+            "max_call_depth": {
+              "enforced_by": "just-bash",
+              "limit": 8,
+              "on_exceed": "terminate"
+            },
+            "max_command_count": {
+              "enforced_by": "just-bash",
+              "limit": 32,
+              "on_exceed": "terminate"
+            },
+            "max_database_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 32768,
+              "on_exceed": "block"
+            },
+            "max_execution_time_ms": {
+              "enforced_by": "just-bash",
+              "limit": 1000,
+              "on_exceed": "terminate"
+            },
+            "max_extension_cleanup_time_ms": {
+              "enforced_by": "just-bash",
+              "limit": 25,
+              "on_exceed": "terminate"
+            },
+            "max_filesystem_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 131072,
+              "on_exceed": "block"
+            },
+            "max_output_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 4096,
+              "on_exceed": "terminate"
+            },
+            "max_source_bytes": {
+              "enforced_by": "just-bash",
+              "limit": 4096,
+              "on_exceed": "block"
+            },
+            "sampled_worker_rss_bytes": {
+              "enforced_by": "host-watchdog",
+              "limit": 536870912,
+              "on_exceed": "terminate"
+            }
+          },
+          "resultGate": {
+            "allowed_side_effects": [],
+            "artifact_import": {
+              "max_bytes": 4096,
+              "reject_path_traversal": true,
+              "reject_symlinks": true,
+              "source": "/scratch/export"
+            },
+            "audit_record": "evidence/just-bash-adversarial-20260923.json",
+            "filesystem_diff": true,
+            "required": true
+          },
+          "runtime": {
+            "agent_host_isolation_version": "0.1.0",
+            "audit_events": [
+              "runtime_identity",
+              "command",
+              "stdout_stderr",
+              "filesystem_diff",
+              "artifact",
+              "failure",
+              "limit_violation",
+              "result_gate",
+              "cleanup"
+            ],
+            "custom_commands": [],
+            "escalation": {
+              "automatic": false,
+              "require_new_attempt": true,
+              "require_new_manifest": true,
+              "runtime_kind": "apple-container",
+              "target_profile": "guest-build"
+            },
+            "execution_limit_profile": "hardened",
+            "filesystem": {
+              "host_root": "input-snapshot-only",
+              "implementation": "in-memory",
+              "writes": "task-local-overlay"
+            },
+            "host_shell_fallback": false,
+            "host_watchdog": {
+              "max_rss_bytes": 536870912,
+              "poll_interval_ms": 50,
+              "wall_time_ms": 30000
+            },
+            "inherit_host_environment": false,
+            "javascript": false,
+            "kind": "just-bash",
+            "limits": {
+              "max_archive_bytes": 32768,
+              "max_call_depth": 8,
+              "max_command_count": 32,
+              "max_database_bytes": 32768,
+              "max_execution_time_ms": 1000,
+              "max_extension_cleanup_time_ms": 25,
+              "max_filesystem_bytes": 131072,
+              "max_output_bytes": 4096,
+              "max_source_bytes": 4096
+            },
+            "node_version": "24.13.1",
+            "package_version": "3.4.2",
+            "profile_variant": "standard",
+            "python": false,
+            "tool_invocation": false,
+            "unsupported_command": "InspectBlocked"
+          },
+          "task": {
+            "attempt_id": "attempt-import-726866959928",
+            "command": [
+              "cat",
+              "data.txt"
+            ],
+            "command_classes": [
+              "read",
+              "search",
+              "text-processing",
+              "structured-data",
+              "hash"
+            ],
+            "expected_artifacts": [
+              "/scratch/export/result.txt"
+            ],
+            "goal": "adversarial inspect fetch evidence",
+            "id": "inspect-fetch-issue5-success",
+            "lifecycle": {
+              "checkpoint": "application-level",
+              "stop_timeout_seconds": 5
+            },
+            "profile": "inspect"
+          },
+          "verification": {
+            "adversarial_evidence": [],
+            "status": "unverified"
+          },
+          "workspace": {
+            "image": null,
+            "lockfile": {
+              "path": "package-lock.json",
+              "sha256": "sha256:f39c8d9cf405a8ab62d0c13b8bf2de184d89bcc4b8b9ed978374796708bd3ec4"
+            },
+            "mcps": [],
+            "repository": {
+              "commit": "4625fd1fcd75d035b44203be071cfaf6c053496a",
+              "tree_hash": "490067c472189c877af6196f2589e4783127bab0",
+              "url": "https://github.com/53able/agent-host-isolation.git"
+            },
+            "skills": [
+              {
+                "id": "agent-host-isolation",
+                "version": "0.1.0"
+              }
+            ],
+            "snapshot": {
+              "hash": "sha256:e6eef84ad81f124d7935234b4a4a29c3971c7659c8b38774f1e45e0a519083d0",
+              "id": "inspect-fetch-issue5-snapshot",
+              "paths": [
+                {
+                  "hash": "sha256:59fc09ea457d8da02bfe7521103200c05a7e8c4efaaf75d345bcc21cc5e98853",
+                  "path": "data.txt",
+                  "size_bytes": 25,
+                  "type": "regular"
+                }
+              ],
+              "read_only": true,
+              "target": "/workspace"
+            },
+            "toolchain": {
+              "agent-host-isolation": "0.1.0",
+              "just-bash": "3.4.2",
+              "node": "24.13.1"
+            }
+          }
+        },
+        "target_manifest_hash": "sha256:1b49d050659b0e046567331ac20584b2abdd76486b618428ea80aee42792ed90",
+        "transport": "injected/mock; real installed JustBash standard runtime"
+      },
+      "passed": true
+    },
+    {
+      "class": "live_network",
+      "expected": "allowed",
+      "name": "live-example-com",
+      "observed": {
+        "audit_events": [
+          {
+            "attempt_id": "attempt-cd800517a5f7",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 559,
+            "decision": "usage",
+            "event_id": "e9a694764b4948fb8f3962274b93040f",
+            "manifest_hash": "sha256:9b63f76ba7e70fe2b47c95f169166d14d4099ff68469f3c949786b5b3b6a1631",
+            "max_bytes": 4096,
+            "reason": null,
+            "task_id": "inspect-fetch-live-live-example-com",
+            "used_bytes": 559
+          },
+          {
+            "attempt_id": "attempt-cd800517a5f7",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 559,
+            "cleanup_outcome": "not_required",
+            "decision": "allowed",
+            "event_id": "f9de435d83124b0b844de3eed9959e23",
+            "manifest_hash": "sha256:9b63f76ba7e70fe2b47c95f169166d14d4099ff68469f3c949786b5b3b6a1631",
+            "method": "GET",
+            "origin": "https://example.com:443",
+            "path": "/",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": null,
+            "redirect_hops": 0,
+            "result_gate": "pending",
+            "scope": "public metadata",
+            "sha256": "sha256:ff67a9d764d6a2367a187734e697f6a53217db9a21c101d410a113ca871a299d",
+            "size_bytes": 559,
+            "task_id": "inspect-fetch-live-live-example-com",
+            "url": "https://example.com/",
+            "verification": "unverified"
+          }
+        ],
+        "broker_process": {
+          "pid": 81943,
+          "returncode": 0,
+          "terminated_before_reader": true
+        },
+        "bytes": 559,
+        "cleanup": false,
+        "decision": "allowed",
+        "origin": "https://example.com:443",
+        "passed": true,
+        "path_prefix": "/",
+        "record": {
+          "attempt_id": "attempt-cd800517a5f7",
+          "audit_record": "audit/inspect-fetch-issue5.json",
+          "event_id": "f9de435d83124b0b844de3eed9959e23",
+          "manifest_hash": "sha256:9b63f76ba7e70fe2b47c95f169166d14d4099ff68469f3c949786b5b3b6a1631",
+          "method": "GET",
+          "purpose": "bounded inspection input",
+          "redirect_hops": 0,
+          "result_gate": "pending",
+          "sha256": "sha256:ff67a9d764d6a2367a187734e697f6a53217db9a21c101d410a113ca871a299d",
+          "size_bytes": 559,
+          "task_id": "inspect-fetch-live-live-example-com",
+          "url": "https://example.com/",
+          "verification": "unverified"
+        },
+        "redirect_event": false,
+        "runtime": {
+          "profile": "standard",
+          "stdout": "<!doctype html><html lang=\"en\"><head><title>Example Domain</title><link rel=\"icon\" href=\"data:,\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style></head><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.</p><p><a href=\"https://iana.org/domains/example\">Learn more</a></p></div></body></html>\n"
+        },
+        "sha256": "sha256:ff67a9d764d6a2367a187734e697f6a53217db9a21c101d410a113ca871a299d",
+        "snapshot_paths": [
+          {
+            "hash": "sha256:ff67a9d764d6a2367a187734e697f6a53217db9a21c101d410a113ca871a299d",
+            "path": "data.txt",
+            "size_bytes": 559,
+            "type": "regular"
+          }
+        ],
+        "source_manifest_hash": "sha256:9b63f76ba7e70fe2b47c95f169166d14d4099ff68469f3c949786b5b3b6a1631",
+        "status": "HTTP 2xx",
+        "target_manifest_hash": "sha256:eb7c917b129e0d5bd5203092d1fe45602d6b8c93ef22fc5b4b4d613d1212a40e",
+        "transport": "live public DNS + TLS + HTTPS",
+        "url": "https://example.com/"
+      },
+      "passed": true
+    },
+    {
+      "class": "live_network",
+      "expected": "denied-after-redirect",
+      "name": "live-redirect-hop",
+      "observed": {
+        "audit_events": [
+          {
+            "attempt_id": "attempt-e5cf8f009bd6",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "in_progress",
+            "decision": "redirect",
+            "event_id": "f8a8308f23a1462eb4fa5fbfc3dd419e",
+            "hop": 0,
+            "manifest_hash": "sha256:7cf7c95cebecfc2dca5811dd2843cdd2ec2c8b2bf9cf5075d03fe8fd1d965018",
+            "method": "GET",
+            "origin": "https://httpbin.org:443",
+            "path": "/get",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": null,
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-live-live-redirect-hop",
+            "url": "https://httpbin.org/get"
+          },
+          {
+            "attempt_id": "attempt-e5cf8f009bd6",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoke_required",
+            "decision": "denied",
+            "event_id": "2096c0f0293e40ebad16e63326a2d7bb",
+            "manifest_hash": "sha256:7cf7c95cebecfc2dca5811dd2843cdd2ec2c8b2bf9cf5075d03fe8fd1d965018",
+            "method": "GET",
+            "origin": "https://httpbin.org:443",
+            "path": "/get",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-live-live-redirect-hop",
+            "url": "https://httpbin.org/get"
+          },
+          {
+            "attempt_id": "attempt-e5cf8f009bd6",
+            "audit_record": "audit/inspect-fetch-issue5.json",
+            "bytes": 0,
+            "cleanup_outcome": "revoked",
+            "decision": "revoked",
+            "event_id": "2376eaf94a3a411295943408aca171d4",
+            "manifest_hash": "sha256:7cf7c95cebecfc2dca5811dd2843cdd2ec2c8b2bf9cf5075d03fe8fd1d965018",
+            "method": "GET",
+            "origin": "https://httpbin.org:443",
+            "path": "/get",
+            "port": 443,
+            "purpose": "bounded inspection input",
+            "reason": "no exact active grant matched",
+            "revocation_outcome": "grant_revoked",
+            "scope": "public metadata",
+            "task_id": "inspect-fetch-live-live-redirect-hop"
+          }
+        ],
+        "broker_process": {
+          "pid": 81963,
+          "returncode": 0,
+          "terminated_before_reader": true
+        },
+        "cleanup": true,
+        "decision": "denied",
+        "origin": "https://httpbin.org:443",
+        "passed": true,
+        "path_prefix": "/redirect/",
+        "reason": "no exact active grant matched",
+        "redirect_event": true,
+        "transport": "live public DNS + TLS + HTTPS",
+        "url": "https://httpbin.org/redirect/1"
+      },
+      "passed": true
+    }
+  ],
+  "reason": "the full denial matrix uses injected transport; live example.com HTTPS and httpbin redirect probes were attempted, but this does not establish production-equivalent coverage for every required class",
+  "repository": {
+    "dirty_worktree": [
+      " M README.md",
+      " M docs/ja-JP/README.md",
+      " M docs/ja-JP/mechanisms/07-just-bash-inspect-runtime.md",
+      " M docs/mechanisms/07-just-bash-inspect-runtime.md",
+      "?? evidence/inspect-fetch-issue5-20260923.json",
+      "?? evidence/inspect-fetch-issue5-20260923.md",
+      "?? project-tasks/issue-5-tasklist.md"
+    ],
+    "head": "4625fd1fcd75d035b44203be071cfaf6c053496a",
+    "tree": "490067c472189c877af6196f2589e4783127bab0",
+    "url": "https://github.com/53able/agent-host-isolation.git"
+  },
+  "runtime": {
+    "broker": "scripts/inspect_fetch_broker.py",
+    "embedding": "scripts/just_bash_runtime.mjs:createInspectRuntimeFromFetch + executeInspectCommand",
+    "gate": "scripts/inspect_snapshot_gate.py",
+    "just_bash": "3.4.2",
+    "node": "24.13.1",
+    "store": "SQLite FetchAuditStore"
+  },
+  "snapshot_paths": {
+    "source": [
+      {
+        "hash": "sha256:59fc09ea457d8da02bfe7521103200c05a7e8c4efaaf75d345bcc21cc5e98853",
+        "path": "data.txt",
+        "size_bytes": 25,
+        "type": "regular"
+      }
+    ],
+    "target": [
+      {
+        "hash": "sha256:59fc09ea457d8da02bfe7521103200c05a7e8c4efaaf75d345bcc21cc5e98853",
+        "path": "data.txt",
+        "size_bytes": 25,
+        "type": "regular"
+      }
+    ]
+  },
+  "source_manifest": {
+    "gateway": {
+      "credential_broker": null,
+      "default": "deny",
+      "grants": [
+        {
+          "attempt_id": "attempt-success",
+          "audit_record": "audit/inspect-fetch-issue5.json",
+          "expiry": "2026-09-23T02:24:14.388654Z",
+          "max_bytes": 4096,
+          "methods": [
+            "GET"
+          ],
+          "origin": "https://api.example.com:443",
+          "path_prefix": "/v1/data/",
+          "port": 443,
+          "purpose": "bounded inspection input",
+          "redirect_policy": "revalidate-exact-origin",
+          "scope": "public metadata",
+          "task_id": "inspect-fetch-issue5-success"
+        }
+      ],
+      "ingress_ports": [],
+      "task_network": "inspect-fetch-issue5-success-network"
+    },
+    "manifest_version": 2,
+    "model": {
+      "credential_broker_ref": null,
+      "id": "none",
+      "provider": "none"
+    },
+    "resources": {
+      "host_wall_time_ms": {
+        "enforced_by": "host-watchdog",
+        "limit": 30000,
+        "on_exceed": "terminate"
+      },
+      "max_archive_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 32768,
+        "on_exceed": "block"
+      },
+      "max_call_depth": {
+        "enforced_by": "just-bash",
+        "limit": 8,
+        "on_exceed": "terminate"
+      },
+      "max_command_count": {
+        "enforced_by": "just-bash",
+        "limit": 32,
+        "on_exceed": "terminate"
+      },
+      "max_database_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 32768,
+        "on_exceed": "block"
+      },
+      "max_execution_time_ms": {
+        "enforced_by": "just-bash",
+        "limit": 1000,
+        "on_exceed": "terminate"
+      },
+      "max_extension_cleanup_time_ms": {
+        "enforced_by": "just-bash",
+        "limit": 25,
+        "on_exceed": "terminate"
+      },
+      "max_filesystem_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 131072,
+        "on_exceed": "block"
+      },
+      "max_output_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 4096,
+        "on_exceed": "terminate"
+      },
+      "max_source_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 4096,
+        "on_exceed": "block"
+      },
+      "sampled_worker_rss_bytes": {
+        "enforced_by": "host-watchdog",
+        "limit": 536870912,
+        "on_exceed": "terminate"
+      }
+    },
+    "resultGate": {
+      "allowed_side_effects": [],
+      "artifact_import": {
+        "max_bytes": 4096,
+        "reject_path_traversal": true,
+        "reject_symlinks": true,
+        "source": "/scratch/export"
+      },
+      "audit_record": "evidence/just-bash-adversarial-20260923.json",
+      "filesystem_diff": true,
+      "required": true
+    },
+    "runtime": {
+      "agent_host_isolation_version": "0.1.0",
+      "audit_events": [
+        "runtime_identity",
+        "command",
+        "stdout_stderr",
+        "filesystem_diff",
+        "artifact",
+        "failure",
+        "limit_violation",
+        "result_gate",
+        "cleanup"
+      ],
+      "custom_commands": [],
+      "escalation": {
+        "automatic": false,
+        "require_new_attempt": true,
+        "require_new_manifest": true,
+        "runtime_kind": "apple-container",
+        "target_profile": "guest-build"
+      },
+      "execution_limit_profile": "hardened",
+      "filesystem": {
+        "host_root": "input-snapshot-only",
+        "implementation": "in-memory",
+        "writes": "task-local-overlay"
+      },
+      "host_shell_fallback": false,
+      "host_watchdog": {
+        "max_rss_bytes": 536870912,
+        "poll_interval_ms": 50,
+        "wall_time_ms": 30000
+      },
+      "inherit_host_environment": false,
+      "javascript": false,
+      "kind": "just-bash",
+      "limits": {
+        "max_archive_bytes": 32768,
+        "max_call_depth": 8,
+        "max_command_count": 32,
+        "max_database_bytes": 32768,
+        "max_execution_time_ms": 1000,
+        "max_extension_cleanup_time_ms": 25,
+        "max_filesystem_bytes": 131072,
+        "max_output_bytes": 4096,
+        "max_source_bytes": 4096
+      },
+      "node_version": "24.13.1",
+      "package_version": "3.4.2",
+      "profile_variant": "network-derived",
+      "python": false,
+      "tool_invocation": false,
+      "unsupported_command": "InspectBlocked"
+    },
+    "task": {
+      "attempt_id": "attempt-success",
+      "command": [
+        "cat",
+        "data.txt"
+      ],
+      "command_classes": [
+        "read",
+        "search",
+        "text-processing",
+        "structured-data",
+        "hash"
+      ],
+      "expected_artifacts": [
+        "/scratch/export/result.txt"
+      ],
+      "goal": "adversarial inspect fetch evidence",
+      "id": "inspect-fetch-issue5-success",
+      "lifecycle": {
+        "checkpoint": "application-level",
+        "stop_timeout_seconds": 5
+      },
+      "profile": "inspect"
+    },
+    "verification": {
+      "adversarial_evidence": [],
+      "status": "unverified"
+    },
+    "workspace": {
+      "image": null,
+      "lockfile": {
+        "path": "package-lock.json",
+        "sha256": "sha256:f39c8d9cf405a8ab62d0c13b8bf2de184d89bcc4b8b9ed978374796708bd3ec4"
+      },
+      "mcps": [],
+      "repository": {
+        "commit": "4625fd1fcd75d035b44203be071cfaf6c053496a",
+        "tree_hash": "490067c472189c877af6196f2589e4783127bab0",
+        "url": "https://github.com/53able/agent-host-isolation.git"
+      },
+      "skills": [
+        {
+          "id": "agent-host-isolation",
+          "version": "0.1.0"
+        }
+      ],
+      "snapshot": {
+        "hash": "sha256:e6eef84ad81f124d7935234b4a4a29c3971c7659c8b38774f1e45e0a519083d0",
+        "id": "inspect-fetch-issue5-snapshot",
+        "paths": [
+          {
+            "hash": "sha256:59fc09ea457d8da02bfe7521103200c05a7e8c4efaaf75d345bcc21cc5e98853",
+            "path": "data.txt",
+            "size_bytes": 25,
+            "type": "regular"
+          }
+        ],
+        "read_only": true,
+        "target": "/workspace"
+      },
+      "toolchain": {
+        "agent-host-isolation": "0.1.0",
+        "just-bash": "3.4.2",
+        "node": "24.13.1"
+      }
+    }
+  },
+  "status": "unverified",
+  "target_manifest": {
+    "gateway": {
+      "credential_broker": null,
+      "default": "deny",
+      "grants": [],
+      "ingress_ports": [],
+      "task_network": null
+    },
+    "manifest_version": 2,
+    "model": {
+      "credential_broker_ref": null,
+      "id": "none",
+      "provider": "none"
+    },
+    "resources": {
+      "host_wall_time_ms": {
+        "enforced_by": "host-watchdog",
+        "limit": 30000,
+        "on_exceed": "terminate"
+      },
+      "max_archive_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 32768,
+        "on_exceed": "block"
+      },
+      "max_call_depth": {
+        "enforced_by": "just-bash",
+        "limit": 8,
+        "on_exceed": "terminate"
+      },
+      "max_command_count": {
+        "enforced_by": "just-bash",
+        "limit": 32,
+        "on_exceed": "terminate"
+      },
+      "max_database_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 32768,
+        "on_exceed": "block"
+      },
+      "max_execution_time_ms": {
+        "enforced_by": "just-bash",
+        "limit": 1000,
+        "on_exceed": "terminate"
+      },
+      "max_extension_cleanup_time_ms": {
+        "enforced_by": "just-bash",
+        "limit": 25,
+        "on_exceed": "terminate"
+      },
+      "max_filesystem_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 131072,
+        "on_exceed": "block"
+      },
+      "max_output_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 4096,
+        "on_exceed": "terminate"
+      },
+      "max_source_bytes": {
+        "enforced_by": "just-bash",
+        "limit": 4096,
+        "on_exceed": "block"
+      },
+      "sampled_worker_rss_bytes": {
+        "enforced_by": "host-watchdog",
+        "limit": 536870912,
+        "on_exceed": "terminate"
+      }
+    },
+    "resultGate": {
+      "allowed_side_effects": [],
+      "artifact_import": {
+        "max_bytes": 4096,
+        "reject_path_traversal": true,
+        "reject_symlinks": true,
+        "source": "/scratch/export"
+      },
+      "audit_record": "evidence/just-bash-adversarial-20260923.json",
+      "filesystem_diff": true,
+      "required": true
+    },
+    "runtime": {
+      "agent_host_isolation_version": "0.1.0",
+      "audit_events": [
+        "runtime_identity",
+        "command",
+        "stdout_stderr",
+        "filesystem_diff",
+        "artifact",
+        "failure",
+        "limit_violation",
+        "result_gate",
+        "cleanup"
+      ],
+      "custom_commands": [],
+      "escalation": {
+        "automatic": false,
+        "require_new_attempt": true,
+        "require_new_manifest": true,
+        "runtime_kind": "apple-container",
+        "target_profile": "guest-build"
+      },
+      "execution_limit_profile": "hardened",
+      "filesystem": {
+        "host_root": "input-snapshot-only",
+        "implementation": "in-memory",
+        "writes": "task-local-overlay"
+      },
+      "host_shell_fallback": false,
+      "host_watchdog": {
+        "max_rss_bytes": 536870912,
+        "poll_interval_ms": 50,
+        "wall_time_ms": 30000
+      },
+      "inherit_host_environment": false,
+      "javascript": false,
+      "kind": "just-bash",
+      "limits": {
+        "max_archive_bytes": 32768,
+        "max_call_depth": 8,
+        "max_command_count": 32,
+        "max_database_bytes": 32768,
+        "max_execution_time_ms": 1000,
+        "max_extension_cleanup_time_ms": 25,
+        "max_filesystem_bytes": 131072,
+        "max_output_bytes": 4096,
+        "max_source_bytes": 4096
+      },
+      "node_version": "24.13.1",
+      "package_version": "3.4.2",
+      "profile_variant": "standard",
+      "python": false,
+      "tool_invocation": false,
+      "unsupported_command": "InspectBlocked"
+    },
+    "task": {
+      "attempt_id": "attempt-import-726866959928",
+      "command": [
+        "cat",
+        "data.txt"
+      ],
+      "command_classes": [
+        "read",
+        "search",
+        "text-processing",
+        "structured-data",
+        "hash"
+      ],
+      "expected_artifacts": [
+        "/scratch/export/result.txt"
+      ],
+      "goal": "adversarial inspect fetch evidence",
+      "id": "inspect-fetch-issue5-success",
+      "lifecycle": {
+        "checkpoint": "application-level",
+        "stop_timeout_seconds": 5
+      },
+      "profile": "inspect"
+    },
+    "verification": {
+      "adversarial_evidence": [],
+      "status": "unverified"
+    },
+    "workspace": {
+      "image": null,
+      "lockfile": {
+        "path": "package-lock.json",
+        "sha256": "sha256:f39c8d9cf405a8ab62d0c13b8bf2de184d89bcc4b8b9ed978374796708bd3ec4"
+      },
+      "mcps": [],
+      "repository": {
+        "commit": "4625fd1fcd75d035b44203be071cfaf6c053496a",
+        "tree_hash": "490067c472189c877af6196f2589e4783127bab0",
+        "url": "https://github.com/53able/agent-host-isolation.git"
+      },
+      "skills": [
+        {
+          "id": "agent-host-isolation",
+          "version": "0.1.0"
+        }
+      ],
+      "snapshot": {
+        "hash": "sha256:e6eef84ad81f124d7935234b4a4a29c3971c7659c8b38774f1e45e0a519083d0",
+        "id": "inspect-fetch-issue5-snapshot",
+        "paths": [
+          {
+            "hash": "sha256:59fc09ea457d8da02bfe7521103200c05a7e8c4efaaf75d345bcc21cc5e98853",
+            "path": "data.txt",
+            "size_bytes": 25,
+            "type": "regular"
+          }
+        ],
+        "read_only": true,
+        "target": "/workspace"
+      },
+      "toolchain": {
+        "agent-host-isolation": "0.1.0",
+        "just-bash": "3.4.2",
+        "node": "24.13.1"
+      }
+    }
+  },
+  "tested_embedding": "Python broker/store/gate -> real installed JustBash standard runtime; denial probes use injected transport, live probes use public HTTPS"
+}
