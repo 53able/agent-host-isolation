@@ -77,7 +77,7 @@ def build_escalation_request(
         "source_manifest_hash": source_hash,
         "blocked_event_hash": _manifest_hash(blocked_event),
         "missing_capability": missing_capability,
-        "strict_memory": missing_capability == "strict-memory",
+        "strict_memory": target_manifest["task"]["strict_memory"],
         "target_profile": "guest-build",
         "target_runtime_kind": "apple-container",
         "target_attempt_id": target_attempt,

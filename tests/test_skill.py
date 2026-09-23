@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_FILE = ROOT / "SKILL.md"
@@ -30,6 +31,36 @@ lifecycle = load_script("task_lifecycle")
 just_bash_contract = load_script("just_bash_contract")
 just_bash_manifest = load_script("just_bash_manifest")
 artifact_importer = load_script("import_artifacts")
+strict_memory_probe = load_script("run_strict_memory_probe")
+
+
+class StrictMemoryProbeCleanupTests(unittest.TestCase):
+    def test_deletes_only_volume_with_matching_ownership_labels(self):
+        manifest = valid_manifest()
+        volume = manifest["runtime"]["scratch"]["volume"]
+        labels = compiler.expected_labels(manifest)
+        inspected = subprocess.CompletedProcess([], 0, json.dumps([{"configuration": {"labels": labels}}]), "")
+        deleted = subprocess.CompletedProcess([], 0, "", "")
+        with patch.object(strict_memory_probe, "run", side_effect=[inspected, deleted]) as mock_run:
+            self.assertEqual(strict_memory_probe.cleanup_volumes(manifest, [volume]), [])
+        self.assertEqual(mock_run.call_args_list[1].args[0], ["container", "volume", "delete", volume])
+
+    def test_keeps_volume_with_mismatched_ownership_labels(self):
+        manifest = valid_manifest()
+        volume = manifest["runtime"]["scratch"]["volume"]
+        inspected = subprocess.CompletedProcess([], 0, json.dumps([{"configuration": {"labels": {}}}]), "")
+        with patch.object(strict_memory_probe, "run", return_value=inspected) as mock_run:
+            errors = strict_memory_probe.cleanup_volumes(manifest, [volume])
+        self.assertIn("ownership check failed", errors[0])
+        mock_run.assert_called_once()
+
+    def test_accepts_absent_volume_after_failed_create(self):
+        manifest = valid_manifest()
+        volume = manifest["runtime"]["scratch"]["volume"]
+        missing = subprocess.CompletedProcess([], 1, "", f"volume not found: {volume}")
+        with patch.object(strict_memory_probe, "run", return_value=missing) as mock_run:
+            self.assertEqual(strict_memory_probe.cleanup_volumes(manifest, [volume]), [])
+        mock_run.assert_called_once()
 
 
 def valid_manifest():
@@ -681,6 +712,9 @@ class JustBashManifestTests(unittest.TestCase):
         self.assertFalse(request["automatic"])
         self.assertNotEqual(request["source_manifest_hash"], request["target_manifest_hash"])
         self.assertNotEqual(request["source_attempt_id"], request["target_attempt_id"])
+        event = inspect_blocked_event(source, "native-binary")
+        request = just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        self.assertTrue(request["strict_memory"])
 
     def test_escalation_rejects_different_task_id(self):
         source = valid_just_bash_manifest()

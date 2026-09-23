@@ -15,12 +15,34 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from apple_container_compiler import canonical_hash, compile_command
+from apple_container_compiler import canonical_hash, compile_command, require_resource_ownership
 from manifest_v2 import validate_v2
 from run_apple_container_smoke import build_manifest, cleanup, run, SNAPSHOT
 
 
+def cleanup_volumes(manifest: dict, volumes: list[str]) -> list[str]:
+    errors: list[str] = []
+    for volume in volumes:
+        inspected = run(["container", "volume", "inspect", volume], check=False)
+        if inspected.returncode != 0:
+            if "volume not found" not in inspected.stderr:
+                errors.append(f"volume inspect failed: {volume}")
+            continue
+        try:
+            labels = json.loads(inspected.stdout)[0]["configuration"]["labels"]
+            require_resource_ownership(manifest, labels)
+        except (KeyError, IndexError, TypeError, ValueError) as exc:
+            errors.append(f"volume ownership check failed: {volume}: {exc}")
+            continue
+        if run(["container", "volume", "delete", volume], check=False).returncode != 0:
+            errors.append(f"volume delete failed: {volume}")
+    return errors
+
+
 def execute() -> dict:
+    worktree_status = run(["git", "status", "--short"], timeout=10).stdout.splitlines()
+    if worktree_status:
+        raise RuntimeError("strict-memory probe requires a clean worktree")
     task_id = f"ahi-memory-{uuid.uuid4().hex[:8]}"
     manifest = build_manifest(task_id)
     probe_script = Path(__file__).resolve()
@@ -44,7 +66,7 @@ def execute() -> dict:
         "task_id": task_id,
         "manifest": manifest,
         "manifest_hash": canonical_hash(manifest),
-        "worktree_status_before": run(["git", "status", "--short"], timeout=10).stdout.splitlines(),
+        "worktree_status_before": worktree_status,
         "host": {
             "macos": platform.mac_ver()[0],
             "architecture": platform.machine(),
@@ -69,8 +91,8 @@ def execute() -> dict:
                 raise RuntimeError("probe input must contain regular files only")
             (snapshot / file.name).write_bytes(file.read_bytes())
         for action, volume_key in (("create-scratch-volume", "scratch"), ("create-output-volume", "output")):
-            run(compile_command(manifest, action))
             volumes.append(manifest["runtime"][volume_key]["volume"])
+            run(compile_command(manifest, action))
         created = True
         run(compile_command(manifest, "create"))
         inspected = json.loads(run(compile_command(manifest, "inspect")).stdout)[0]
@@ -120,7 +142,7 @@ def execute() -> dict:
         evidence["verification_status"] = "blocked"
     finally:
         try:
-            evidence["cleanup_errors"] = cleanup(manifest, created, volumes)
+            evidence["cleanup_errors"] = cleanup(manifest, created, []) + cleanup_volumes(manifest, volumes)
             missing_container = run(["container", "inspect", task_id], check=False)
             evidence["container_absent"] = missing_container.returncode != 0 and "container not found" in missing_container.stderr
             evidence["volumes_absent"] = {}
