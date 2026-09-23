@@ -405,6 +405,16 @@ class AppleContainerCompilerTests(unittest.TestCase):
         argv = compiler.compile_command(valid_manifest(), "create-scratch-volume")
         self.assertEqual(argv[:4], ["container", "volume", "create", "-s"])
 
+    def test_attached_start_is_compiled_and_ownership_checked(self):
+        manifest = valid_manifest()
+        labels = compiler.expected_labels(manifest)
+        self.assertEqual(
+            compiler.compile_command(manifest, "start-attached", observed_labels=labels),
+            ["container", "start", "--attach", manifest["task"]["id"]],
+        )
+        with self.assertRaisesRegex(ValueError, "ownership"):
+            compiler.compile_command(manifest, "start-attached", observed_labels={})
+
     def test_unrecognized_action_is_not_forwarded(self):
         with self.assertRaisesRegex(ValueError, "unsupported action"):
             compiler.compile_command(valid_manifest(), "exec")
@@ -717,12 +727,16 @@ class JustBashManifestTests(unittest.TestCase):
         target["task"]["strict_memory"] = True
         request = just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
         self.assertTrue(request["strict_memory"])
+        self.assertEqual(request["target_manifest_hash"], compiler.canonical_hash(target))
         self.assertFalse(request["automatic"])
         self.assertNotEqual(request["source_manifest_hash"], request["target_manifest_hash"])
         self.assertNotEqual(request["source_attempt_id"], request["target_attempt_id"])
         event = inspect_blocked_event(source, "native-binary")
         request = just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
         self.assertTrue(request["strict_memory"])
+        target["task"]["goal"] = "日本語の目標"
+        request = just_bash_contract.build_escalation_request(source, event, target, "audit/escalation.json")
+        self.assertEqual(request["target_manifest_hash"], compiler.canonical_hash(target))
 
     def test_escalation_rejects_different_task_id(self):
         source = valid_just_bash_manifest()

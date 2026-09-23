@@ -92,7 +92,7 @@ cp assets/just-bash-inspect-manifest.template.json isolation-manifest.json
 
 JustBash templateも同じtop-level Manifest v2 resourceを使い、`runtime.kind`、最小snapshot、interpreter limit、`InspectBlocked`昇格policyだけを特化します。
 
-`task.strict_memory`を明示します。標準JustBashの`inspect`では`false`だけを許可します。worker RSSの定期監視はOS強制の厳密な上限ではありません。strict-memoryの`InspectBlocked`から、新しいmanifestとattemptを持つApple Container `guest-build` requestを生成できますが、自動実行はしません。[実機メモリprobe](../../evidence/strict-memory-probe-20260923.md)は記録したhostで一つのOOM上限とcleanupを確認したもので、他のresourceとfull agent pathが未検証の間、自動振り分けは無効です。
+`task.strict_memory`を明示します。標準JustBashの`inspect`では`false`だけを許可します。worker RSSの定期監視はOS強制の厳密な上限ではありません。strict-memoryの`InspectBlocked`から、新しいmanifestとattemptを持つApple Container `guest-build` requestを生成できます。[実機メモリprobe](../../evidence/strict-memory-probe-20260923.md)は記録したhostで一つのOOM上限とcleanupを確認しました。[自動振り分けゲート](mechanisms/08-strict-memory-dispatch.md)はprocessとdiskの宣言上限が実機probeで成立しなかったため、現在もblockedです。
 
 ### 3. 実行前に検査する
 

@@ -93,11 +93,13 @@ def compile_command(
 
     task = manifest["task"]
     task_id = task["id"]
-    existing_resource_actions = {"start", "stop", "delete", "logs", "boot-logs", "stats"}
+    existing_resource_actions = {"start", "start-attached", "stop", "delete", "logs", "boot-logs", "stats"}
     if action in existing_resource_actions:
         require_resource_ownership(manifest, observed_labels)
     if action == "start":
         return ["container", "start", task_id]
+    if action == "start-attached":
+        return ["container", "start", "--attach", task_id]
     if action == "stop":
         return ["container", "stop", "--time", str(task["lifecycle"]["stop_timeout_seconds"]), task_id]
     if action == "delete":
@@ -172,7 +174,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
     parser.add_argument("action", choices=(
-        "create-scratch-volume", "create-output-volume", "create", "run", "start",
+        "create-scratch-volume", "create-output-volume", "create", "run", "start", "start-attached",
         "stop", "delete", "inspect", "logs", "boot-logs", "stats",
     ))
     parser.add_argument("--resource-labels", type=Path)

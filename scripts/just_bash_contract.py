@@ -9,6 +9,7 @@ import sys
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from apple_container_compiler import canonical_hash as apple_manifest_hash
 from just_bash_manifest import canonical_manifest_hash, validate_just_bash_v2
 from manifest_v2 import SAFE_ID, validate_v2
 
@@ -65,7 +66,7 @@ def build_escalation_request(
         raise ValueError("target manifest must select guest-build on apple-container")
     if missing_capability == "strict-memory" and target_manifest["task"].get("strict_memory") is not True:
         raise ValueError("strict-memory escalation requires task.strict_memory true in the new manifest")
-    target_hash = _manifest_hash(target_manifest)
+    target_hash = apple_manifest_hash(target_manifest)
     if target_hash == source_hash:
         raise ValueError("target manifest must be distinct from the source manifest")
     if not _safe_audit_path(audit_record):
