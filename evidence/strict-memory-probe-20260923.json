@@ -9,7 +9,7 @@
     "--cap-drop",
     "ALL",
     "--mount",
-    "type=volume,source=ahi-memory-2c45e952-output,target=/output,readonly",
+    "type=volume,source=ahi-memory-31d6fb8e-output,target=/output,readonly",
     "docker.io/library/alpine:3.22@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
     "sh",
     "-c",
@@ -17,8 +17,8 @@
   ],
   "artifact_read_returncode": 0,
   "artifact_read_stderr": "[0/6] [0s]\n[1/6] Fetching image [0s]\n[2/6] Unpacking image [0s]\n[3/6] Fetching kernel [0s]\n[4/6] Fetching init image [0s]\n[5/6] Unpacking init image [0s]\n[6/6] Starting container [0s]\n[6/6] Starting container [0s]",
-  "captured_at": "2026-09-23T00:59:44.712493+00:00",
-  "cgroup_memory_events": "low 0\nhigh 0\nmax 58\noom 1\noom_kill 1\noom_group_kill 0",
+  "captured_at": "2026-09-23T01:21:35.599283+00:00",
+  "cgroup_memory_events": "low 0\nhigh 0\nmax 62\noom 1\noom_kill 1\noom_group_kill 0",
   "cgroup_memory_max": "268435456",
   "checks": {
     "artifact_result_gate": "unverified",
@@ -36,7 +36,7 @@
   "container_absent": true,
   "final_status": {
     "networks": [],
-    "startedDate": "2026-09-23T00:59:45Z",
+    "startedDate": "2026-09-23T01:21:36Z",
     "state": "stopped"
   },
   "host": {
@@ -111,7 +111,7 @@
         "reject_symlinks": true,
         "source": "/output"
       },
-      "audit_record": "evidence/ahi-memory-2c45e952.json",
+      "audit_record": "evidence/ahi-memory-31d6fb8e.json",
       "required": true
     },
     "runtime": {
@@ -125,12 +125,12 @@
       "nested_virtualization": false,
       "output": {
         "target": "/output",
-        "volume": "ahi-memory-2c45e952-output"
+        "volume": "ahi-memory-31d6fb8e-output"
       },
       "rootfs_read_only": true,
       "scratch": {
         "target": "/scratch",
-        "volume": "ahi-memory-2c45e952-scratch"
+        "volume": "ahi-memory-31d6fb8e-scratch"
       },
       "socket_publishing": false,
       "ssh_forwarding": false
@@ -146,7 +146,7 @@
         "/output/result.txt"
       ],
       "goal": "measure OS-enforced memory exhaustion and cleanup",
-      "id": "ahi-memory-2c45e952",
+      "id": "ahi-memory-31d6fb8e",
       "lifecycle": {
         "checkpoint": "disabled",
         "stop_timeout_seconds": 2
@@ -161,65 +161,47 @@
       },
       "lockfile": {
         "path": "scripts/run_strict_memory_probe.py",
-        "sha256": "67fcd5280f840d1f0c11ab6a6e5702483eccd571187a8579624a8b6c7eeaaebf"
+        "sha256": "79ab10f0d6c7c2c14bf4c6eecc74eef08ec0ed0749aa002919c4722aa264e73a"
       },
       "mcps": [],
       "repository": {
-        "commit": "0439af3bcbd0f6e9493c2f3605a78b97a17ac1cc",
-        "tree_hash": "5c1ce45dbaf57a1a3ad7a1faf214c4f15af67d6e",
+        "commit": "7631eb38607ea7fa2edd1621b4f2911de3a98bd9",
+        "tree_hash": "3b54d47b6dff7f2a657c491e599313c11926bfd6",
         "url": "https://github.com/53able/agent-host-isolation.git"
       },
       "skills": [
         {
           "id": "agent-host-isolation",
-          "version": "0439af3bcbd0f6e9493c2f3605a78b97a17ac1cc"
+          "version": "7631eb38607ea7fa2edd1621b4f2911de3a98bd9"
         }
       ],
       "snapshot": {
-        "id": "ahi-memory-2c45e952-input",
+        "id": "ahi-memory-31d6fb8e-input",
         "read_only": true,
-        "source": "/var/tmp/agent-host-isolation/snapshots/ahi-memory-2c45e952-input",
+        "source": "/var/tmp/agent-host-isolation/snapshots/ahi-memory-31d6fb8e-input",
         "target": "/workspace"
       },
       "toolchain": {
         "apple-container": "container CLI version 1.2.2 (build: release, commit: 0190097)",
-        "python": "3.9.6"
+        "python": "3.14.6"
       }
     }
   },
-  "manifest_hash": "sha256:6d75bd845fa92ca808c32e0a06999bed761bc681337f5d3a4527844a98bdc315",
+  "manifest_hash": "sha256:3131a1ac79588d6d062bf057b42cad3229602770b4cb2704a82c92f4cd7e6b61",
   "start_argv": [
     "container",
     "start",
     "--attach",
-    "ahi-memory-2c45e952"
+    "ahi-memory-31d6fb8e"
   ],
   "start_returncode": 137,
   "start_stderr": "Killed",
   "start_stdout": "",
-  "task_id": "ahi-memory-2c45e952",
+  "task_id": "ahi-memory-31d6fb8e",
   "verification_status": "unverified",
   "volumes_absent": {
-    "ahi-memory-2c45e952-output": true,
-    "ahi-memory-2c45e952-scratch": true
+    "ahi-memory-31d6fb8e-output": true,
+    "ahi-memory-31d6fb8e-scratch": true
   },
-  "worktree_status_before": [
-    " M README.md",
-    " M assets/isolation-manifest.template.json",
-    " M assets/just-bash-inspect-manifest.template.json",
-    " M docs/ja-JP/README.md",
-    " M docs/ja-JP/mechanisms/07-just-bash-inspect-runtime.md",
-    " M docs/mechanisms/07-just-bash-inspect-runtime.md",
-    " M references/apple-container-runtime.md",
-    " M scripts/just_bash_contract.py",
-    " M scripts/just_bash_manifest.py",
-    " M scripts/manifest_v2.py",
-    " M scripts/run_just_bash_adversarial.mjs",
-    " M tests/just_bash_runtime.test.mjs",
-    " M tests/test_skill.py",
-    " M validation/just-bash/manifest.json",
-    "?? evidence/strict-memory-probe-20260923.json",
-    "?? evidence/strict-memory-probe-20260923.md",
-    "?? scripts/run_strict_memory_probe.py"
-  ]
+  "worktree_status_before": []
 }

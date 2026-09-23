@@ -1,11 +1,12 @@
 # Strict-memory Apple Container probe
 
-- Captured: 2026-09-23 00:59:44 UTC
+- Captured: 2026-09-23 01:21:35 UTC
 - Host: macOS 26.7, arm64
 - Apple Container: CLI and API server 1.2.2, commit `0190097d06df0b9065f4c2d2c7873c649d81d493`
-- Task: `ahi-memory-2c45e952`
-- Manifest hash: `sha256:6d75bd845fa92ca808c32e0a06999bed761bc681337f5d3a4527844a98bdc315`
-- [Raw evidence](strict-memory-probe-20260923.json) SHA-256: `2b5d8ac3fe0eb48038ba90134f46b8aad75642291f27c00e2c7255f316784682`
+- Task: `ahi-memory-31d6fb8e`
+- Source commit: `7631eb38607ea7fa2edd1621b4f2911de3a98bd9` (clean worktree before probe)
+- Manifest hash: `sha256:3131a1ac79588d6d062bf057b42cad3229602770b4cb2704a82c92f4cd7e6b61`
+- [Raw evidence](strict-memory-probe-20260923.json) SHA-256: `916393432b54da7d280fb976207ba8709951a8d31ba523e9cdef005a8d05e530`
 
 The guest reported `/sys/fs/cgroup/memory.max = 268435456`, matching the compiled `--memory` setting. A bounded allocation above that value exited 137. `memory.events` reported `oom 1` and `oom_kill 1`; the expected post-allocation artifact was absent. The test container and both named volumes were absent after cleanup. Apple Container rejected an earlier 64 MiB probe because this CLI requires at least 200 MiB; the final probe uses 256 MiB.
 
